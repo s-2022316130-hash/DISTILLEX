@@ -1,0 +1,12 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Tooling
+node_modules/
+.vercel
+.cache/
+*.log
