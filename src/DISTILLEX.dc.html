@@ -1326,7 +1326,13 @@ class Component extends DCLogic {
       bal:{fRes,cRes,identity:true,xN,stepResid,rating,tol:Component.RATING_TOL,
            converged: rating ? Math.abs(stepResid)<=Component.RATING_TOL : true}};
   }
-  variant(s,over){ return this.solve(Object.assign({},s,over)); }
+  variant(s,over){
+    // Guards the programmatic callers (sensitivity sweeps, what-if, exam) the
+    // same way renderVals guards the interactive path. solve() is unchanged.
+    const t=Object.assign({},s,over), v=this.validateInputs(t);
+    if(!v.ok) return {ok:false,E:v.errors.map(e=>e.msg),W:[],mix:Component.MIX[t.mixKey],invalid:true};
+    return this.solve(t);
+  }
 
   // ---------- formatting ----------
   f(v,d){ return (v===undefined||v===null||!isFinite(v)) ? '\u2014' : (+v).toFixed(d===undefined?3:d); }
@@ -1351,7 +1357,12 @@ class Component extends DCLogic {
   cfg(){ const s=this.state; const o={}; ['mixKey','model','P','alphaC','F','zF','q','xD','xB','R','Nspec','DF','eff','reb','calcMode'].forEach(k=>o[k]=s[k]); return o; }
 
   renderVals(){
-    const s=this.state, S=Component, r=this.solve(s);
+    const s=this.state, S=Component, vres=this.validateInputs(s);
+    // Invalid input never reaches the engine, and no previous result survives:
+    // the whole view-model is rebuilt from state on every render, so withholding
+    // r here withholds every derived number with it.
+    const r = vres.ok ? this.solve(s)
+      : {ok:false,E:[],W:[],mix:Component.MIX[s.mixKey],invalid:true,vE:vres.errors};
     const ok=r.ok, hasR=ok&&r.stages;
     const f=(v,d)=>this.f(v,d);
 
@@ -1423,8 +1434,11 @@ class Component extends DCLogic {
     const navItems=S.NAV.map(([k,label])=>({k,label,
       style:'min-height:30px;font-size:13px;padding:4px 10px;border-color:'+(s.view===k?'var(--color-accent)':'transparent')+';background:'+(s.view===k?'var(--color-accent)':'transparent')+';color:'+(s.view===k?'var(--color-bg)':'var(--color-text)')}));
 
+    const KINDLABEL={input:'INVALID INPUT',spec:'INFEASIBLE SPECIFICATION',domain:'MODEL DOMAIN'};
+    const errStyle='font-size:12.5px;padding:6px 10px;border:1px solid var(--color-accent-700);background:color-mix(in srgb,var(--color-accent) 12%,transparent);color:var(--color-accent-800)';
     const issues=[].concat(
-      (r.E||[]).map(t=>({text:'\u26a0  '+t,style:'font-size:12.5px;padding:6px 10px;border:1px solid var(--color-accent-700);background:color-mix(in srgb,var(--color-accent) 12%,transparent);color:var(--color-accent-800)'})),
+      (vres.errors||[]).map(e=>({text:'\u26a0  '+KINDLABEL[e.kind]+'  \u00b7  '+e.msg,style:errStyle})),
+      (r.E||[]).map(t=>({text:'\u26a0  '+KINDLABEL[this.kindOf(t)]+'  \u00b7  '+t,style:errStyle})),
       (r.W||[]).map(t=>({text:'i  '+t,style:'font-size:12.5px;padding:6px 10px;border:1px dashed var(--color-divider);color:color-mix(in srgb,var(--color-text) 72%,transparent)'})));
 
     const liveRows=[
@@ -1498,7 +1512,7 @@ class Component extends DCLogic {
       explaining:s.explaining, explainLabel:s.explaining?'Close explainer':'Explain separation',
       explainNo:s.explainI+1, explainTitle:S.EXPLAIN[s.explainI][0], explainText:S.EXPLAIN[s.explainI][1],
       wiOptions:wiOpts.map(o=>({k:o[0],label:o[1]})), wiStep:s.wiVar==='P'?1:(s.wiVar==='Nspec'?1:0.05),
-      hasWhatIf:!!s.whatIf, whatIfRows, whatIfNote,
+      hasWhatIf:!!s.whatIf&&vres.ok, whatIfRows, whatIfNote,
       tipOpen:!!s.tip, tipText:s.tip?S.TIPS[s.tip]:'',
       tipStyle:'position:fixed;z-index:90;max-width:280px;padding:8px 10px;font-size:12px;line-height:1.45;background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);left:'+s.tipXY[0]+'px;top:'+s.tipXY[1]+'px',
       toastOpen:!!s.toast, toast:s.toast,
@@ -1506,7 +1520,11 @@ class Component extends DCLogic {
       home:()=>this.setState({view:'landing'}),
       tryExample:()=>this.setState({view:'sim',mixKey:'bt',model:'raoult',P:101.325,F:100,zF:0.45,q:1,xD:0.96,xB:0.04,R:2.2,calcMode:'design'}),
       toggleTheme:()=>this.setState({theme:s.theme==='dark'?'light':'dark'}),
-      setNum:(e)=>{const k=e.target.dataset.k,val=parseFloat(e.target.value); if(!isNaN(val)) this.setState({[k]:val, whatIf:null});},
+      setNum:(e)=>{const k=e.target.dataset.k, raw=e.target.value, val=parseFloat(raw);
+        // Keep the raw entry when it will not parse so validation reports it.
+        // Silently retaining the previous number would leave a valid-looking
+        // result attached to a field the user can see is wrong.
+        this.setState({[k]: Number.isFinite(val)?val:raw, whatIf:null});},
       setStr:(e)=>{const t=e.target; this.setState({[t.dataset.k]:t.value, whatIf:null});},
       tipIn:(e)=>{const b=e.currentTarget.getBoundingClientRect(); this.setState({tip:e.currentTarget.dataset.tip,tipXY:[Math.min(b.left,window.innerWidth-300),b.bottom+6]});},
       tipOut:()=>this.setState({tip:null}),
@@ -1523,7 +1541,10 @@ class Component extends DCLogic {
       loadCfg:(e)=>{const fl=e.target.files&&e.target.files[0]; if(!fl) return;
         const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result); const clean={};
           Object.keys(o).forEach(k=>{ if(k in this.state) clean[k]=o[k]; });
-          this.setState(Object.assign({whatIf:null},clean)); this.flash('Configuration loaded'); }
+          this.setState(Object.assign({whatIf:null},clean));
+          const vr=this.validateInputs(Object.assign({},this.state,clean));
+          this.flash(vr.ok? 'Configuration loaded'
+            : 'Configuration loaded, but '+vr.errors.length+' value(s) failed validation \u2014 see the messages at the top of the screen'); }
           catch(err){ this.flash('Could not read that file \u2014 expected DISTILLEX JSON'); } };
         rd.readAsText(fl); e.target.value='';},
       ...(()=>{ try { return this.extras(s,r,hasR); } catch(err){ console.error('DISTILLEX extras error: '+(err&&err.message)+' | '+(err&&err.stack)); return {}; } })(),
@@ -1540,6 +1561,116 @@ class Component extends DCLogic {
    *  from it, so it cannot fail and validates nothing) and the numerical residual
    *  of the solve (which can fail, and in rating mode does). The identity is never
    *  presented as a passed check. */
+  /** Domain of every user-settable numeric input. Bounds are physical or
+   *  solver-derived and each carries its reason; none is invented to make an
+   *  awkward case converge.
+   *   - mole fractions are the OPEN interval (0,1): 0 or 1 is a pure component,
+   *     not a binary separation problem;
+   *   - F, P, R, MW and latent heat are strictly positive quantities;
+   *   - eff is an OVERALL tray efficiency N_theoretical/N_actual, so 0 < E <= 1;
+   *     E > 1 would mean fewer real trays than theoretical stages;
+   *   - alpha must exceed 1: alpha = 1 gives y = x and no separation is
+   *     possible, alpha < 1 means the components are labelled the wrong way
+   *     round and should be swapped rather than accepted;
+   *   - N keeps the existing 3..60 stepping range, formalised rather than
+   *     re-invented;
+   *   - q is only required to be finite: subcooled (q>1) and superheated (q<0)
+   *     feeds are both legitimate in this model, so no artificial bound is set. */
+  static LIMITS = {
+    F     :{min:0,minOpen:true,label:'Feed flowrate F',unit:' kmol/h'},
+    zF    :{min:0,max:1,minOpen:true,maxOpen:true,label:'Feed composition z_F'},
+    xD    :{min:0,max:1,minOpen:true,maxOpen:true,label:'Distillate composition x_D'},
+    xB    :{min:0,max:1,minOpen:true,maxOpen:true,label:'Bottoms composition x_B'},
+    R     :{min:0,minOpen:true,label:'Reflux ratio R'},
+    P     :{min:0,minOpen:true,label:'Column pressure P',unit:' kPa'},
+    eff   :{min:0,max:1,minOpen:true,label:'Overall tray efficiency'},
+    DF    :{min:0,max:1,minOpen:true,maxOpen:true,label:'Distillate cut D/F'},
+    Nspec :{min:3,max:60,integer:true,label:'Theoretical stages N'},
+    alphaC:{min:1,minOpen:true,label:'Relative volatility α'},
+    q     :{label:'Feed quality q'}
+  };
+  /** Antoine C must keep T + C > 0 across the whole −80…500 °C interval that
+   *  bubbleT/dewT bisect over, so the correlation never crosses its pole inside
+   *  the solver's own search bracket. Solver-domain bound, not a literature
+   *  value; every shipped component satisfies it (lowest is n-heptane, 216.6). */
+  static ANTOINE_C_MIN = 80;
+  /** solve() emits plain strings and is deliberately left byte-identical, so its
+   *  messages are classified for display here rather than at source. */
+  static SOLVE_KIND = [
+    [/^Rating solution did not converge/, 'domain'],
+    [/^Antoine extrapolation/, 'domain']
+  ];
+
+  num(v){
+    if(typeof v === 'number') return v;
+    if(typeof v === 'string' && v.trim() !== '') return Number(v);
+    return NaN;
+  }
+  /** One numeric field against Component.LIMITS. Never coerces: an out-of-domain
+   *  value is reported, not clamped. */
+  checkNum(key,val,out){
+    const L = Component.LIMITS[key], n = this.num(val);
+    if(!Number.isFinite(n)){
+      const why = (val===''||val===undefined||val===null) ? ' — the field is empty.'
+        : (typeof val==='number' ? ' — got '+String(val)+'.' : ' — “'+String(val)+'” is not numeric.');
+      out.push({kind:'input',field:key,msg:L.label+' must be a finite number'+why});
+      return;
+    }
+    if(L.integer && !Number.isInteger(n)){
+      out.push({kind:'input',field:key,msg:L.label+' must be a whole number of stages; got '+n+'.'});
+      return;
+    }
+    if(L.min!==undefined && (L.minOpen ? !(n>L.min) : !(n>=L.min)))
+      out.push({kind:'input',field:key,msg:L.label+' must be '+(L.minOpen?'greater than ':'at least ')+L.min+(L.unit||'')+'; got '+n+(L.unit||'')+'.'});
+    else if(L.max!==undefined && (L.maxOpen ? !(n<L.max) : !(n<=L.max)))
+      out.push({kind:'input',field:key,msg:L.label+' must be '+(L.maxOpen?'less than ':'at most ')+L.max+(L.unit||'')+'; got '+n+(L.unit||'')+'.'});
+  }
+  checkCustom(s,out){
+    const c = s.custom;
+    if(!c || typeof c!=='object' || !c.a || !c.b || typeof c.a!=='object' || typeof c.b!=='object'){
+      out.push({kind:'input',field:'custom',msg:'Custom mixture: component data is missing or malformed.'});
+      return;
+    }
+    [['a','Custom component A'],['b','Custom component B']].forEach(pair=>{
+      const d = c[pair[0]], lbl = pair[1];
+      if(!String(d.name===undefined?'':d.name).trim())
+        out.push({kind:'input',field:'custom',msg:lbl+' needs a name.'});
+      const need=(f,unitless)=>{ const n=this.num(d[f]);
+        if(!Number.isFinite(n)){ out.push({kind:'input',field:'custom',msg:lbl+': '+unitless+' must be a finite number.'}); return null; }
+        return n; };
+      need('A','Antoine constant A');
+      const B=need('B','Antoine constant B');
+      if(B!==null && !(B>0)) out.push({kind:'input',field:'custom',msg:lbl+': Antoine constant B must be positive, otherwise vapour pressure would fall as temperature rises.'});
+      const C=need('C','Antoine constant C');
+      if(C!==null && !(C>Component.ANTOINE_C_MIN)) out.push({kind:'domain',field:'custom',msg:lbl+': Antoine constant C must exceed '+Component.ANTOINE_C_MIN+' so that T + C stays positive across the −80…500 °C range the bubble- and dew-point solver searches. Below that the correlation crosses its pole inside the solver’s own bracket and the vapour pressure is meaningless.'});
+      const MW=need('MW','Molar mass');
+      if(MW!==null && !(MW>0)) out.push({kind:'input',field:'custom',msg:lbl+': molar mass must be positive.'});
+      need('Tb','Normal boiling point T_b');
+      if(d.lat!==undefined){ const la=need('lat','Latent heat of vaporisation');
+        if(la!==null && !(la>0)) out.push({kind:'input',field:'custom',msg:lbl+': latent heat of vaporisation must be positive.'}); }
+    });
+    const na=String(c.a.name===undefined?'':c.a.name).trim().toLowerCase();
+    const nb=String(c.b.name===undefined?'':c.b.name).trim().toLowerCase();
+    if(na && na===nb) out.push({kind:'input',field:'custom',msg:'The two components of a binary mixture must have different names.'});
+  }
+  /** Single gate in front of the engine. Runs before solve() on every render and
+   *  inside variant(), so no programmatic caller (sensitivity sweep, what-if
+   *  comparison, exam generator) can reach the equations with invalid input. */
+  validateInputs(s){
+    const E=[];
+    ['F','zF','P','R','q'].forEach(k=>this.checkNum(k,s[k],E));
+    this.checkNum('eff',s.eff,E);
+    if(s.calcMode==='rating'){ this.checkNum('Nspec',s.Nspec,E); this.checkNum('DF',s.DF,E); }
+    else { this.checkNum('xD',s.xD,E); this.checkNum('xB',s.xB,E); }
+    if(s.model==='alpha') this.checkNum('alphaC',s.alphaC,E);
+    if(s.mixKey==='custom') this.checkCustom(s,E);
+    else if(!Component.MIX[s.mixKey]) E.push({kind:'input',field:'mixKey',msg:'Unknown mixture selection “'+String(s.mixKey)+'”.'});
+    return {ok:E.length===0, errors:E};
+  }
+  kindOf(msg){
+    const h=Component.SOLVE_KIND.find(k=>k[0].test(msg));
+    return h ? h[1] : 'spec';
+  }
   balanceReport(r,hasR){
     const f=(v,d)=>this.f(v,d);
     const box=(kind)=>'font-size:13px;font-family:var(--font-heading);padding:5px 9px;border:1px '+
@@ -1592,8 +1723,20 @@ class Component extends DCLogic {
     return {ind,dep};
   }
   extras(s,r,hasR){
-    const f=(v,d)=>this.f(v,d), S=Component, C=this.curve(s), MX=(x)=>this.MX(x), MY=(y)=>this.MY(y);
+    const f=(v,d)=>this.f(v,d), S=Component, MX=(x)=>this.MX(x), MY=(y)=>this.MY(y);
     const out={};
+    // When validation rejected the mixture data itself (malformed custom
+    // component, unknown mixture key) the equilibrium table cannot be built:
+    // compsOf/curve/alphaAt/tempAt would dereference missing records and throw
+    // into the catch in renderVals, silently stripping the whole view-model.
+    // Skip them and let the validation messages stand in for the diagrams.
+    const dataOk = !(r && r.invalid);
+    const C = dataOk ? this.curve(s) : {xs:[],ys:[],Ts:[],as:[]};
+    // Everything that stopped this run, in one list: pre-engine validation
+    // failures first, then whatever solve() rejected. Exports declare it so a
+    // downloaded report can never look like a completed calculation.
+    const runIssues = (((r&&r.vE)||[]).map(e=>({kind:e.kind,field:e.field,msg:e.msg})))
+      .concat((((r&&r.E)||[]).map(t=>({kind:this.kindOf(t),field:'',msg:t}))));
     const eqPts=[], bub=[], dew=[];
     let tmin=1e9,tmax=-1e9;
     for(let i=0;i<C.xs.length;i++){ if(C.Ts[i]<tmin) tmin=C.Ts[i]; if(C.Ts[i]>tmax) tmax=C.Ts[i]; }
@@ -1606,22 +1749,25 @@ class Component extends DCLogic {
     out.axTicks=[0,0.2,0.4,0.6,0.8,1].map(t=>({x:MX(t).toFixed(0),y:MY(t).toFixed(0),label:t.toFixed(1)}));
     out.tTicks=[0,1,2,3,4].map(i=>({y:(420-100*i).toFixed(0),label:(tmin+(tmax-tmin)*i/4).toFixed(1)}));
     out.isXY=s.vleShow==='xy'; out.isTXY=s.vleShow==='txy';
-    const [cA,cB]=this.compsOf(s);
-    out.compRows=[cA,cB].map((c,i)=>({name:c.name,role:i===0?'A — more volatile':'B — less volatile',
-      mw:c.MW.toFixed(2),tb:c.Tb.toFixed(1),ant:c.A.toFixed(4)+' / '+c.B.toFixed(2)+' / '+c.C.toFixed(2),lat:c.lat.toFixed(2),
+    const cPair = dataOk ? this.compsOf(s) : [{},{}];
+    // Uses the non-finite-safe formatter: malformed custom data must render as
+    // an em dash next to the validation message, never throw the whole view.
+    out.compRows=[cPair[0]||{},cPair[1]||{}].map((c,i)=>({name:c.name||'—',role:i===0?'A — more volatile':'B — less volatile',
+      mw:f(c.MW,2),tb:f(c.Tb,1),ant:f(c.A,4)+' / '+f(c.B,2)+' / '+f(c.C,2),lat:f(c.lat,2),
       cas:c.cas||'user data',rng:c.lo===undefined?'—':(c.lo+' to '+c.hi+' °C'),
-      chk:c.Tb===undefined?'—':(this.psat(c,c.Tb)/0.13332239).toFixed(1)+' mmHg at T_b'}));
+      chk:!isFinite(this.num(c.Tb))?'—':f(this.psat(c,c.Tb)/0.13332239,1)+' mmHg at T_b'}));
     const azm=Component.MIX[s.mixKey];
     out.azNote=(azm&&azm.az)? 'Azeotrope: x ≈ '+azm.az.x.toFixed(3)+' — '+azm.az.txt+'. Ordinary distillation cannot cross it.' : 'No azeotrope reported for this pair at ordinary pressures.';
     out.vleFacts=[
       {k:'Model',v:s.model==='raoult'?'Ideal VLE — Raoult\u2019s law with Antoine vapour pressures':'Constant relative volatility'},
       {k:'Pressure',v:f(s.P,1)+' kPa'},
-      {k:'\u03b1 at x=0.05 / 0.5 / 0.95',v:f(this.alphaAt(0.05,s),3)+' / '+f(this.alphaAt(0.5,s),3)+' / '+f(this.alphaAt(0.95,s),3)},
-      {k:'Boiling range at P',v:f(this.tempAt(1,s),1)+' \u00b0C (pure A) to '+f(this.tempAt(0,s),1)+' \u00b0C (pure B)'},
+      {k:'\u03b1 at x=0.05 / 0.5 / 0.95',v:dataOk? f(this.alphaAt(0.05,s),3)+' / '+f(this.alphaAt(0.5,s),3)+' / '+f(this.alphaAt(0.95,s),3) : '\u2014'},
+      {k:'Boiling range at P',v:dataOk? f(this.tempAt(1,s),1)+' \u00b0C (pure A) to '+f(this.tempAt(0,s),1)+' \u00b0C (pure B)' : '\u2014'},
       {k:'Azeotrope',v:out.azNote},
       {k:'Data source',v:Component.SOURCE}];
     out.vleHoverOn=!!s.vleHover;
-    if(s.vleHover){ const x=s.vleHover, y=this.yEq(x,s);
+    out.vleHoverOn = out.vleHoverOn && dataOk;
+    if(s.vleHover && dataOk){ const x=s.vleHover, y=this.yEq(x,s);
       out.vleHover={cx:MX(x).toFixed(1),cy:MY(y).toFixed(1),lx:Math.min(MX(x)+8,330).toFixed(1),
         label:'x = '+x.toFixed(3)+'   y* = '+y.toFixed(3)+'   T = '+this.tempAt(x,s).toFixed(1)+' \u00b0C   \u03b1 = '+this.alphaAt(x,s).toFixed(2)}; }
     else out.vleHover={cx:0,cy:0,lx:0,label:''};
@@ -1711,7 +1857,11 @@ class Component extends DCLogic {
       'Condenser and reboiler duties are latent-heat only; sensible heat, sub-cooling and feed pre-heat are excluded',
       'Column hydraulics (flooding, weeping, pressure drop, sizing) are outside this model'];
     out.exportCSV=()=>{
-      const rows=[['DISTILLEX simulation export'],['Generated',new Date().toISOString()],[],['USER INPUTS']]
+      const rows=[['DISTILLEX simulation export'],['Generated',new Date().toISOString()],
+        ['Run status',runIssues.length
+          ? 'REJECTED - no results were produced; the inputs below are the entries as submitted'
+          : 'completed']]
+        .concat(runIssues.map(e=>['  '+e.kind+' issue',e.msg]),[[],['USER INPUTS']])
         .concat(out.inputRows.map(a=>[a.k,a.v]),[[],['CALCULATED RESULTS']],out.calcRows.map(a=>[a.k,a.v]),
         [[],['MATERIAL BALANCE (identity - D and B are solved from it; not an independent check)'],
          ['F = D + B',hasR?f(r.F,4)+' = '+f(r.D,4)+' + '+f(r.B,4):'n/a'],
@@ -1732,6 +1882,8 @@ class Component extends DCLogic {
     };
     out.exportJSON=()=>{
       this.download('distillex-results.json',JSON.stringify({generated:new Date().toISOString(),
+        run:{completed:runIssues.length===0,
+          issues:runIssues.map(e=>({kind:e.kind,field:e.field||undefined,message:e.msg}))},
         inputs:this.cfg(),model:s.model,assumptions:out.assumptions,
         results:hasR?{D:r.D,B:r.B,xD:r.xD,xB:r.xB,N:r.N,Nact:r.Nact,feedStage:r.feedStage,Rmin:r.Rmin,Nmin:r.Nmin,
           recovery:r.rec,Qc_MW:r.Qc,Qr_MW:r.Qr,L:r.L,V:r.V,Lbar:r.Lb,Vbar:r.Vb,Ttop:r.Ttop,Tbot:r.Tbot,
@@ -1757,8 +1909,9 @@ class Component extends DCLogic {
       const ind=L.ind.some(a=>a[0]===s.sens.ind)?s.sens.ind:L.ind[0][0];
       const dep=L.dep.some(a=>a[0]===s.sens.dep)?s.sens.dep:L.dep[0][0];
       const n=Math.max(3,Math.min(60,Math.round(+s.sens.n))), lo=+s.sens.min, hi=+s.sens.max;
+      const rangeOk=Number.isFinite(lo)&&Number.isFinite(hi);
       const pts=[]; let fails=0;
-      for(let i=0;i<n;i++){
+      for(let i=0;rangeOk&&i<n;i++){
         const val=lo+(hi-lo)*i/(n-1);
         const v=this.variant(s,{[ind]:ind==='Nspec'?Math.round(val):val});
         if(!v.ok){ fails++; continue; }
@@ -1787,8 +1940,10 @@ class Component extends DCLogic {
           ' moves from '+a[1].toFixed(4)+' to '+b[1].toFixed(4)+
           (isFinite(pct)?' ('+(pct>=0?'+':'')+pct.toFixed(1)+'%)':'')+'. The response is '+
           (mono?(dir>0?'monotonically increasing':(dir<0?'monotonically decreasing':'flat')):'non-monotonic over this range')+'.'+
-          (fails?' '+fails+' of '+n+' points gave no feasible solution and were omitted.':'');
-      } else out.sensNote='No feasible points in this range — narrow the range or change the specification.';
+          (fails?' '+fails+' of '+n+' points were invalid or infeasible and were omitted.':'');
+      } else out.sensNote = !rangeOk
+        ? 'Sensitivity range must be numeric: enter finite values for the start and end of the sweep.'
+        : 'No valid or feasible points in this range — narrow the range or change the specification.';
       out.sensCSV=()=>{ this.download('distillex-sensitivity.csv',
         [out.sensXLabel+','+out.sensYLabel].concat(pts.map(p=>p[0].toFixed(6)+','+p[1].toFixed(6))).join('\n'),'text/csv');
         this.flash('Sensitivity data exported'); };
@@ -1883,8 +2038,11 @@ class Component extends DCLogic {
           hasR? 'Volatility: α = '+f(r.aTop,2)+' at the top, '+f(r.aBot,2)+' at the bottom, mean '+f(r.aAvg,2)+'.' : ''].filter(Boolean)};
     out.modeTitle=mp.title; out.modeLines=mp.lines;
     out.isCustom=s.mixKey==='custom';
-    out.cust={aName:s.custom.a.name,aA:s.custom.a.A,aB:s.custom.a.B,aC:s.custom.a.C,aMW:s.custom.a.MW,aTb:s.custom.a.Tb,
-              bName:s.custom.b.name,bA:s.custom.b.A,bB:s.custom.b.B,bC:s.custom.b.C,bMW:s.custom.b.MW,bTb:s.custom.b.Tb};
+    // The editor must still render when the stored custom record is malformed,
+    // otherwise the user cannot see or repair the values validation rejected.
+    const cu=(s.custom&&typeof s.custom==='object')?s.custom:{}, cuA=cu.a||{}, cuB=cu.b||{};
+    out.cust={aName:cuA.name,aA:cuA.A,aB:cuA.B,aC:cuA.C,aMW:cuA.MW,aTb:cuA.Tb,
+              bName:cuB.name,bA:cuB.A,bB:cuB.B,bC:cuB.C,bMW:cuB.MW,bTb:cuB.Tb};
     out.setCust=(e)=>{const t=e.target; this.setCustom(t.dataset.side,t.dataset.f,t.value);};
     out.isVLE=s.view==='vle'; out.isMT=s.view==='mt'; out.isResults=s.view==='results';
     out.isSens=s.view==='sens'; out.isTheory=s.view==='theory'; out.isExam=s.view==='exam'; out.isAbout=s.view==='about';

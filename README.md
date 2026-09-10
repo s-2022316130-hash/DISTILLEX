@@ -83,6 +83,26 @@ unreachable, whatever the ideal model computes. Methanol/water and acetone/water
 but azeotrope-free at 1 atm and are marked as teaching approximations; benzene/toluene and
 n-hexane/n-heptane are genuinely near-ideal and are the recommended demonstration systems.
 
+### Input validation
+
+Inputs are checked before they reach the calculation engine, and an invalid entry
+withholds the result rather than producing one. Three cases are reported
+separately: **invalid input** (non-numeric, or outside a quantity's physical
+domain), **infeasible specification** (a request the material balance or the
+equilibrium curve cannot satisfy, such as x_D ≤ x_B) and **model domain** (the
+solver cannot reach a valid answer — a rating case that will not converge, or an
+Antoine correlation pushed outside the range the bubble-point search covers).
+
+Out-of-domain values are never silently clamped or replaced by defaults. Mole
+fractions must lie strictly inside (0, 1); F, P and R are strictly positive;
+overall tray efficiency lies in (0, 1]; the constant-α model requires α > 1;
+stage counts are whole numbers in 3–60. A custom mixture must carry two
+differently-named components with finite properties, positive Antoine B, positive
+molar mass, and Antoine C above 80 — the last so that T + C stays positive across
+the −80…500 °C interval the bubble- and dew-point solver bisects, keeping the
+correlation clear of its own pole. These are teaching-level guards on a
+client-side educational model, not an industrial validation suite.
+
 ### Assumptions
 
 Steady state; binary system; constant molar overflow; uniform column pressure; negligible heat
