@@ -369,13 +369,17 @@
 
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Mass balance</h6>
-            <div style="{{ mb.style }}">{{ mb.status }}</div>
-            <div style="font-size:11.5px;font-variant-numeric:tabular-nums;line-height:1.7;color:color-mix(in srgb,var(--color-text) 70%,transparent)">
+            <h6 style="margin:0;color:var(--color-accent)">Material balance &amp; convergence</h6>
+            <div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityHead }}</div>
+            <div style="font-size:11.5px;font-variant-numeric:tabular-nums;line-height:1.7;color:color-mix(in srgb,var(--color-text) 75%,transparent)">
               <div>F = D + B → {{ mb.total }}</div>
               <div>F·z<sub>F</sub> = D·x<sub>D</sub> + B·x<sub>B</sub> → {{ mb.comp }}</div>
-              <div>Residual: {{ mb.resid }} (tol 1×10⁻⁶)</div>
             </div>
+            <div style="font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityNote }}</div>
+            <div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;border-top:1px solid var(--color-divider);padding-top:8px;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.convHead }}</div>
+            <div style="{{ mb.convStyle }}">{{ mb.convStatus }}</div>
+            <div style="font-size:11.5px;font-variant-numeric:tabular-nums;line-height:1.7;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.residLabel }}: {{ mb.residValue }}</div>
+            <div style="font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.residNote }}</div>
           </section>
 
           <section class="card blueprint dx-noprint" style="padding:14px;gap:10px">
@@ -458,11 +462,9 @@
             </div>
             <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 62%,transparent)">{{ colTypeNote }}</div>
             <div class="field">
-              <label for="dx-cond">Condenser</label>
-              <select class="input" id="dx-cond" value="{{ v.cond }}" data-k="cond" onChange="{{ setStr }}">
-                <option value="total">Total condenser — y₁ = x_D</option>
-                <option value="partial">Partial condenser — vapour distillate (one extra stage)</option>
-              </select>
+              <label>Condenser</label>
+              <div class="input" style="display:flex;align-items:center;background:transparent;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Total condenser — y₁ = x_D</div>
+              <div style="font-size:11.5px;line-height:1.5;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Fixed, not a choice: only the total condenser is implemented. A partial condenser would add one equilibrium stage, and that is not modelled — so no selector is offered rather than one that changes nothing.</div>
             </div>
             <div class="field">
               <label for="dx-reb">Reboiler</label>
@@ -814,13 +816,17 @@
         <div class="dx-grid2">
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Mass balance check</h6>
-            <div style="{{ mb.style }}">{{ mb.status }}</div>
-            <div style="font-size:12px;font-variant-numeric:tabular-nums;line-height:1.8;color:color-mix(in srgb,var(--color-text) 72%,transparent)">
+            <h6 style="margin:0;color:var(--color-accent)">Material balance &amp; numerical convergence</h6>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityHead }}</div>
+            <div style="font-size:12px;font-variant-numeric:tabular-nums;line-height:1.8;color:color-mix(in srgb,var(--color-text) 75%,transparent)">
               <div>Overall: F = D + B → {{ mb.total }}</div>
               <div>Component A: F·z<sub>F</sub> = D·x<sub>D</sub> + B·x<sub>B</sub> → {{ mb.comp }}</div>
-              <div>Residuals (overall / component): {{ mb.resid }} — tolerance 1×10⁻⁶ kmol/h</div>
             </div>
+            <div style="font-size:11.5px;line-height:1.55;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityNote }}</div>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-top:1px solid var(--color-divider);padding-top:8px;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.convHead }}</div>
+            <div style="{{ mb.convStyle }}">{{ mb.convStatus }}</div>
+            <div style="font-size:12px;font-variant-numeric:tabular-nums;line-height:1.8;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.residLabel }}: {{ mb.residValue }}</div>
+            <div style="font-size:11.5px;line-height:1.55;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.residNote }}</div>
           </section>
           <section class="card blueprint" style="padding:14px;gap:6px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -1038,6 +1044,10 @@ class Component extends DCLogic {
     acetone:{name:'Acetone',cas:'67-64-1',A:7.11714,B:1210.595,C:229.664,MW:58.08,Tb:56.1,lat:29.10,lo:-13,hi:55}
   };
   static SOURCE = 'Antoine constants (mmHg, °C) from the Reid–Prausnitz–Poling / Lange compilations — the sets in general engineering use. Check: benzene at 80.0 °C → 759.0 mmHg (T_b 80.1 °C); water at 100.0 °C → 757.6 mmHg. Latent heats are at the normal boiling point.';
+  /** Convergence tolerance for the rating-mode shooting solve, in mole fraction.
+   *  A rating solution whose |x_N − x_B| exceeds this is reported as NOT CONVERGED
+   *  and is never presented as a valid result. */
+  static RATING_TOL = 1e-4;
   static MIX = {
     bt:{label:'Benzene / Toluene',a:'benzene',b:'toluene',alpha:2.45,ideal:true,az:null,note:'Close-boiling hydrocarbon pair and the classic teaching system. Raoult\u2019s law is an excellent approximation; \u03b1 \u2248 2.4\u20132.5 at 1 atm and no azeotrope exists at any pressure.'},
     ew:{label:'Ethanol / Water',a:'ethanol',b:'water',alpha:2.20,ideal:false,az:{x:0.894,T:78.2,txt:'95.6 wt% ethanol, boiling at 78.2 \u00b0C at 1 atm'},note:'Strongly non-ideal. A minimum-boiling azeotrope at 95.6 wt% ethanol (x \u2248 0.894 mole fraction), boiling at 78.2 \u00b0C at 1 atm, caps ordinary distillation \u2014 an ideal model cannot reproduce it. Anhydrous ethanol needs azeotropic, extractive or membrane separation.'},
@@ -1073,7 +1083,7 @@ class Component extends DCLogic {
     pump:{title:'Feed pump (P-101)',body:'Centrifugal pump raising the feed from storage pressure to column pressure plus line and control-valve losses. Hydraulics are not part of the equilibrium model.'},
     preheat:{title:'Feed preheater (E-101)',body:'Sets the feed quality q that the simulation uses. Duty is what moves the feed between subcooled liquid, saturated liquid, part-vaporised and saturated vapour.'},
     column:{title:'Fractionating column (C-101)',body:'The counter-current contacting device. Stage count, feed stage and internals are set on the left; the stage table shows the resulting profile.'},
-    cond:{title:'Overhead condenser (E-102)',body:'Removes the latent heat of the overhead vapour. A total condenser gives a liquid distillate with y\u2081 = x_D; a partial condenser acts as an extra equilibrium stage.'},
+    cond:{title:'Overhead condenser (E-102)',body:'Removes the latent heat of the overhead vapour. A total condenser gives a liquid distillate with y\u2081 = x_D; a partial condenser acts as an extra equilibrium stage. This simulator models the total-condenser case only \u2014 no condenser stage is added to the stage count.'},
     drum:{title:'Reflux drum (V-101)',body:'Holds condensate and splits it between reflux and distillate product. Level control on the drum sets the distillate draw; the reflux ratio is the control handle you adjust.'},
     reb:{title:'Reboiler (E-103)',body:'Supplies the boil-up. A kettle reboiler behaves as one theoretical equilibrium stage, which is why the stage count here includes it.'},
     prod:{title:'Product draws',body:'Distillate D at x_D and bottoms B at x_B. Their rates follow directly from the overall and component material balances.'}
@@ -1093,7 +1103,7 @@ class Component extends DCLogic {
     ['t12','McCabe\u2013Thiele method','A graphical solution of the stage-by-stage balances, valid under constant molar overflow. Steps between the operating lines and the equilibrium curve count equilibrium stages directly.'],
     ['t13','Theoretical stages','A theoretical stage produces vapour and liquid in equilibrium. The number required follows from the specifications and the reflux; real trays are fewer in effect, hence efficiency.'],
     ['t14','Tray efficiency','Overall efficiency E\u2092 = N_theoretical / N_actual. Typical values are 0.5\u20130.8 for hydrocarbon systems. Murphree efficiency is defined per tray and is the more rigorous measure.'],
-    ['t15','Total vs partial condenser','A total condenser condenses all overhead vapour: y\u2081 = x_D and it is not an equilibrium stage. A partial condenser produces vapour distillate and does act as one extra stage.'],
+    ['t15','Total vs partial condenser','A total condenser condenses all overhead vapour: y\u2081 = x_D and it is not an equilibrium stage. A partial condenser produces vapour distillate and does act as one extra stage. Note on this simulator: only the total condenser is implemented, so every stage count on screen assumes y\u2081 = x_D.'],
     ['t16','Reboiler','A kettle reboiler is a partial reboiler and counts as one equilibrium stage. A thermosiphon reboiler with vapour return may be treated as less than a full stage.'],
     ['t17','Minimum reflux','At R_min an operating line touches the equilibrium curve \u2014 a pinch \u2014 and stage-to-stage progress stops. Real columns run at 1.1\u20131.5\u00d7R_min, the economic trade-off between column height and energy.'],
     ['t18','Total reflux','No products are withdrawn; the operating lines collapse onto the diagonal and the stage count reaches its minimum, N_min, given by the Fenske equation. Used for start-up and for column testing.'],
@@ -1104,7 +1114,7 @@ class Component extends DCLogic {
   state = {
     view:(this.props||{}).startView||'landing', mixKey:(this.props||{}).defaultMixture||'bt', model:'raoult', P:101.325, alphaC:2.45,
     F:100, zF:0.45, q:1.0, xD:0.96, xB:0.04, R:2.2, Nspec:12, DF:0.45,
-    eff:0.70, colType:'tray', cond:'total', reb:'partial', calcMode:'design',
+    eff:0.70, colType:'tray', reb:'partial', calcMode:'design',
     mode:'learning', theme:'light', colView:'stages', equip:'column',
     anim:999, playing:false, hoverStage:null, tip:null, tipXY:[0,0],
     explaining:false, explainI:0, wiVar:'R', wiTo:3.2, whatIf:null,
@@ -1225,7 +1235,7 @@ class Component extends DCLogic {
     if(E.length) return {ok:false,E,W,mix};
     if(mix && mix.ideal===false && s.model==='raoult') W.push('Non-ideal system: '+mix.label+' departs from Raoult\u2019s law. Results are indicative for teaching, not for design.');
 
-    let xD,xB,D,B,N,feedStage,stages,rating=false;
+    let xD,xB,D,B,N,feedStage,stages,rating=false,ratingResid=null;
     if(s.calcMode==='rating'){
       rating=true;
       D=+s.DF*F; B=F-D;
@@ -1244,12 +1254,25 @@ class Component extends DCLogic {
       for(let i=0;i<70;i++){
         const mid=(lo+hi)/2, o=shoot(mid);
         if(o.bad){ hi=mid; continue; }
-        best=Object.assign({xD:mid},o);
+        // Retain the best iterate seen, not merely the last one — the final
+        // bisection midpoint is not guaranteed to carry the smallest residual.
+        if(!best || Math.abs(o.resid)<Math.abs(best.resid)) best=Object.assign({xD:mid},o);
         if(o.n<Ntar || o.resid<0) lo=mid; else hi=mid;
       }
       if(!best){ E.push('No feasible operating point: with this cut and reflux the stripping line cannot be constructed. Reduce D/F or raise R.'); return {ok:false,E,W,mix}; }
+      // Gate on the real residual. The shooting solve is only a solution when the
+      // liquid the N-th stage actually delivers agrees with the x_B the component
+      // balance demands; otherwise there is no operating point and we say so.
+      ratingResid=best.resid;
+      if(!(Math.abs(ratingResid)<=Component.RATING_TOL)){
+        E.push('Rating solution did not converge. Shooting residual |x_N \u2212 x_B| = '+Math.abs(ratingResid).toExponential(3)+
+          ', against a tolerance of '+Component.RATING_TOL.toExponential(0)+' mole fraction. With N = '+Ntar+
+          ' stages at R = '+R.toFixed(2)+' and D/F = '+(+s.DF).toFixed(3)+' no distillate purity satisfies both the component balance and the stage count \u2014 the cut is asking for more separation than the column can deliver. '+
+          'Move D/F towards the feed composition z_F = '+zF.toFixed(3)+', reduce the stage count, or raise the reflux ratio.');
+        return {ok:false,E,W,mix,ratingResid};
+      }
       xD=best.xD; xB=best.xb; stages=best.r.stages; feedStage=best.r.feed; N=Ntar;
-      if(xD>0.9999||xB<1e-5) W.push('The rating solution has hit a composition bound; treat the extreme purity as approximate.');
+      if(xD>0.9999||xB<1e-5) W.push('The rating solution sits against a composition bound (x_D = '+xD.toFixed(5)+', x_B = '+xB.toFixed(5)+'). It converged to a residual of '+Math.abs(ratingResid).toExponential(2)+', but at this extreme the purity is very sensitive to the specification.');
     } else {
       xD=+s.xD; xB=+s.xB;
       if(!(xD>xB)) E.push('Distillate composition must be greater than bottoms composition for the selected separation.');
@@ -1287,14 +1310,24 @@ class Component extends DCLogic {
     const sep=(xD/(1-xD))/(xB/(1-xB));
     const nTrays = s.reb==='partial' ? N-1 : N;
     const Nact = Math.ceil(nTrays/(+s.eff));
+    // D and B are SOLVED FROM F = D + B and F·z_F = D·x_D + B·x_B, so these two
+    // residuals are forced to zero by construction. They are reported as an
+    // identity, never as an independent validation of the solution.
     const fRes=Math.abs(F-(D+B)), cRes=Math.abs(F*zF-(D*xD+B*xB));
+    // The residual that can actually fail: in rating mode the shooting residual
+    // between the stage the column delivers and the balance-implied x_B; in
+    // design mode the integer-stage terminal overshoot past the x_B specification.
+    const xN = stages.length ? stages[stages.length-1].x : NaN;
+    const stepResid = rating ? (xN-xB) : (xB-xN);
     const prof=stages.map(st=>({n:st.n,x:st.x,y:st.y,yn:st.yn,T:this.tempAt(st.x,s),a:this.alphaAt(st.x,s),rect:st.rect,
       L: st.rect?Lr:Lb, V: st.rect?V:Math.max(0,Vb)}));
     return {ok:E.length===0,E,W,mix,rating,F,D,B,zF,xD,xB,R,Rmin,Nmin,N,Nact,feedStage,stages:prof,q,
       xInt:Lf.xInt,yInt:Lf.yInt,slopeS:Lf.slopeS,mr:Lf.mr,br:Lf.br,pinch:mrObj.pinch,
       L:Lr,V,Lb,Vb,Qc,Qr,rec,recB,sep,aAvg,aTop,aBot,latTop,latBot,
       Ttop:this.tempAt(xD,s),Tbot:this.tempAt(xB,s),Tfeed:this.tempAt(zF,s),
-      bal:{fRes,cRes,ok:fRes<1e-6&&cRes<1e-6}};
+      ratingResid,
+      bal:{fRes,cRes,identity:true,xN,stepResid,rating,tol:Component.RATING_TOL,
+           converged: rating ? Math.abs(stepResid)<=Component.RATING_TOL : true}};
   }
   variant(s,over){ return this.solve(Object.assign({},s,over)); }
 
@@ -1318,7 +1351,7 @@ class Component extends DCLogic {
     a.href=URL.createObjectURL(new Blob([text],{type:type||'text/plain'}));
     a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
   }
-  cfg(){ const s=this.state; const o={}; ['mixKey','model','P','alphaC','F','zF','q','xD','xB','R','Nspec','DF','eff','colType','cond','reb','calcMode'].forEach(k=>o[k]=s[k]); return o; }
+  cfg(){ const s=this.state; const o={}; ['mixKey','model','P','alphaC','F','zF','q','xD','xB','R','Nspec','DF','eff','colType','reb','calcMode'].forEach(k=>o[k]=s[k]); return o; }
 
   renderVals(){
     const s=this.state, S=Component, r=this.solve(s);
@@ -1434,7 +1467,7 @@ class Component extends DCLogic {
     return {
       v:{mixKey:s.mixKey,model:s.model,P:f(s.P,1),alphaC:f(s.alphaC,2),F:f(s.F,1),zF:f(s.zF,3),q:f(s.q,2),
          xD:f(s.xD,3),xB:f(s.xB,3),R:f(s.R,2),Nspec:String(s.Nspec),DF:f(s.DF,3),eff:f(s.eff,2),
-         mode:s.mode,cond:s.cond,reb:s.reb,wiVar:s.wiVar,wiTo:s.wiTo},
+         mode:s.mode,reb:s.reb,wiVar:s.wiVar,wiTo:s.wiTo},
       r:{mixNote:(r.mix&&r.mix.note)||'',qPhase:this.qPhase(+s.q),Tfeed:f(r.Tfeed,1),
          Rmin:f(r.Rmin,3),Rratio:hasR?f(r.R/r.Rmin,2):'\u2014',effPct:Math.round(+s.eff*100),
          N:f(r.N,0),Nact:f(r.Nact,0),feedStage:f(r.feedStage,0),D:f(r.D,2),B:f(r.B,2),F:f(r.F,1),
@@ -1467,11 +1500,7 @@ class Component extends DCLogic {
         {k:'x liquid',v:hoverStg.x.toFixed(4)},{k:'y vapour',v:hoverStg.y.toFixed(4)},
         {k:'T \u00b0C',v:hoverStg.T.toFixed(1)},{k:'\u03b1 local',v:hoverStg.a.toFixed(3)},
         {k:'L kmol/h',v:hoverStg.L.toFixed(1)},{k:'V kmol/h',v:hoverStg.V.toFixed(1)}]:[],
-      mb:{status: hasR? (r.bal.ok?'\u2713 Balanced':'\u26a0 Balance discrepancy') : '\u2014 no converged solution',
-          style:'font-size:14px;font-family:var(--font-heading);padding:5px 9px;border:1px solid '+(hasR&&r.bal.ok?'var(--color-accent)':'var(--color-divider)')+';color:'+(hasR&&r.bal.ok?'var(--color-accent-800)':'inherit')+';background:'+(hasR&&r.bal.ok?'color-mix(in srgb,var(--color-accent) 14%,transparent)':'transparent'),
-          total: hasR? f(r.F,3)+' = '+f(r.D,3)+' + '+f(r.B,3):'\u2014',
-          comp: hasR? f(r.F*r.zF,3)+' = '+f(r.D*r.xD,3)+' + '+f(r.B*r.xB,3):'\u2014',
-          resid: hasR? r.bal.fRes.toExponential(2)+' / '+r.bal.cRes.toExponential(2):'\u2014'},
+      mb:this.balanceReport(r,hasR),
       modelBadge:(s.model==='raoult'?'Model: Raoult / ideal VLE':'Model: constant \u03b1 = '+f(s.alphaC,2))+'  \u00b7  P = '+f(s.P,1)+' kPa  \u00b7  Demonstration case',
       explaining:s.explaining, explainLabel:s.explaining?'Close explainer':'Explain separation',
       explainNo:s.explainI+1, explainTitle:S.EXPLAIN[s.explainI][0], explainText:S.EXPLAIN[s.explainI][1],
@@ -1494,7 +1523,7 @@ class Component extends DCLogic {
       explainToggle:()=>this.setState({explaining:!s.explaining,explainI:0}),
       explainNext:()=>this.setState({explainI:(s.explainI+1)%S.EXPLAIN.length}),
       explainPrev:()=>this.setState({explainI:(s.explainI+S.EXPLAIN.length-1)%S.EXPLAIN.length}),
-      reset:()=>{this.setState({mixKey:'bt',model:'raoult',P:101.325,alphaC:2.45,F:100,zF:0.45,q:1,xD:0.96,xB:0.04,R:2.2,Nspec:12,DF:0.45,eff:0.7,calcMode:'design',cond:'total',reb:'partial',colType:'tray',whatIf:null}); this.flash('Reset to the benzene / toluene demonstration case');},
+      reset:()=>{this.setState({mixKey:'bt',model:'raoult',P:101.325,alphaC:2.45,F:100,zF:0.45,q:1,xD:0.96,xB:0.04,R:2.2,Nspec:12,DF:0.45,eff:0.7,calcMode:'design',reb:'partial',colType:'tray',whatIf:null}); this.flash('Reset to the benzene / toluene demonstration case');},
       saveCfg:()=>{this.download('distillex-config.json',JSON.stringify(this.cfg(),null,2),'application/json'); this.flash('Configuration saved');},
       loadClick:()=>{ if(this._file) this._file.click(); },
       fileRef:(el)=>{this._file=el;},
@@ -1512,6 +1541,54 @@ class Component extends DCLogic {
       },
       applyWhatIf:()=>{ this.setState({[s.wiVar]:+s.wiTo, whatIf:null}); this.flash('Applied'); }
     };
+  }
+  /** Splits what used to be a single "mass balance check" into the two things it
+   *  actually contains: the material balance (an identity — D and B are solved
+   *  from it, so it cannot fail and validates nothing) and the numerical residual
+   *  of the solve (which can fail, and in rating mode does). The identity is never
+   *  presented as a passed check. */
+  balanceReport(r,hasR){
+    const f=(v,d)=>this.f(v,d);
+    const box=(kind)=>'font-size:13px;font-family:var(--font-heading);padding:5px 9px;border:1px '+
+      (kind==='ok'?'solid var(--color-accent)':kind==='bad'?'solid var(--color-accent-700)':'dashed var(--color-divider)')+
+      ';color:'+(kind==='none'?'inherit':'var(--color-accent-800)')+
+      ';background:'+(kind==='none'?'transparent':'color-mix(in srgb,var(--color-accent) 14%,transparent)');
+    if(!hasR){
+      const rr=(r&&r.ratingResid!=null)? Math.abs(r.ratingResid).toExponential(3)+
+        '  (tolerance '+Component.RATING_TOL.toExponential(0)+' mole fraction \u2014 exceeded)' : '\u2014';
+      return {identityHead:'Material balance \u2014 identity',
+        identityNote:'No solution to report a balance for.',
+        total:'\u2014', comp:'\u2014',
+        convHead:'Numerical convergence',
+        convStatus:(r&&r.ratingResid!=null)?'\u26a0 NOT CONVERGED':'\u2014 no solution',
+        convStyle:box((r&&r.ratingResid!=null)?'bad':'none'),
+        residLabel:(r&&r.ratingResid!=null)?'Shooting residual |x_N \u2212 x_B|':'Residual',
+        residValue:rr,
+        residNote:(r&&r.ratingResid!=null)?'The stage count and the distillate cut cannot both be satisfied; see the message at the top of the screen.':''};
+    }
+    const b=r.bal;
+    const common={
+      identityHead:'Material balance \u2014 identity',
+      total:f(r.F,3)+' = '+f(r.D,3)+' + '+f(r.B,3),
+      comp:f(r.F*r.zF,3)+' = '+f(r.D*r.xD,3)+' + '+f(r.B*r.xB,3),
+      identityNote:'D and B are solved from these two equations, so the residuals ('+
+        b.fRes.toExponential(1)+' / '+b.cRes.toExponential(1)+' kmol/h) are zero by construction. '+
+        'This confirms the arithmetic, not the solution \u2014 it is not an independent check.'};
+    if(b.rating) return Object.assign({},common,{
+      convHead:'Numerical convergence \u2014 rating shooting solve',
+      convStatus:'\u2713 Converged',
+      convStyle:box('ok'),
+      residLabel:'Shooting residual |x_N \u2212 x_B|',
+      residValue:Math.abs(b.stepResid).toExponential(3)+'  (tolerance '+b.tol.toExponential(0)+' mole fraction)',
+      residNote:'x_N = '+b.xN.toFixed(6)+' is the liquid the '+f(r.N,0)+'th stage actually delivers; x_B = '+
+        r.xB.toFixed(6)+' is what the component balance requires. Agreement between the two is the real test.'});
+    return Object.assign({},common,{
+      convHead:'Numerical residual \u2014 stage-stepping discretisation',
+      convStatus:'Design mode \u2014 not an iterative solve',
+      convStyle:box('none'),
+      residLabel:'Terminal overshoot x_B \u2212 x_N',
+      residValue:b.stepResid.toExponential(3)+' mole fraction',
+      residNote:'Stepping stops on the first stage whose liquid falls at or below x_B, so the last stage overshoots the specification by this much. Stages are whole numbers: this is discretisation error, not a convergence failure.'});
   }
   sensLists(s){
     const ind=[['R','Reflux ratio R'],['zF','Feed composition z_F'],['q','Feed quality q'],['P','Pressure (kPa)'],['eff','Tray efficiency']]
@@ -1617,7 +1694,7 @@ class Component extends DCLogic {
       s.calcMode==='design'?['Distillate spec x_D',f(s.xD,4)]:['Stages specified N',String(s.Nspec)],
       s.calcMode==='design'?['Bottoms spec x_B',f(s.xB,4)]:['Distillate cut D/F',f(s.DF,3)],
       ['Reflux ratio R',f(s.R,3)],['Overall efficiency',f(s.eff,2)],
-      ['Condenser',s.cond==='total'?'Total':'Partial'],['Reboiler',s.reb==='partial'?'Partial (kettle)':'Total'],
+      ['Condenser','Total condenser \u2014 the only treatment this model implements'],['Reboiler',s.reb==='partial'?'Partial (kettle)':'Total'],
       ['Internals',s.colType==='tray'?'Trays':'Packing (HETP equivalent)']].map(a=>({k:a[0],v:a[1]}));
     out.calcRows=hasR?[['Distillate D',f(r.D,3)+' kmol/h'],['Bottoms B',f(r.B,3)+' kmol/h'],
       ['x_D',f(r.xD,5)],['x_B',f(r.xB,5)],['Recovery of light key',(100*r.rec).toFixed(2)+' %'],
@@ -1635,15 +1712,24 @@ class Component extends DCLogic {
       s.model==='raoult'?'Ideal vapour\u2013liquid equilibrium: Raoult\u2019s law with Antoine vapour pressures; ideal gas vapour phase':'Constant relative volatility independent of composition and temperature',
       'Uniform column pressure — no tray pressure drop','Negligible heat loss to the environment',
       s.reb==='partial'?'Partial reboiler treated as one theoretical equilibrium stage':'Total reboiler contributes no equilibrium stage',
-      s.cond==='total'?'Total condenser — the distillate has the composition of the overhead vapour':'Partial condenser acts as one additional equilibrium stage',
+      'Total condenser only: the overhead vapour is condensed completely, so y\u2081 = x_D and the condenser is not an equilibrium stage. A partial condenser \u2014 which would contribute one additional equilibrium stage \u2014 is NOT modelled; the stage count is unchanged whatever condenser hardware a real column would use.',
       'Overall tray efficiency applied uniformly; Murphree efficiencies not resolved per tray',
       'Condenser and reboiler duties are latent-heat only; sensible heat, sub-cooling and feed pre-heat are excluded',
       'Column hydraulics (flooding, weeping, pressure drop, sizing) are outside this model'];
     out.exportCSV=()=>{
       const rows=[['DISTILLEX simulation export'],['Generated',new Date().toISOString()],[],['USER INPUTS']]
         .concat(out.inputRows.map(a=>[a.k,a.v]),[[],['CALCULATED RESULTS']],out.calcRows.map(a=>[a.k,a.v]),
-        [[],['MASS BALANCE'],['F = D + B',hasR?f(r.F,4)+' = '+f(r.D,4)+' + '+f(r.B,4):'n/a'],
-         ['Residual',hasR?r.bal.fRes.toExponential(3):'n/a']],
+        [[],['MATERIAL BALANCE (identity - D and B are solved from it; not an independent check)'],
+         ['F = D + B',hasR?f(r.F,4)+' = '+f(r.D,4)+' + '+f(r.B,4):'n/a'],
+         ['F.zF = D.xD + B.xB',hasR?f(r.F*r.zF,4)+' = '+f(r.D*r.xD,4)+' + '+f(r.B*r.xB,4):'n/a'],
+         ['Identity residual overall / component (kmol/h)',hasR?r.bal.fRes.toExponential(3)+' / '+r.bal.cRes.toExponential(3):'n/a'],
+         [],['NUMERICAL CONVERGENCE'],
+         ['Solve mode',hasR?(r.bal.rating?'Rating - shooting on x_D':'Design - direct stage stepping'):'n/a'],
+         ['Terminal stage liquid x_N',hasR?r.bal.xN.toFixed(6):'n/a'],
+         [hasR&&r.bal.rating?'Shooting residual |x_N - x_B| (mole fraction)':'Terminal overshoot x_B - x_N (mole fraction)',
+          hasR?Math.abs(r.bal.stepResid).toExponential(3):'n/a'],
+         ['Convergence tolerance (mole fraction)',hasR?(r.bal.rating?r.bal.tol.toExponential(0):'n/a - design mode is not iterative'):'n/a'],
+         ['Converged',hasR?(r.bal.converged?'yes':'NO'):'n/a']],
         [[],['STAGE PROFILE'],['Stage','Section','x','y','T (C)','alpha','L','V']],
         (hasR?r.stages:[]).map(a=>[a.n,a.rect?'Rectifying':'Stripping',a.x.toFixed(5),a.y.toFixed(5),a.T.toFixed(2),a.a.toFixed(4),a.L.toFixed(2),a.V.toFixed(2)]),
         [[],['ASSUMPTIONS']],out.assumptions.map(a=>[a]));
@@ -1655,7 +1741,14 @@ class Component extends DCLogic {
         inputs:this.cfg(),model:s.model,assumptions:out.assumptions,
         results:hasR?{D:r.D,B:r.B,xD:r.xD,xB:r.xB,N:r.N,Nact:r.Nact,feedStage:r.feedStage,Rmin:r.Rmin,Nmin:r.Nmin,
           recovery:r.rec,Qc_MW:r.Qc,Qr_MW:r.Qr,L:r.L,V:r.V,Lbar:r.Lb,Vbar:r.Vb,Ttop:r.Ttop,Tbot:r.Tbot,
-          massBalanceResidual:{overall:r.bal.fRes,component:r.bal.cRes}}:null,
+          materialBalanceIdentity:{overall:r.bal.fRes,component:r.bal.cRes,
+            note:'D and B are solved from F = D + B and F.zF = D.xD + B.xB, so these residuals are zero by construction and are not an independent validation.'},
+          convergence:{mode:r.bal.rating?'rating-shooting':'design-stepping',
+            terminalStageLiquid_xN:r.bal.xN,
+            residual:r.bal.stepResid,
+            residualDefinition:r.bal.rating?'x_N - x_B (shooting residual)':'x_B - x_N (integer-stage terminal overshoot)',
+            toleranceMoleFraction:r.bal.rating?r.bal.tol:null,
+            converged:r.bal.converged}}:null,
         stages:hasR?r.stages.map(a=>({n:a.n,section:a.rect?'rectifying':'stripping',x:a.x,y:a.y,T:a.T,alpha:a.a,L:a.L,V:a.V})):[]
       },null,2),'application/json');
       this.flash('JSON exported');
@@ -1787,8 +1880,8 @@ class Component extends DCLogic {
           'Equilibrium curve tabulated at 241 points; y*(x) and x*(y) obtained by linear interpolation on that table (error < 10⁻⁴ mole fraction).',
           'Operating lines from constant molar overflow; q-line intersection by direct solution, or bisection when the q-line is not vertical.',
           'Minimum reflux: q-line pinch plus a 60-point scan for a tangent pinch; the larger requirement governs.',
-          s.calcMode==='rating'? 'Rating mode: shooting on x_D with 70 bisection steps; the residual is the N-th stage liquid composition minus the balance-implied x_B.' : 'Design mode: direct stage stepping, terminated when x ≤ x_B or when the step makes no downward progress.',
-          hasR? 'Mass-balance residuals: overall '+r.bal.fRes.toExponential(2)+' kmol/h, component '+r.bal.cRes.toExponential(2)+' kmol/h against a 10⁻⁶ tolerance.' : 'No converged solution to report residuals for.']}
+          s.calcMode==='rating'? 'Rating mode: shooting on x_D with 70 bisection steps; the residual is the N-th stage liquid composition minus the balance-implied x_B, and the solve is rejected unless |x_N − x_B| ≤ 10⁻⁴ mole fraction.' : 'Design mode: direct stage stepping, terminated when x ≤ x_B or when the step makes no downward progress. Not an iterative solve, so there is nothing to converge.',
+          hasR? 'The material balance is an identity here — D and B are solved from it, so its residuals are zero by construction and check nothing. The residual that carries information is '+(r.bal.rating? 'the rating shooting residual |x_N − x_B| = '+Math.abs(r.bal.stepResid).toExponential(2)+' against a 10⁻⁴ mole-fraction tolerance.' : 'the terminal overshoot x_B − x_N = '+r.bal.stepResid.toExponential(2)+' mole fraction, which is integer-stage discretisation error.') : 'No converged solution to report residuals for.']}
       : {title:'Engineering summary',lines:[
           hasR? 'Internal traffic: L = '+f(r.L,1)+', V = '+f(r.V,1)+', L̄ = '+f(r.Lb,1)+', V̄ = '+f(r.Vb,1)+' kmol/h.' : 'No converged solution.',
           hasR? 'Duties: condenser '+f(r.Qc,3)+' MW, reboiler '+f(r.Qr,3)+' MW (latent heat only).' : '',
