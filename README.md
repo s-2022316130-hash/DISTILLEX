@@ -31,14 +31,14 @@ step, no account, no telemetry, no stored data.
 ## Features
 
 - **Simulation dashboard** — feed and operating conditions, live column schematic with per-tray
-  hover data, live results, mass-balance check, "What happens if?" before/after comparator,
+  hover data, live results, material balance and convergence residual, "What happens if?" comparator,
   and Learning / Engineering / Advanced interface levels.
 - **VLE Explorer** — x–y and T–x–y diagrams with pointer read-out, component data table with
   CAS numbers, fitted temperature ranges and a vapour-pressure self-check, and a custom binary
   mixture with user-supplied Antoine constants.
 - **McCabe–Thiele** — equilibrium curve, both operating lines, q-line, minimum-reflux line,
   animated or single-step stage stepping, draggable x_B / z_F / x_D handles.
-- **Column** — tray/packed selection, condenser and reboiler type, full stage-by-stage table,
+- **Column** — reboiler type, full stage-by-stage table,
   clickable industrial flowsheet (tank, pump, preheater, column, condenser, reflux drum, reboiler).
 - **Results** — inputs, calculated values, mass balance, assumptions, CSV / JSON / printable
   report export, save & load configuration as JSON.
@@ -64,7 +64,8 @@ step, no account, no telemetry, no stored data.
 | Minimum stages | Fenske with geometric-mean α |
 | Design mode | Fix x_D, x_B and R → solve for stages and feed stage |
 | Rating mode | Fix N and D/F → shooting on x_D by bisection → solve for product purities |
-| Material balance | F = D + B and F·z_F = D·x_D + B·x_B, residuals reported against 1e−6 |
+| Material balance | F = D + B and F·z_F = D·x_D + B·x_B, solved for D and B — an identity, not an independent check |
+| Convergence | Rating mode is rejected unless the shooting residual \|x_N − x_B\| ≤ 1e−4 mole fraction; design mode is not iterative |
 | Duties | Latent heat only: Q_C = V·λ_top, Q_R = V̄·λ_bottom |
 
 ### Data provenance

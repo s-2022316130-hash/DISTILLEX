@@ -455,12 +455,9 @@
             <h6 style="margin:0;color:var(--color-accent)">Column configuration</h6>
             <div class="field">
               <label>Internals</label>
-              <div class="seg" style="width:100%">
-                <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxcol" value="tray" checked="{{ isTray }}" data-k="colType" onChange="{{ setStr }}"><span>Tray</span></label>
-                <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxcol" value="packed" checked="{{ isPacked }}" data-k="colType" onChange="{{ setStr }}"><span>Packed</span></label>
-              </div>
+              <div class="input" style="display:flex;align-items:center;background:transparent;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Trays — stagewise model</div>
+              <div style="font-size:11.5px;line-height:1.5;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Fixed, not a choice: the stage calculation is internals-agnostic and the tray column is the only case this model completes. Packed columns are not modelled — no HETP, packed height or transfer-unit (HTU/NTU) calculation is performed — so no selector is offered rather than one that changes nothing.</div>
             </div>
-            <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 62%,transparent)">{{ colTypeNote }}</div>
             <div class="field">
               <label>Condenser</label>
               <div class="input" style="display:flex;align-items:center;background:transparent;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Total condenser — y₁ = x_D</div>
@@ -983,7 +980,7 @@
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <h6 style="margin:0;color:var(--color-accent)">Limitations</h6>
-            <p style="margin:0;font-size:13px;line-height:1.6">Binary systems only. No column hydraulics (flooding, weeping, pressure drop, diameter). Duties are latent-heat only. Tray efficiency is applied as a single overall value. Packed columns are reported as HETP-equivalent stages, not as transfer units. Azeotropic systems cannot be represented by either model offered.</p>
+            <p style="margin:0;font-size:13px;line-height:1.6">Binary systems only. No column hydraulics (flooding, weeping, pressure drop, diameter). Duties are latent-heat only. Tray efficiency is applied as a single overall value. Packed columns are not modelled: no HETP, packed height or transfer-unit (HTU/NTU) calculation is performed. Azeotropic systems cannot be represented by either model offered.</p>
           </section>
         </div>
         <div class="dx-grid2">
@@ -1114,7 +1111,7 @@ class Component extends DCLogic {
   state = {
     view:(this.props||{}).startView||'landing', mixKey:(this.props||{}).defaultMixture||'bt', model:'raoult', P:101.325, alphaC:2.45,
     F:100, zF:0.45, q:1.0, xD:0.96, xB:0.04, R:2.2, Nspec:12, DF:0.45,
-    eff:0.70, colType:'tray', reb:'partial', calcMode:'design',
+    eff:0.70, reb:'partial', calcMode:'design',
     mode:'learning', theme:'light', colView:'stages', equip:'column',
     anim:999, playing:false, hoverStage:null, tip:null, tipXY:[0,0],
     explaining:false, explainI:0, wiVar:'R', wiTo:3.2, whatIf:null,
@@ -1351,7 +1348,7 @@ class Component extends DCLogic {
     a.href=URL.createObjectURL(new Blob([text],{type:type||'text/plain'}));
     a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
   }
-  cfg(){ const s=this.state; const o={}; ['mixKey','model','P','alphaC','F','zF','q','xD','xB','R','Nspec','DF','eff','colType','reb','calcMode'].forEach(k=>o[k]=s[k]); return o; }
+  cfg(){ const s=this.state; const o={}; ['mixKey','model','P','alphaC','F','zF','q','xD','xB','R','Nspec','DF','eff','reb','calcMode'].forEach(k=>o[k]=s[k]); return o; }
 
   renderVals(){
     const s=this.state, S=Component, r=this.solve(s);
@@ -1475,7 +1472,7 @@ class Component extends DCLogic {
          feedY:feedY.toFixed(0),feedYt:(feedY-6).toFixed(0),feedYt2:(feedY+8).toFixed(0),
          flowAnim:'stroke-dasharray:6 4;animation:dxFlowR 1.2s linear infinite',
          actualLabel: s.reb==='partial'?'Actual trays (reboiler excluded)':'Actual trays',
-         colCaption: hasR? (nS>26? 'showing 26 of '+nS+' stages':'') + (s.colType==='packed'?' · packed equivalent':'') : 'no valid solution'},
+         colCaption: hasR? (nS>26? 'showing 26 of '+nS+' stages':'') : 'no valid solution'},
       isLanding:s.view==='landing', isApp:s.view!=='landing',
       isSim:s.view==='sim', isColumn:s.view==='column',
       navItems, issues, hasIssues:issues.length>0,
@@ -1483,14 +1480,10 @@ class Component extends DCLogic {
       mixOptions:Object.keys(S.MIX).map(k=>({k,label:S.MIX[k].label})),
       isRaoult:s.model==='raoult', isAlpha:s.model==='alpha',
       isDesign:s.calcMode==='design', isRating:s.calcMode==='rating',
-      isTray:s.colType==='tray', isPacked:s.colType==='packed',
       isStageView:s.colView==='stages', isIndView:s.colView==='industrial',
       specNote: s.calcMode==='design'
         ? 'Design mode: you fix both product purities and the reflux; the engine returns the stages required.'
         : 'Rating mode: you fix the stage count and the distillate cut; the engine solves for the purities that column actually delivers.',
-      colTypeNote: s.colType==='tray'
-        ? 'Tray column \u2014 rigorous stagewise mode. Each theoretical stage is a tray corrected by the overall efficiency.'
-        : 'Packed column \u2014 the same equilibrium stages are reported as an HETP-equivalent height. Packed hydraulics and mass-transfer units (NTU/HTU) are not modelled; the stage result is unchanged.',
       trays, bubbles, profiles, stageRows, liveRows, equipment,
       equipInfo:{title:eq.title,body:eq.body,duty},
       hover:!!hoverStg,
@@ -1523,7 +1516,7 @@ class Component extends DCLogic {
       explainToggle:()=>this.setState({explaining:!s.explaining,explainI:0}),
       explainNext:()=>this.setState({explainI:(s.explainI+1)%S.EXPLAIN.length}),
       explainPrev:()=>this.setState({explainI:(s.explainI+S.EXPLAIN.length-1)%S.EXPLAIN.length}),
-      reset:()=>{this.setState({mixKey:'bt',model:'raoult',P:101.325,alphaC:2.45,F:100,zF:0.45,q:1,xD:0.96,xB:0.04,R:2.2,Nspec:12,DF:0.45,eff:0.7,calcMode:'design',reb:'partial',colType:'tray',whatIf:null}); this.flash('Reset to the benzene / toluene demonstration case');},
+      reset:()=>{this.setState({mixKey:'bt',model:'raoult',P:101.325,alphaC:2.45,F:100,zF:0.45,q:1,xD:0.96,xB:0.04,R:2.2,Nspec:12,DF:0.45,eff:0.7,calcMode:'design',reb:'partial',whatIf:null}); this.flash('Reset to the benzene / toluene demonstration case');},
       saveCfg:()=>{this.download('distillex-config.json',JSON.stringify(this.cfg(),null,2),'application/json'); this.flash('Configuration saved');},
       loadClick:()=>{ if(this._file) this._file.click(); },
       fileRef:(el)=>{this._file=el;},
@@ -1695,7 +1688,7 @@ class Component extends DCLogic {
       s.calcMode==='design'?['Bottoms spec x_B',f(s.xB,4)]:['Distillate cut D/F',f(s.DF,3)],
       ['Reflux ratio R',f(s.R,3)],['Overall efficiency',f(s.eff,2)],
       ['Condenser','Total condenser \u2014 the only treatment this model implements'],['Reboiler',s.reb==='partial'?'Partial (kettle)':'Total'],
-      ['Internals',s.colType==='tray'?'Trays':'Packing (HETP equivalent)']].map(a=>({k:a[0],v:a[1]}));
+      ['Internals','Trays \u2014 stagewise model; packed columns and HETP are not modelled']].map(a=>({k:a[0],v:a[1]}));
     out.calcRows=hasR?[['Distillate D',f(r.D,3)+' kmol/h'],['Bottoms B',f(r.B,3)+' kmol/h'],
       ['x_D',f(r.xD,5)],['x_B',f(r.xB,5)],['Recovery of light key',(100*r.rec).toFixed(2)+' %'],
       ['Heavy-key recovery in bottoms',(100*r.recB).toFixed(2)+' %'],
@@ -1714,6 +1707,7 @@ class Component extends DCLogic {
       s.reb==='partial'?'Partial reboiler treated as one theoretical equilibrium stage':'Total reboiler contributes no equilibrium stage',
       'Total condenser only: the overhead vapour is condensed completely, so y\u2081 = x_D and the condenser is not an equilibrium stage. A partial condenser \u2014 which would contribute one additional equilibrium stage \u2014 is NOT modelled; the stage count is unchanged whatever condenser hardware a real column would use.',
       'Overall tray efficiency applied uniformly; Murphree efficiencies not resolved per tray',
+      'Tray column only: the stage calculation is internals-agnostic. Packed columns are NOT modelled \u2014 no HETP, packed height or transfer-unit (HTU/NTU) calculation is performed.',
       'Condenser and reboiler duties are latent-heat only; sensible heat, sub-cooling and feed pre-heat are excluded',
       'Column hydraulics (flooding, weeping, pressure drop, sizing) are outside this model'];
     out.exportCSV=()=>{
