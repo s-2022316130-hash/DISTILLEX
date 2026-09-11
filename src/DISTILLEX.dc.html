@@ -1,7 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
+<title>DISTILLEX — Interactive Fractional Distillation Laboratory</title>
+<meta name="description" content="Client-side simulator for binary fractional distillation: vapour–liquid equilibrium, McCabe–Thiele stage construction, column design and rating, sensitivity studies and theory.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f2f2f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101418" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f2f2f3'/%3E%3Cg stroke='%235980a6' stroke-width='2' fill='none'%3E%3Crect x='12' y='6' width='8' height='20'/%3E%3Cpath d='M16 6V3h7v5'/%3E%3Cpath d='M16 26v3H9v-4'/%3E%3C/g%3E%3Cg stroke='%235980a6' stroke-width='1'%3E%3Cpath d='M13 11h6M13 15h6M13 19h6M13 23h6'/%3E%3C/g%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
 </head>
@@ -20,12 +26,38 @@
   .dx-dark { --color-bg:#101418; --color-surface:#181d23; --color-text:#e4e9ee; --color-accent:#7fa8d1; --color-divider: color-mix(in srgb, #e4e9ee 20%, transparent);
     --color-accent-100:#1b2836; --color-accent-200:#22344a; --color-accent-800:#bfd6ee; --color-accent-700:#a8c6e4; --color-neutral-100:#1b2026; --color-neutral-800:#cdd4db;
     --shadow-sm:0 1px 2px rgba(0,0,0,.5); --shadow-md:0 3px 10px rgba(0,0,0,.55); --shadow-lg:0 12px 32px rgba(0,0,0,.6); }
+  /* WCAG 1.4.3. The light accent #5980a6 is 3.71:1 on the page background and
+     3.42:1 on a card — below the 4.5:1 required of body-size text, and it also
+     sat behind button labels at the same ratio. It is unchanged for borders,
+     diagram strokes, slider thumbs and fills, which are non-text and need only
+     3:1 (1.4.11), and one step further down the same ramp is used wherever the
+     accent carries text or sits behind it. The dark palette already clears
+     4.5:1, so --dx-ink-accent is the dark accent itself and nothing shifts. */
+  :root { --dx-ink-accent: var(--color-accent-700); }
+  .dx-dark { --dx-ink-accent: var(--color-accent); }
+  a, .btn-ghost, .card-kicker, .tag-outline { color: var(--dx-ink-accent); }
+  .nav a:hover, .nav a[aria-current='page'] { color: var(--dx-ink-accent); }
+  .btn-primary { background: var(--dx-ink-accent); border-color: var(--dx-ink-accent); }
+  .seg-opt:has(input:checked) { background: var(--dx-ink-accent); }
   .dx-grid3 { display:grid; grid-template-columns:minmax(0,320px) minmax(0,1fr) minmax(0,300px); gap:14px; align-items:start }
   .dx-grid2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; align-items:start }
   .dx-grid3b { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; align-items:start }
   .dx-side { display:grid; grid-template-columns:minmax(0,300px) minmax(0,1fr); gap:14px; align-items:start }
-  @media (max-width:1180px){ .dx-grid3 { grid-template-columns:1fr } .dx-grid3b { grid-template-columns:1fr } }
-  @media (max-width:900px){ .dx-grid2 { grid-template-columns:1fr } .dx-side { grid-template-columns:1fr } }
+  .dx-hero { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:48px; align-items:center; padding:64px 0 56px }
+  @media (max-width:1180px){ .dx-grid3 { grid-template-columns:minmax(0,1fr) } .dx-grid3b { grid-template-columns:minmax(0,1fr) } }
+  @media (max-width:900px){
+    /* The hero was a fixed two-column grid at every width, which forced the
+       landing page wider than a phone viewport. */
+    .dx-hero { grid-template-columns:minmax(0,1fr); gap:26px; padding:32px 0 28px }
+    /* Touch target size (WCAG 2.5.8). The markup sets 30-36px heights inline
+       for the desktop density, so these are scoped to narrow viewports and
+       need !important to override the inline values. Desktop is unchanged. */
+    .dx .btn, .dx button.btn { min-height:44px !important; min-width:44px }
+    .dx .input, .dx select.input { min-height:44px !important }
+    .dx .seg-opt { min-height:44px }
+    .dx input[type=range] { height:44px }
+  }
+  @media (max-width:900px){ .dx-grid2 { grid-template-columns:minmax(0,1fr) } .dx-side { grid-template-columns:minmax(0,1fr) } }
   @media print { .dx-noprint { display:none !important } }
 </style>
 <template id="__bundler_thumbnail">
@@ -49,7 +81,7 @@
 
 <sc-if value="{{ isLanding }}" hint-placeholder-val="{{ true }}">
 <div style="max-width:1180px;margin:0 auto;padding:0 24px 60px">
-  <div style="display:flex;align-items:center;gap:12px;padding:22px 0 0">
+  <div style="display:flex;align-items:center;gap:12px;padding:22px 0 0;flex-wrap:wrap">
     <div style="width:22px;height:22px;border:1px solid var(--color-accent);position:relative">
       <div style="position:absolute;inset:4px 4px auto 4px;height:1px;background:var(--color-accent)"></div>
       <div style="position:absolute;inset:auto 4px 4px 4px;height:1px;background:var(--color-accent)"></div>
@@ -66,10 +98,10 @@
 
   <div style="height:1px;background:var(--color-divider);margin:18px 0 0"></div>
 
-  <div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:48px;align-items:center;padding:64px 0 56px">
+  <div class="dx-hero">
     <div>
-      <div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-accent);margin-bottom:18px">Separation processes · Unit operations laboratory</div>
-      <h1 style="font-size:76px;letter-spacing:.02em;margin:0 0 8px;line-height:.98">DISTILLEX</h1>
+      <div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dx-ink-accent);margin-bottom:18px">Separation processes · Unit operations laboratory</div>
+      <h1 style="font-size:clamp(40px,11vw,76px);letter-spacing:.02em;margin:0 0 8px;line-height:.98">DISTILLEX</h1>
       <h3 style="font-weight:400;font-size:26px;margin:0 0 18px;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Interactive Fractional Distillation Laboratory</h3>
       <p style="max-width:52ch;font-size:16px;color:color-mix(in srgb,var(--color-text) 72%,transparent);text-wrap:pretty">Understand separation by controlling the column yourself. Explore vapour–liquid equilibrium, column operation, stagewise separation and process design — every number on screen is computed in your browser from the thermodynamic model you select.</p>
       <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:26px">
@@ -77,7 +109,7 @@
         <button class="btn btn-secondary" data-v="theory" onClick="{{ go }}" style="padding:10px 20px;font-size:15px">Explore theory</button>
         <button class="btn btn-secondary" onClick="{{ tryExample }}" style="padding:10px 20px;font-size:15px">Try example</button>
       </div>
-      <div style="margin-top:22px;font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Runs entirely client-side · Ideal VLE (Raoult) and constant-volatility models · No account, no server</div>
+      <div style="margin-top:22px;font-size:12px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Runs entirely client-side · Ideal VLE (Raoult) and constant-volatility models · No account, no server</div>
     </div>
     <div class="blueprint" style="padding:20px;aspect-ratio:1/1;display:grid;place-items:center">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -129,7 +161,7 @@
     </div>
   </div>
 
-  <p style="margin-top:40px;font-size:11px;line-height:1.6;color:color-mix(in srgb,var(--color-text) 55%,transparent);max-width:88ch">This simulator is intended for education and conceptual engineering analysis. Results depend on the selected thermodynamic model and assumptions and should not be used as the sole basis for industrial process design.</p>
+  <p style="margin-top:40px;font-size:11px;line-height:1.6;color:color-mix(in srgb,var(--color-text) 72%,transparent);max-width:88ch">This simulator is intended for education and conceptual engineering analysis. Results depend on the selected thermodynamic model and assumptions and should not be used as the sole basis for industrial process design.</p>
 </div>
 </sc-if>
 
@@ -146,7 +178,7 @@
         <button class="btn" data-v="{{ it.k }}" onClick="{{ go }}" style="{{ it.style }}">{{ it.label }}</button>
       </sc-for>
     </nav>
-    <div style="display:flex;align-items:center;gap:6px">
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
       <select class="input" value="{{ v.mode }}" data-k="mode" onChange="{{ setStr }}" style="width:auto;min-height:32px;font-size:12px" aria-label="Interface detail level">
         <option value="learning">Learning mode</option>
         <option value="engineering">Engineering mode</option>
@@ -162,7 +194,7 @@
   </header>
 
   <sc-if value="{{ hasIssues }}">
-    <div class="dx-noprint" style="padding:8px 16px;display:flex;flex-direction:column;gap:5px;border-bottom:1px solid var(--color-divider)">
+    <div class="dx-noprint" role="alert" aria-live="assertive" style="padding:8px 16px;display:flex;flex-direction:column;gap:5px;border-bottom:1px solid var(--color-divider)">
       <sc-for list="{{ issues }}" as="m" hint-placeholder-count="1">
         <div style="{{ m.style }}">{{ m.text }}</div>
       </sc-for>
@@ -176,7 +208,7 @@
         <div style="display:flex;flex-direction:column;gap:14px">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Mixture &amp; model</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Mixture &amp; model</h6>
             <div class="field">
               <label for="dx-mix">Binary mixture</label>
               <select class="input" id="dx-mix" value="{{ v.mixKey }}" data-k="mixKey" onChange="{{ setStr }}">
@@ -185,7 +217,7 @@
                 </sc-for>
               </select>
             </div>
-            <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 62%,transparent)">{{ r.mixNote }}</div>
+            <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ r.mixNote }}</div>
             <div class="field">
               <label>Thermodynamic model</label>
               <div class="seg" style="width:100%">
@@ -196,78 +228,78 @@
             <sc-if value="{{ isAlpha }}">
               <div class="field">
                 <label style="display:flex;justify-content:space-between"><span>Relative volatility α</span><span style="font-variant-numeric:tabular-nums">{{ v.alphaC }}</span></label>
-                <input type="range" min="1.05" max="12" step="0.05" value="{{ v.alphaC }}" data-k="alphaC" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+                <input type="range" min="1.05" max="12" step="0.05" value="{{ v.alphaC }}" data-k="alphaC" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Relative volatility alpha">
               </div>
             </sc-if>
-            <div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 45%,transparent)">Activity-coefficient models (NRTL, Wilson, UNIQUAC) — planned.</div>
+            <div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Activity-coefficient models (NRTL, Wilson, UNIQUAC) — planned.</div>
             <div class="field">
               <label style="display:flex;justify-content:space-between;align-items:center"><span>Column pressure — kPa</span><span style="font-variant-numeric:tabular-nums">{{ v.P }}</span></label>
-              <input type="range" min="10" max="600" step="1" value="{{ v.P }}" data-k="P" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+              <input type="range" min="10" max="600" step="1" value="{{ v.P }}" data-k="P" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Column pressure, kPa">
             </div>
           </section>
 
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Feed conditions</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Feed conditions</h6>
             <div class="dx-grid2" style="gap:8px">
               <div class="field"><label for="dx-F">Flowrate F — kmol/h</label><input class="input" id="dx-F" type="number" min="0.1" step="1" value="{{ v.F }}" data-k="F" onChange="{{ setNum }}"></div>
               <div class="field"><label for="dx-Tf">Feed pressure — kPa</label><input class="input" id="dx-Tf" type="number" min="1" step="1" value="{{ v.P }}" disabled="{{ true }}"></div>
             </div>
             <div class="field">
               <label style="display:flex;justify-content:space-between;align-items:center"><span>Composition z<sub>F</sub></span><span style="font-variant-numeric:tabular-nums">{{ v.zF }}</span></label>
-              <input type="range" min="0.02" max="0.98" step="0.005" value="{{ v.zF }}" data-k="zF" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+              <input type="range" min="0.02" max="0.98" step="0.005" value="{{ v.zF }}" data-k="zF" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Feed composition z_F, mole fraction">
             </div>
             <div class="field">
               <label style="display:flex;justify-content:space-between;align-items:center"><span>Feed quality q</span><span style="font-variant-numeric:tabular-nums">{{ v.q }}</span></label>
-              <input type="range" min="-0.5" max="1.5" step="0.01" value="{{ v.q }}" data-k="q" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
-              <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;color:color-mix(in srgb,var(--color-text) 60%,transparent)"><span>{{ r.qPhase }}</span><span>T<sub>bubble</sub> {{ r.Tfeed }} °C</span></div>
+              <input type="range" min="-0.5" max="1.5" step="0.01" value="{{ v.q }}" data-k="q" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Feed quality q">
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)"><span>{{ r.qPhase }}</span><span>T<sub>bubble</sub> {{ r.Tfeed }} °C</span></div>
             </div>
           </section>
 
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">{{ modeTitle }}</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">{{ modeTitle }}</h6>
             <sc-for list="{{ modeLines }}" as="ln" hint-placeholder-count="4">
-              <div style="display:flex;gap:8px;font-size:12px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 78%,transparent)"><span style="color:var(--color-accent)">—</span><span>{{ ln }}</span></div>
+              <div style="display:flex;gap:8px;font-size:12px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 78%,transparent)"><span style="color:var(--dx-ink-accent)">—</span><span>{{ ln }}</span></div>
             </sc-for>
           </section>
 
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Specification</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Specification</h6>
             <div class="seg" style="width:100%">
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxcalc" value="design" checked="{{ isDesign }}" data-k="calcMode" onChange="{{ setStr }}"><span>Design</span></label>
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxcalc" value="rating" checked="{{ isRating }}" data-k="calcMode" onChange="{{ setStr }}"><span>Rating</span></label>
             </div>
-            <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 62%,transparent)">{{ specNote }}</div>
+            <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ specNote }}</div>
             <sc-if value="{{ isDesign }}">
               <div class="field">
                 <label style="display:flex;justify-content:space-between;align-items:center"><span>Distillate x<sub>D</sub></span><span style="font-variant-numeric:tabular-nums">{{ v.xD }}</span></label>
-                <input type="range" min="0.05" max="0.999" step="0.001" value="{{ v.xD }}" data-k="xD" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+                <input type="range" min="0.05" max="0.999" step="0.001" value="{{ v.xD }}" data-k="xD" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Distillate composition x_D, mole fraction">
               </div>
               <div class="field">
                 <label style="display:flex;justify-content:space-between;align-items:center"><span>Bottoms x<sub>B</sub></span><span style="font-variant-numeric:tabular-nums">{{ v.xB }}</span></label>
-                <input type="range" min="0.001" max="0.95" step="0.001" value="{{ v.xB }}" data-k="xB" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+                <input type="range" min="0.001" max="0.95" step="0.001" value="{{ v.xB }}" data-k="xB" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Bottoms composition x_B, mole fraction">
               </div>
             </sc-if>
             <sc-if value="{{ isRating }}">
               <div class="field">
                 <label style="display:flex;justify-content:space-between;align-items:center"><span>Theoretical stages N (incl. reboiler)</span><span style="font-variant-numeric:tabular-nums">{{ v.Nspec }}</span></label>
-                <input type="range" min="3" max="60" step="1" value="{{ v.Nspec }}" data-k="Nspec" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+                <input type="range" min="3" max="60" step="1" value="{{ v.Nspec }}" data-k="Nspec" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Theoretical stages N, including the reboiler">
               </div>
               <div class="field">
                 <label style="display:flex;justify-content:space-between;align-items:center"><span>Distillate cut D/F</span><span style="font-variant-numeric:tabular-nums">{{ v.DF }}</span></label>
-                <input type="range" min="0.05" max="0.95" step="0.005" value="{{ v.DF }}" data-k="DF" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+                <input type="range" min="0.05" max="0.95" step="0.005" value="{{ v.DF }}" data-k="DF" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Distillate cut D over F">
               </div>
             </sc-if>
             <div class="field">
               <label style="display:flex;justify-content:space-between;align-items:center"><span>Reflux ratio R = L/D <i data-tip="R" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" style="display:inline-flex;width:14px;height:14px;border:1px solid var(--color-divider);align-items:center;justify-content:center;font-size:9px;font-style:normal;cursor:help;vertical-align:middle">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.R }}</span></label>
-              <input type="range" min="0.1" max="12" step="0.05" value="{{ v.R }}" data-k="R" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
-              <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;color:color-mix(in srgb,var(--color-text) 60%,transparent)"><span>R<sub>min</sub> = {{ r.Rmin }} <i data-tip="Rmin" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" style="display:inline-flex;width:13px;height:13px;border:1px solid var(--color-divider);align-items:center;justify-content:center;font-size:9px;font-style:normal;cursor:help;vertical-align:middle">i</i></span><span>R/R<sub>min</sub> = {{ r.Rratio }}</span></div>
+              <input type="range" min="0.1" max="12" step="0.05" value="{{ v.R }}" data-k="R" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Reflux ratio R">
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)"><span>R<sub>min</sub> = {{ r.Rmin }} <i data-tip="Rmin" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" style="display:inline-flex;width:13px;height:13px;border:1px solid var(--color-divider);align-items:center;justify-content:center;font-size:9px;font-style:normal;cursor:help;vertical-align:middle">i</i></span><span>R/R<sub>min</sub> = {{ r.Rratio }}</span></div>
             </div>
             <div class="field">
               <label style="display:flex;justify-content:space-between;align-items:center"><span>Overall tray efficiency <i data-tip="eff" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" style="display:inline-flex;width:14px;height:14px;border:1px solid var(--color-divider);align-items:center;justify-content:center;font-size:9px;font-style:normal;cursor:help;vertical-align:middle">i</i></span><span style="font-variant-numeric:tabular-nums">{{ r.effPct }}%</span></label>
-              <input type="range" min="0.2" max="1" step="0.01" value="{{ v.eff }}" data-k="eff" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+              <input type="range" min="0.2" max="1" step="0.01" value="{{ v.eff }}" data-k="eff" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Overall tray efficiency">
             </div>
           </section>
         </div>
@@ -276,8 +308,8 @@
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-              <h6 style="margin:0;color:var(--color-accent)">Fractionating column</h6>
-              <span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ r.colCaption }}</span>
+              <h6 style="margin:0;color:var(--dx-ink-accent)">Fractionating column</h6>
+              <span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ r.colCaption }}</span>
               <button class="btn btn-secondary dx-noprint" onClick="{{ explainToggle }}" style="margin-left:auto;min-height:30px">{{ explainLabel }}</button>
             </div>
             <div style="display:grid;grid-template-columns:minmax(0,1fr);justify-items:center">
@@ -297,7 +329,7 @@
                   <g data-n="{{ t.n }}" onMouseEnter="{{ trayIn }}" onMouseLeave="{{ trayOut }}" style="cursor:crosshair">
                     <rect x="150" y="{{ t.top }}" width="120" height="{{ t.h }}" fill="{{ t.fill }}" stroke="none"></rect>
                     <line x1="158" y1="{{ t.y }}" x2="262" y2="{{ t.y }}" stroke="{{ t.stroke }}" stroke-width="{{ t.w }}"></line>
-                    <text x="146" y="{{ t.ty }}" text-anchor="end" font-size="9" fill="color-mix(in srgb,var(--color-text) 50%,transparent)" font-family="var(--font-body)">{{ t.label }}</text>
+                    <text x="146" y="{{ t.ty }}" text-anchor="end" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)" font-family="var(--font-body)">{{ t.label }}</text>
                   </g>
                 </sc-for>
                 <g stroke="var(--color-accent)" stroke-width="1.5" fill="none" marker-end="url(#dxArrow)">
@@ -311,7 +343,7 @@
                 <path d="M306 104 l12 8 l-12 8 M324 104 l12 8 l-12 8" fill="none" stroke="var(--color-accent)" stroke-width="1.2"></path>
                 <text x="330" y="90" text-anchor="middle" font-size="10" font-family="var(--font-heading)" letter-spacing="1" fill="var(--color-text)">CONDENSER</text>
                 <path d="M330 128 V150 H262" fill="none" stroke="var(--color-accent)" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#dxArrow)"></path>
-                <text x="300" y="146" text-anchor="end" font-size="9" fill="color-mix(in srgb,var(--color-text) 60%,transparent)">reflux L = {{ r.L }}</text>
+                <text x="300" y="146" text-anchor="end" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">reflux L = {{ r.L }}</text>
                 <ellipse cx="86" cy="426" rx="26" ry="12" fill="none" stroke="var(--color-accent)" stroke-width="1.5"></ellipse>
                 <path d="M60 426 V386 M112 426 V386 M60 386 H112" fill="none" stroke="var(--color-accent)" stroke-width="1.5"></path>
                 <path d="M68 404 q9 -10 18 0 q9 10 18 0" fill="none" stroke="var(--color-accent)" stroke-width="1.2"></path>
@@ -330,14 +362,14 @@
                     <circle cx="{{ b.cx }}" cy="{{ b.cy }}" r="{{ b.r }}" fill="{{ b.fill }}" style="{{ b.style }}"></circle>
                   </sc-for>
                 </g>
-                <text x="278" y="86" font-size="9" fill="color-mix(in srgb,var(--color-text) 55%,transparent)">vapour ↑ V = {{ r.V }}</text>
-                <text x="278" y="462" font-size="9" fill="color-mix(in srgb,var(--color-text) 55%,transparent)">liquid ↓ L̄ = {{ r.Lb }}</text>
+                <text x="278" y="86" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">vapour ↑ V = {{ r.V }}</text>
+                <text x="278" y="462" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">liquid ↓ L̄ = {{ r.Lb }}</text>
               </svg>
             </div>
             <sc-if value="{{ hover }}">
               <div class="blueprint" style="padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:6px;font-size:12px;font-variant-numeric:tabular-nums;background:var(--color-surface)">
                 <sc-for list="{{ hoverRows }}" as="h" hint-placeholder-count="6">
-                  <div><div style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ h.k }}</div><div>{{ h.v }}</div></div>
+                  <div><div style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ h.k }}</div><div>{{ h.v }}</div></div>
                 </sc-for>
               </div>
             </sc-if>
@@ -358,7 +390,7 @@
         <div style="display:flex;flex-direction:column;gap:14px">
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Live results</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Live results</h6>
             <sc-for list="{{ liveRows }}" as="row" hint-placeholder-count="8">
               <div style="{{ row.style }}">
                 <span style="font-size:12.5px;color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ row.k }}</span>
@@ -369,18 +401,22 @@
 
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Mass balance</h6>
-            <div style="{{ mb.style }}">{{ mb.status }}</div>
-            <div style="font-size:11.5px;font-variant-numeric:tabular-nums;line-height:1.7;color:color-mix(in srgb,var(--color-text) 70%,transparent)">
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Material balance &amp; convergence</h6>
+            <div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityHead }}</div>
+            <div style="font-size:11.5px;font-variant-numeric:tabular-nums;line-height:1.7;color:color-mix(in srgb,var(--color-text) 75%,transparent)">
               <div>F = D + B → {{ mb.total }}</div>
               <div>F·z<sub>F</sub> = D·x<sub>D</sub> + B·x<sub>B</sub> → {{ mb.comp }}</div>
-              <div>Residual: {{ mb.resid }} (tol 1×10⁻⁶)</div>
             </div>
+            <div style="font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityNote }}</div>
+            <div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;border-top:1px solid var(--color-divider);padding-top:8px;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.convHead }}</div>
+            <div style="{{ mb.convStyle }}">{{ mb.convStatus }}</div>
+            <div style="font-size:11.5px;font-variant-numeric:tabular-nums;line-height:1.7;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.residLabel }}: {{ mb.residValue }}</div>
+            <div style="font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.residNote }}</div>
           </section>
 
           <section class="card blueprint dx-noprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">What happens if?</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">What happens if?</h6>
             <div style="display:flex;gap:6px">
               <select class="input" value="{{ v.wiVar }}" data-k="wiVar" onChange="{{ setStr }}" style="flex:1" aria-label="Variable to change">
                 <sc-for list="{{ wiOptions }}" as="o" hint-placeholder-count="5">
@@ -395,7 +431,7 @@
             </div>
             <sc-if value="{{ hasWhatIf }}">
               <div style="display:flex;flex-direction:column;gap:4px">
-                <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 55%,transparent);border-bottom:1px solid var(--color-divider);padding-bottom:4px">
+                <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 72%,transparent);border-bottom:1px solid var(--color-divider);padding-bottom:4px">
                   <span>Quantity</span><span>Before</span><span>After</span>
                 </div>
                 <sc-for list="{{ whatIfRows }}" as="w" hint-placeholder-count="5">
@@ -415,8 +451,8 @@
       <section class="card blueprint" style="padding:14px;gap:10px;margin-top:14px">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-          <h6 style="margin:0;color:var(--color-accent)">Stage profiles</h6>
-          <span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Stage 1 = top tray · stage {{ r.N }} = reboiler</span>
+          <h6 style="margin:0;color:var(--dx-ink-accent)">Stage profiles</h6>
+          <span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Stage 1 = top tray · stage {{ r.N }} = reboiler</span>
         </div>
         <div class="dx-grid2" style="gap:14px">
           <sc-for list="{{ profiles }}" as="p" hint-placeholder-count="4">
@@ -430,9 +466,9 @@
                   <polyline points="{{ s.pts }}" fill="none" stroke="{{ s.color }}" stroke-width="1.6" stroke-dasharray="{{ s.dash }}"></polyline>
                 </sc-for>
                 <sc-for list="{{ p.ticks }}" as="t" hint-placeholder-count="4">
-                  <text x="{{ t.x }}" y="{{ t.y }}" text-anchor="{{ t.anchor }}" font-size="9" fill="color-mix(in srgb,var(--color-text) 55%,transparent)">{{ t.label }}</text>
+                  <text x="{{ t.x }}" y="{{ t.y }}" text-anchor="{{ t.anchor }}" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
                 </sc-for>
-                <text x="200" y="184" text-anchor="middle" font-size="9" fill="color-mix(in srgb,var(--color-text) 55%,transparent)">Stage number (top → bottom)</text>
+                <text x="200" y="184" text-anchor="middle" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">Stage number (top → bottom)</text>
                 <sc-for list="{{ p.legend }}" as="g" hint-placeholder-count="1">
                   <g><rect x="{{ g.x }}" y="20" width="14" height="2" fill="{{ g.color }}"></rect><text x="{{ g.tx }}" y="25" font-size="9" fill="color-mix(in srgb,var(--color-text) 65%,transparent)">{{ g.label }}</text></g>
                 </sc-for>
@@ -448,21 +484,16 @@
         <div style="display:flex;flex-direction:column;gap:14px">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Column configuration</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Column configuration</h6>
             <div class="field">
               <label>Internals</label>
-              <div class="seg" style="width:100%">
-                <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxcol" value="tray" checked="{{ isTray }}" data-k="colType" onChange="{{ setStr }}"><span>Tray</span></label>
-                <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxcol" value="packed" checked="{{ isPacked }}" data-k="colType" onChange="{{ setStr }}"><span>Packed</span></label>
-              </div>
+              <div class="input" style="display:flex;align-items:center;background:transparent;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Trays — stagewise model</div>
+              <div style="font-size:11.5px;line-height:1.5;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Fixed, not a choice: the stage calculation is internals-agnostic and the tray column is the only case this model completes. Packed columns are not modelled — no HETP, packed height or transfer-unit (HTU/NTU) calculation is performed — so no selector is offered rather than one that changes nothing.</div>
             </div>
-            <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 62%,transparent)">{{ colTypeNote }}</div>
             <div class="field">
-              <label for="dx-cond">Condenser</label>
-              <select class="input" id="dx-cond" value="{{ v.cond }}" data-k="cond" onChange="{{ setStr }}">
-                <option value="total">Total condenser — y₁ = x_D</option>
-                <option value="partial">Partial condenser — vapour distillate (one extra stage)</option>
-              </select>
+              <label>Condenser</label>
+              <div class="input" style="display:flex;align-items:center;background:transparent;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Total condenser — y₁ = x_D</div>
+              <div style="font-size:11.5px;line-height:1.5;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Fixed, not a choice: only the total condenser is implemented. A partial condenser would add one equilibrium stage, and that is not modelled — so no selector is offered rather than one that changes nothing.</div>
             </div>
             <div class="field">
               <label for="dx-reb">Reboiler</label>
@@ -473,7 +504,7 @@
             </div>
             <div class="field">
               <label style="display:flex;justify-content:space-between;align-items:center"><span>Overall efficiency</span><span style="font-variant-numeric:tabular-nums">{{ r.effPct }}%</span></label>
-              <input type="range" min="0.2" max="1" step="0.01" value="{{ v.eff }}" data-k="eff" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+              <input type="range" min="0.2" max="1" step="0.01" value="{{ v.eff }}" data-k="eff" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Overall tray efficiency">
             </div>
             <div style="display:flex;justify-content:space-between;font-size:12.5px;border-top:1px solid var(--color-divider);padding-top:8px"><span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">Theoretical stages</span><span style="font-variant-numeric:tabular-nums">{{ r.N }}</span></div>
             <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ r.actualLabel }}</span><span style="font-variant-numeric:tabular-nums">{{ r.Nact }}</span></div>
@@ -481,7 +512,7 @@
           </section>
           <section class="card blueprint dx-noprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">View</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">View</h6>
             <div class="seg" style="width:100%">
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxview" value="stages" checked="{{ isStageView }}" data-k="colView" onChange="{{ setStr }}"><span>Stage table</span></label>
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxview" value="industrial" checked="{{ isIndView }}" data-k="colView" onChange="{{ setStr }}"><span>Industrial</span></label>
@@ -493,7 +524,7 @@
           <sc-if value="{{ isStageView }}">
             <section class="card blueprint" style="padding:14px;gap:8px">
               <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              <h6 style="margin:0;color:var(--color-accent)">Stage-by-stage results</h6>
+              <h6 style="margin:0;color:var(--dx-ink-accent)">Stage-by-stage results</h6>
               <div style="overflow:auto;max-height:620px">
                 <table class="table">
                   <thead><tr><th>Stage</th><th>Section</th><th>x (liquid)</th><th>y (vapour)</th><th>T °C</th><th>α local</th><th>L kmol/h</th><th>V kmol/h</th></tr></thead>
@@ -509,7 +540,7 @@
           <sc-if value="{{ isIndView }}">
             <section class="card blueprint" style="padding:14px;gap:10px">
               <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              <div style="display:flex;align-items:baseline;gap:10px"><h6 style="margin:0;color:var(--color-accent)">Industrial flowsheet</h6><span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Click an item for its engineering information</span></div>
+              <div style="display:flex;align-items:baseline;gap:10px"><h6 style="margin:0;color:var(--dx-ink-accent)">Industrial flowsheet</h6><span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Click an item for its engineering information</span></div>
               <svg viewBox="0 0 900 420" style="width:100%;height:auto" role="img" aria-label="Process flow diagram of the distillation unit">
                 <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1"><path d="M0 60 H900 M0 140 H900 M0 220 H900 M0 300 H900 M0 380 H900 M100 0 V420 M300 0 V420 M500 0 V420 M700 0 V420"></path></g>
                 <defs><marker id="dxA2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--color-accent)"></path></marker></defs>
@@ -525,7 +556,7 @@
                   <g data-k="{{ e.k }}" onClick="{{ pickEquip }}" style="cursor:pointer">
                     <rect x="{{ e.x }}" y="{{ e.y }}" width="{{ e.w }}" height="{{ e.h }}" fill="{{ e.fill }}" stroke="var(--color-accent)" stroke-width="{{ e.sw }}"></rect>
                     <text x="{{ e.tx }}" y="{{ e.ty }}" text-anchor="middle" font-size="10.5" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)">{{ e.label }}</text>
-                    <text x="{{ e.tx }}" y="{{ e.ty2 }}" text-anchor="middle" font-size="9" fill="color-mix(in srgb,var(--color-text) 55%,transparent)">{{ e.tag }}</text>
+                    <text x="{{ e.tx }}" y="{{ e.ty2 }}" text-anchor="middle" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ e.tag }}</text>
                   </g>
                 </sc-for>
               </svg>
@@ -545,7 +576,7 @@
         <div style="display:flex;flex-direction:column;gap:14px">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Equilibrium parameters</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Equilibrium parameters</h6>
             <div class="field">
               <label for="dx-vmix">Binary mixture</label>
               <select class="input" id="dx-vmix" value="{{ v.mixKey }}" data-k="mixKey" onChange="{{ setStr }}">
@@ -561,22 +592,22 @@
             </div>
             <div class="field">
               <label style="display:flex;justify-content:space-between"><span>Pressure — kPa</span><span style="font-variant-numeric:tabular-nums">{{ v.P }}</span></label>
-              <input type="range" min="10" max="600" step="1" value="{{ v.P }}" data-k="P" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+              <input type="range" min="10" max="600" step="1" value="{{ v.P }}" data-k="P" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Column pressure, kPa">
             </div>
             <sc-if value="{{ isAlpha }}">
               <div class="field">
                 <label style="display:flex;justify-content:space-between"><span>Relative volatility α</span><span style="font-variant-numeric:tabular-nums">{{ v.alphaC }}</span></label>
-                <input type="range" min="1.05" max="12" step="0.05" value="{{ v.alphaC }}" data-k="alphaC" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+                <input type="range" min="1.05" max="12" step="0.05" value="{{ v.alphaC }}" data-k="alphaC" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Relative volatility alpha">
               </div>
             </sc-if>
-            <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 62%,transparent)">{{ r.mixNote }}</div>
+            <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ r.mixNote }}</div>
           </section>
 
           <sc-if value="{{ isCustom }}">
             <section class="card blueprint" style="padding:14px;gap:10px">
               <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              <h6 style="margin:0;color:var(--color-accent)">Custom binary — Antoine data</h6>
-              <div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">log₁₀ P<sup>sat</sup>[mmHg] = A − B/(T[°C] + C). Component A must be the more volatile one.</div>
+              <h6 style="margin:0;color:var(--dx-ink-accent)">Custom binary — Antoine data</h6>
+              <div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">log₁₀ P<sup>sat</sup>[mmHg] = A − B/(T[°C] + C). Component A must be the more volatile one.</div>
               <div class="dx-grid2" style="gap:8px">
                 <div class="field"><label>Name A</label><input class="input" value="{{ cust.aName }}" data-side="a" data-f="name" onChange="{{ setCust }}"></div>
                 <div class="field"><label>Name B</label><input class="input" value="{{ cust.bName }}" data-side="b" data-f="name" onChange="{{ setCust }}"></div>
@@ -596,10 +627,10 @@
 
           <section class="card blueprint" style="padding:14px;gap:6px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Model facts</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Model facts</h6>
             <sc-for list="{{ vleFacts }}" as="fct" hint-placeholder-count="5">
               <div style="display:flex;flex-direction:column;gap:1px;padding:4px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 7%,transparent)">
-                <span style="font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 55%,transparent)">{{ fct.k }}</span>
+                <span style="font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ fct.k }}</span>
                 <span style="font-size:12.5px">{{ fct.v }}</span>
               </div>
             </sc-for>
@@ -610,13 +641,13 @@
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <h6 style="margin:0;color:var(--color-accent)">Vapour–liquid equilibrium</h6>
+              <h6 style="margin:0;color:var(--dx-ink-accent)">Vapour–liquid equilibrium</h6>
               <div class="seg" style="margin-left:auto">
                 <label class="seg-opt"><input type="radio" name="dxvle" value="xy" checked="{{ isXY }}" onChange="{{ setVleShow }}"><span>x–y diagram</span></label>
                 <label class="seg-opt"><input type="radio" name="dxvle" value="txy" checked="{{ isTXY }}" onChange="{{ setVleShow }}"><span>T–x–y diagram</span></label>
               </div>
             </div>
-            <svg viewBox="0 0 500 480" style="width:100%;height:auto;touch-action:none" onMouseMove="{{ vleMove }}" onMouseLeave="{{ vleLeave }}" role="img" aria-label="Equilibrium diagram">
+            <svg viewBox="0 0 500 480" style="width:100%;height:auto;touch-action:none" onPointerMove="{{ vleMove }}" onPointerLeave="{{ vleLeave }}" role="img" aria-label="Equilibrium diagram">
               <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1">
                 <path d="M60 340 H460 M60 260 H460 M60 180 H460 M60 100 H460 M140 20 V420 M220 20 V420 M300 20 V420 M380 20 V420"></path>
               </g>
@@ -625,7 +656,7 @@
                 <line x1="60" y1="420" x2="460" y2="20" stroke="color-mix(in srgb,var(--color-text) 45%,transparent)" stroke-width="1.2"></line>
                 <polyline points="{{ eqPoints }}" fill="none" stroke="var(--color-accent)" stroke-width="2"></polyline>
                 <text x="70" y="36" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-accent)">EQUILIBRIUM y* = f(x)</text>
-                <text x="352" y="404" font-size="11" fill="color-mix(in srgb,var(--color-text) 55%,transparent)">y = x</text>
+                <text x="352" y="404" font-size="11" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">y = x</text>
                 <sc-if value="{{ vleHoverOn }}">
                   <g>
                     <line x1="{{ vleHover.cx }}" y1="420" x2="{{ vleHover.cx }}" y2="{{ vleHover.cy }}" stroke="var(--color-accent)" stroke-dasharray="3 3" stroke-width="1"></line>
@@ -642,26 +673,27 @@
                 <polyline points="{{ dewPoints }}" fill="none" stroke="var(--color-accent-700)" stroke-width="2" stroke-dasharray="6 4"></polyline>
                 <text x="70" y="36" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-accent)">BUBBLE (solid) / DEW (dashed) — VAPOUR REGION ABOVE</text>
                 <sc-for list="{{ tTicks }}" as="t" hint-placeholder-count="5">
-                  <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="color-mix(in srgb,var(--color-text) 55%,transparent)">{{ t.label }}</text>
+                  <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
                 </sc-for>
                 <text x="260" y="458" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)">MOLE FRACTION A (x, y)</text>
                 <text x="18" y="220" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 18 220)">TEMPERATURE °C</text>
               </sc-if>
               <sc-for list="{{ axTicks }}" as="t" hint-placeholder-count="6">
-                <g><text x="{{ t.x }}" y="438" text-anchor="middle" font-size="10" fill="color-mix(in srgb,var(--color-text) 55%,transparent)">{{ t.label }}</text></g>
+                <g><text x="{{ t.x }}" y="438" text-anchor="middle" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text></g>
               </sc-for>
               <sc-if value="{{ isXY }}">
                 <sc-for list="{{ axTicks }}" as="t" hint-placeholder-count="6">
-                  <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="color-mix(in srgb,var(--color-text) 55%,transparent)">{{ t.label }}</text>
+                  <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
                 </sc-for>
               </sc-if>
             </svg>
-            <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">Move the pointer across the plot to read exact equilibrium values.</div>
+            <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Move the pointer across the plot to read exact equilibrium values.</div>
           </section>
 
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Component data</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Component data</h6>
+            <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Component data table, scrolls horizontally">
             <table class="table">
               <thead><tr><th>Component</th><th>CAS</th><th>Role</th><th>MW g/mol</th><th>T<sub>b</sub> °C</th><th>Antoine A / B / C</th><th>Valid range</th><th>Check</th><th>λ kJ/mol</th></tr></thead>
               <tbody>
@@ -670,7 +702,8 @@
                 </sc-for>
               </tbody>
             </table>
-            <div style="font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 58%,transparent)">The <em>Check</em> column recomputes each component's vapour pressure at its own normal boiling point — it should read ≈ 760 mmHg. Any stage temperature outside the fitted range raises an extrapolation warning at the top of the screen.</div>
+            </div>
+            <div style="font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">The <em>Check</em> column recomputes each component's vapour pressure at its own normal boiling point — it should read ≈ 760 mmHg. Any stage temperature outside the fitted range raises an extrapolation warning at the top of the screen.</div>
           </section>
         </div>
       </div>
@@ -681,33 +714,33 @@
         <div style="display:flex;flex-direction:column;gap:14px">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Construction inputs</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Construction inputs</h6>
             <div class="field">
               <label style="display:flex;justify-content:space-between"><span>Distillate x<sub>D</sub></span><span style="font-variant-numeric:tabular-nums">{{ v.xD }}</span></label>
-              <input type="range" min="0.05" max="0.999" step="0.001" value="{{ v.xD }}" data-k="xD" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+              <input type="range" min="0.05" max="0.999" step="0.001" value="{{ v.xD }}" data-k="xD" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Distillate composition x_D, mole fraction">
             </div>
             <div class="field">
               <label style="display:flex;justify-content:space-between"><span>Bottoms x<sub>B</sub></span><span style="font-variant-numeric:tabular-nums">{{ v.xB }}</span></label>
-              <input type="range" min="0.001" max="0.95" step="0.001" value="{{ v.xB }}" data-k="xB" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+              <input type="range" min="0.001" max="0.95" step="0.001" value="{{ v.xB }}" data-k="xB" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Bottoms composition x_B, mole fraction">
             </div>
             <div class="field">
               <label style="display:flex;justify-content:space-between"><span>Feed z<sub>F</sub></span><span style="font-variant-numeric:tabular-nums">{{ v.zF }}</span></label>
-              <input type="range" min="0.02" max="0.98" step="0.005" value="{{ v.zF }}" data-k="zF" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+              <input type="range" min="0.02" max="0.98" step="0.005" value="{{ v.zF }}" data-k="zF" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Feed composition z_F, mole fraction">
             </div>
             <div class="field">
               <label style="display:flex;justify-content:space-between"><span>Reflux ratio R</span><span style="font-variant-numeric:tabular-nums">{{ v.R }}</span></label>
-              <input type="range" min="0.1" max="12" step="0.05" value="{{ v.R }}" data-k="R" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
+              <input type="range" min="0.1" max="12" step="0.05" value="{{ v.R }}" data-k="R" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Reflux ratio R">
             </div>
             <div class="field">
               <label style="display:flex;justify-content:space-between"><span>Feed quality q</span><span style="font-variant-numeric:tabular-nums">{{ v.q }}</span></label>
-              <input type="range" min="-0.5" max="1.5" step="0.01" value="{{ v.q }}" data-k="q" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)">
-              <div style="font-size:11px;margin-top:4px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ r.qPhase }}</div>
+              <input type="range" min="-0.5" max="1.5" step="0.01" value="{{ v.q }}" data-k="q" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Feed quality q">
+              <div style="font-size:11px;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ r.qPhase }}</div>
             </div>
-            <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">The three square handles on the diagonal — x<sub>B</sub>, z<sub>F</sub> and x<sub>D</sub> — can be dragged directly on the diagram.</div>
+            <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">The three square handles on the diagonal — x<sub>B</sub>, z<sub>F</sub> and x<sub>D</sub> — can be dragged directly on the diagram.</div>
           </section>
           <section class="card blueprint dx-noprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Stage stepping</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Stage stepping</h6>
             <button class="btn btn-primary btn-block" onClick="{{ runSteps }}" style="margin-top:0">▶ Run stage calculation</button>
             <div style="display:flex;gap:6px">
               <button class="btn btn-secondary" onClick="{{ stepBack }}" style="flex:1">‹ Back</button>
@@ -719,7 +752,7 @@
           </section>
           <section class="card blueprint" style="padding:14px;gap:4px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Construction results</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Construction results</h6>
             <sc-for list="{{ mtSummary }}" as="row" hint-placeholder-count="8">
               <div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:3px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 7%,transparent)">
                 <span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ row.k }}</span><span style="font-variant-numeric:tabular-nums">{{ row.v }}</span>
@@ -730,8 +763,8 @@
 
         <section class="card blueprint" style="padding:14px;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--color-accent)">McCabe–Thiele diagram</h6>
-          <svg viewBox="0 0 500 480" style="width:100%;height:auto;touch-action:none;user-select:none" onMouseMove="{{ mtMove }}" onMouseUp="{{ mtUp }}" onMouseLeave="{{ mtUp }}" role="img" aria-label="McCabe-Thiele construction">
+          <h6 style="margin:0;color:var(--dx-ink-accent)">McCabe–Thiele diagram</h6>
+          <svg viewBox="0 0 500 480" style="width:100%;height:auto;touch-action:none;user-select:none" onPointerMove="{{ mtMove }}" onPointerUp="{{ mtUp }}" onPointerLeave="{{ mtUp }}" role="img" aria-label="McCabe-Thiele construction">
             <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1">
               <path d="M60 340 H460 M60 260 H460 M60 180 H460 M60 100 H460 M140 20 V420 M220 20 V420 M300 20 V420 M380 20 V420"></path>
             </g>
@@ -751,7 +784,7 @@
                   <text x="{{ m.x }}" y="{{ m.y }}" text-anchor="end" font-size="9.5" font-variant-numeric="tabular-nums" fill="{{ m.fill }}">{{ m.n }}</text>
                 </sc-for>
                 <sc-for list="{{ mtPoints }}" as="p" hint-placeholder-count="3">
-                  <g data-k="{{ p.k }}" onMouseDown="{{ mtDown }}" style="cursor:ew-resize">
+                  <g data-k="{{ p.k }}" onPointerDown="{{ mtDown }}" style="cursor:ew-resize">
                     <rect x="{{ p.cx }}" y="{{ p.cy }}" width="11" height="11" transform="translate(-5.5,-5.5)" fill="var(--color-bg)" stroke="var(--color-accent)" stroke-width="1.8"></rect>
                     <text x="{{ p.cx }}" y="{{ p.cy }}" dx="10" dy="-8" font-size="11" font-family="var(--font-heading)" fill="var(--color-accent-800)">{{ p.label }}</text>
                   </g>
@@ -759,8 +792,8 @@
               </g>
             </sc-if>
             <sc-for list="{{ axTicks }}" as="t" hint-placeholder-count="6">
-              <g><text x="{{ t.x }}" y="438" text-anchor="middle" font-size="10" fill="color-mix(in srgb,var(--color-text) 55%,transparent)">{{ t.label }}</text>
-                 <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="color-mix(in srgb,var(--color-text) 55%,transparent)">{{ t.label }}</text></g>
+              <g><text x="{{ t.x }}" y="438" text-anchor="middle" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
+                 <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text></g>
             </sc-for>
             <text x="260" y="458" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)">LIQUID MOLE FRACTION x_A</text>
             <text x="18" y="220" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 18 220)">VAPOUR MOLE FRACTION y_A</text>
@@ -780,20 +813,20 @@
         <section class="card blueprint dx-noprint" style="padding:14px;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <h6 style="margin:0;color:var(--color-accent)">Export</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Export</h6>
             <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap">
               <button class="btn btn-secondary" onClick="{{ exportCSV }}">Export CSV</button>
               <button class="btn btn-secondary" onClick="{{ exportJSON }}">Export JSON</button>
               <button class="btn btn-primary" onClick="{{ printReport }}">Printable report</button>
             </div>
           </div>
-          <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">Exports are generated in the browser — no data leaves this machine. The printable report contains inputs, model, assumptions, results and the mass balance.</div>
+          <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Exports are generated in the browser — no data leaves this machine. The printable report contains inputs, model, assumptions, results and the mass balance.</div>
         </section>
 
         <div class="dx-grid2">
           <section class="card blueprint" style="padding:14px;gap:6px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">User inputs</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">User inputs</h6>
             <sc-for list="{{ inputRows }}" as="row" hint-placeholder-count="10">
               <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:3px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 7%,transparent)">
                 <span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ row.k }}</span><span style="font-variant-numeric:tabular-nums;text-align:right">{{ row.v }}</span>
@@ -802,7 +835,7 @@
           </section>
           <section class="card blueprint" style="padding:14px;gap:6px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Calculated values</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Calculated values</h6>
             <sc-for list="{{ calcRows }}" as="row" hint-placeholder-count="12">
               <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:3px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 7%,transparent)">
                 <span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ row.k }}</span><span style="font-variant-numeric:tabular-nums;text-align:right">{{ row.v }}</span>
@@ -814,19 +847,23 @@
         <div class="dx-grid2">
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Mass balance check</h6>
-            <div style="{{ mb.style }}">{{ mb.status }}</div>
-            <div style="font-size:12px;font-variant-numeric:tabular-nums;line-height:1.8;color:color-mix(in srgb,var(--color-text) 72%,transparent)">
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Material balance &amp; numerical convergence</h6>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityHead }}</div>
+            <div style="font-size:12px;font-variant-numeric:tabular-nums;line-height:1.8;color:color-mix(in srgb,var(--color-text) 75%,transparent)">
               <div>Overall: F = D + B → {{ mb.total }}</div>
               <div>Component A: F·z<sub>F</sub> = D·x<sub>D</sub> + B·x<sub>B</sub> → {{ mb.comp }}</div>
-              <div>Residuals (overall / component): {{ mb.resid }} — tolerance 1×10⁻⁶ kmol/h</div>
             </div>
+            <div style="font-size:11.5px;line-height:1.55;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityNote }}</div>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-top:1px solid var(--color-divider);padding-top:8px;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.convHead }}</div>
+            <div style="{{ mb.convStyle }}">{{ mb.convStatus }}</div>
+            <div style="font-size:12px;font-variant-numeric:tabular-nums;line-height:1.8;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.residLabel }}: {{ mb.residValue }}</div>
+            <div style="font-size:11.5px;line-height:1.55;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.residNote }}</div>
           </section>
           <section class="card blueprint" style="padding:14px;gap:6px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Model assumptions</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Model assumptions</h6>
             <sc-for list="{{ assumptions }}" as="a" hint-placeholder-count="8">
-              <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--color-accent)">—</span><span>{{ a }}</span></div>
+              <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--dx-ink-accent)">—</span><span>{{ a }}</span></div>
             </sc-for>
           </section>
         </div>
@@ -837,7 +874,7 @@
       <div class="dx-side">
         <section class="card blueprint" style="padding:14px;gap:12px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--color-accent)">Study definition</h6>
+          <h6 style="margin:0;color:var(--dx-ink-accent)">Study definition</h6>
           <div class="field">
             <label for="dx-si">Independent variable</label>
             <select class="input" id="dx-si" value="{{ sv.ind }}" data-k="ind" onChange="{{ setSens }}">
@@ -856,12 +893,12 @@
           </div>
           <div class="field"><label for="dx-sn">Number of points</label><input class="input" id="dx-sn" type="number" min="3" max="60" step="1" value="{{ sv.n }}" data-k="n" onChange="{{ setSens }}"></div>
           <button class="btn btn-secondary btn-block" onClick="{{ sensCSV }}">Export sweep as CSV</button>
-          <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 60%,transparent)">Each point is a complete re-solve of the column with the same thermodynamic model. Infeasible points are omitted rather than extrapolated.</div>
+          <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Each point is a complete re-solve of the column with the same thermodynamic model. Infeasible points are omitted rather than extrapolated.</div>
         </section>
 
         <section class="card blueprint" style="padding:14px;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--color-accent)">{{ sensTitle }}</h6>
+          <h6 style="margin:0;color:var(--dx-ink-accent)">{{ sensTitle }}</h6>
           <svg viewBox="0 0 660 300" style="width:100%;height:auto" role="img" aria-label="Sensitivity chart">
             <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1"><path d="M70 40 H620 M70 92 H620 M70 145 H620 M70 197 H620"></path></g>
             <path d="M70 30 V250 H620" fill="none" stroke="var(--color-divider)" stroke-width="1.4"></path>
@@ -874,16 +911,16 @@
               </g>
             </sc-if>
             <sc-for list="{{ sensXTicks }}" as="t" hint-placeholder-count="5">
-              <text x="{{ t.x }}" y="268" text-anchor="middle" font-size="10" fill="color-mix(in srgb,var(--color-text) 55%,transparent)">{{ t.label }}</text>
+              <text x="{{ t.x }}" y="268" text-anchor="middle" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
             </sc-for>
             <sc-for list="{{ sensYTicks }}" as="t" hint-placeholder-count="5">
-              <text x="62" y="{{ t.y }}" text-anchor="end" font-size="10" fill="color-mix(in srgb,var(--color-text) 55%,transparent)">{{ t.label }}</text>
+              <text x="62" y="{{ t.y }}" text-anchor="end" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
             </sc-for>
             <text x="345" y="290" text-anchor="middle" font-size="11.5" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)">{{ sensXLabel }}</text>
             <text x="16" y="140" text-anchor="middle" font-size="11.5" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 16 140)">{{ sensYLabel }}</text>
           </svg>
           <div class="blueprint" style="padding:10px 12px;background:var(--color-surface)">
-            <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent)">Key observation</div>
+            <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dx-ink-accent)">Key observation</div>
             <p style="margin:4px 0 0;font-size:13px;line-height:1.55">{{ sensNote }}</p>
           </div>
         </section>
@@ -893,7 +930,7 @@
     <sc-if value="{{ isTheory }}">
       <div style="max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:8px">
         <div style="padding:4px 0 12px">
-          <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-accent)">Reference</div>
+          <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dx-ink-accent)">Reference</div>
           <h2 style="margin:4px 0 6px">Theory of fractional distillation</h2>
           <p style="max-width:76ch;font-size:14px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Twenty topics, each written against the same equations the simulator solves. Numbers quoted in the simulator can be traced back to the relationships described here.</p>
         </div>
@@ -901,7 +938,7 @@
           <div class="blueprint" style="padding:4px 14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <button data-k="{{ t.k }}" onClick="{{ setTheory }}" style="{{ t.headStyle }}">
-              <span style="font-size:12px;font-variant-numeric:tabular-nums;color:var(--color-accent)">{{ t.no }}</span>
+              <span style="font-size:12px;font-variant-numeric:tabular-nums;color:var(--dx-ink-accent)">{{ t.no }}</span>
               <span>{{ t.title }}</span>
             </button>
             <p style="{{ t.bodyStyle }}">{{ t.body }}</p>
@@ -917,7 +954,7 @@
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="display:flex;align-items:center;gap:10px">
             <span class="tag tag-accent"><span>Question&#160;{{ examNo }}&#160;of&#160;{{ examTotal }}</span></span>
-            <span style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Generated from the current simulation — answers are the engine's own values</span>
+            <span style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Generated from the current simulation — answers are the engine's own values</span>
           </div>
           <p style="margin:0;font-size:18px;font-family:var(--font-heading);line-height:1.3">{{ examQ }}</p>
           <sc-if value="{{ examNumeric }}">
@@ -941,18 +978,56 @@
           </div>
           <sc-if value="{{ showHint }}">
             <div class="blueprint" style="padding:10px 12px;background:var(--color-surface)">
-              <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent)">Hint</div>
+              <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dx-ink-accent)">Hint</div>
               <p style="margin:4px 0 0;font-size:13.5px;line-height:1.55">{{ examHint }}</p>
             </div>
           </sc-if>
           <sc-if value="{{ showSol }}">
             <div class="blueprint" style="padding:10px 12px;background:var(--color-surface)">
-              <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent)">Worked solution</div>
+              <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dx-ink-accent)">Worked solution</div>
               <p style="margin:4px 0 0;font-size:13.5px;line-height:1.6">{{ examSol }}</p>
             </div>
           </sc-if>
         </section>
-        <p style="font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin:0">Change any parameter on the Simulation page and the questions — and their answers — are regenerated from the new case.</p>
+        <p style="font-size:12px;color:color-mix(in srgb,var(--color-text) 72%,transparent);margin:0">Change any parameter on the Simulation page and the questions — and their answers — are regenerated from the new case.</p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isValidate }}">
+      <div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px">
+        <section class="card blueprint" style="padding:18px;gap:10px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+            <h2 style="margin:0">Validation</h2>
+            <div style="{{ val.summaryStyle }}">{{ val.summary }}</div>
+          </div>
+          <p style="margin:0;max-width:80ch;font-size:13.5px;line-height:1.6">Every figure below is recomputed in your browser each time this page is drawn, from the same engine the rest of the application uses. Each check compares the engine either against a <strong>closed-form result</strong>, against an <strong>identity</strong> it must satisfy, or against <strong>its own internal consistency</strong>.</p>
+          <p style="margin:0;max-width:80ch;font-size:13.5px;line-height:1.6;border-left:2px solid var(--color-accent);padding-left:10px">This is <strong>internal validation only</strong>. Nothing here is compared against a published worked example, tabulated experimental VLE data, or another simulator — no such comparison has been carried out. These checks show the implementation is faithful to its own model; they say nothing about how well that model describes a real column. The derivations and the full list of what is and is not checked are in <code>METHODS.md</code>.</p>
+        </section>
+        <sc-for list="{{ val.groups }}" as="g" hint-placeholder-count="4">
+          <section class="card blueprint" style="padding:14px;gap:8px">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">{{ g.name }}</h6>
+            <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Validation results, scrolls horizontally">
+            <table class="table">
+              <thead><tr><th>Result</th><th>Check</th><th>Computed</th><th>Reference</th><th>Error</th><th>Tolerance</th></tr></thead>
+              <tbody>
+                <sc-for list="{{ g.rows }}" as="v" hint-placeholder-count="3">
+                  <tr style="{{ v.style }}"><td>{{ v.status }}</td><td>{{ v.check }}</td><td>{{ v.got }}</td><td>{{ v.ref }}</td><td>{{ v.err }}</td><td>{{ v.tol }}</td></tr>
+                </sc-for>
+              </tbody>
+            </table>
+            </div>
+            <sc-for list="{{ g.rows }}" as="v" hint-placeholder-count="3">
+              <div style="font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ v.note }}</div>
+            </sc-for>
+          </section>
+        </sc-for>
+        <section class="card blueprint" style="padding:14px;gap:6px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <h6 style="margin:0;color:var(--dx-ink-accent)">Reproducing this outside the browser</h6>
+          <p style="margin:0;font-size:13px;line-height:1.6">The same checks, plus a 648-case numerical fingerprint, the hostile-input matrix, the save/load round-trip and a build-reproducibility check, run headless against the source: <code>node tools/test.js</code>. It exits non-zero on any failure.</p>
+        </section>
       </div>
     </sc-if>
 
@@ -966,24 +1041,24 @@
         <div class="dx-grid2">
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Engineering models</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Engineering models</h6>
             <p style="margin:0;font-size:13px;line-height:1.6">Ideal VLE (Raoult's law) with Antoine vapour pressures in mmHg and °C, and a constant-relative-volatility model. Stage calculations follow McCabe–Thiele under constant molar overflow; minimum reflux includes a tangent-pinch check; minimum stages use Fenske with a geometric-mean α. Activity-coefficient models (Wilson, NRTL, UNIQUAC) are <strong>not</strong> implemented — mixtures that need them are flagged rather than silently approximated.</p>
           </section>
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Data provenance &amp; validation</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Data provenance &amp; validation</h6>
             <p style="margin:0;font-size:13px;line-height:1.6">Antoine constants are the Reid–Prausnitz–Poling / Lange sets in mmHg and °C, each stored with the temperature range it was fitted over; the VLE Explorer prints that range and re-derives each pure-component vapour pressure at its own normal boiling point as a self-check (benzene 759.0 mmHg at 80.0 °C, water 757.6 mmHg at 100.0 °C — both ≈ 760). Latent heats are values at the normal boiling point. Stage temperatures outside a fitted range raise an extrapolation warning rather than silently degrading. Known azeotropes are recorded per mixture — ethanol/water at 95.6 wt% ethanol (x ≈ 0.894), boiling at 78.2 °C at 1 atm — and any specification that crosses one is flagged as physically unreachable, whatever the ideal model computes.</p>
           </section>
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Limitations</h6>
-            <p style="margin:0;font-size:13px;line-height:1.6">Binary systems only. No column hydraulics (flooding, weeping, pressure drop, diameter). Duties are latent-heat only. Tray efficiency is applied as a single overall value. Packed columns are reported as HETP-equivalent stages, not as transfer units. Azeotropic systems cannot be represented by either model offered.</p>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Limitations</h6>
+            <p style="margin:0;font-size:13px;line-height:1.6">Binary systems only. No column hydraulics (flooding, weeping, pressure drop, diameter). Duties are latent-heat only. Tray efficiency is applied as a single overall value. Packed columns are not modelled: no HETP, packed height or transfer-unit (HTU/NTU) calculation is performed. Azeotropic systems cannot be represented by either model offered.</p>
           </section>
         </div>
         <div class="dx-grid2">
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Deployment</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Deployment</h6>
             <ol style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">
               <li>Create a GitHub repository and push this project.</li>
               <li>Import the repository into Vercel — it is a static client-side app, so no build configuration or environment variables are required.</li>
@@ -993,22 +1068,33 @@
           </section>
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Extending it</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Extending it</h6>
             <p style="margin:0;font-size:13px;line-height:1.6">The thermodynamic layer (vapour pressure, equilibrium, temperatures), the unit-operation engine (balances, stage stepping, duties), the visualisation layer and the mixture data are separate concerns. A new unit operation — absorption, extraction, evaporation, a heat exchanger — needs a new engine module and view; the thermodynamic and data layers are reused unchanged.</p>
           </section>
         </div>
         <section class="card blueprint" style="padding:16px;gap:6px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--color-accent)">Standing assumptions</h6>
+          <h6 style="margin:0;color:var(--dx-ink-accent)">Standing assumptions</h6>
           <sc-for list="{{ assumptions }}" as="a" hint-placeholder-count="8">
-            <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--color-accent)">—</span><span>{{ a }}</span></div>
+            <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--dx-ink-accent)">—</span><span>{{ a }}</span></div>
           </sc-for>
+        </section>
+        <section class="card blueprint" style="padding:16px;gap:6px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <h6 style="margin:0;color:var(--dx-ink-accent)">Developer</h6>
+          <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+            <div style="font-family:var(--font-heading);font-size:19px">Shafin Ahamed Neon</div>
+            <a href="https://www.linkedin.com/in/shafin-ahamed-neon-aa9596213" target="_blank" rel="noopener noreferrer external"
+               style="font-size:13px;min-height:44px;display:inline-flex;align-items:center"
+               aria-label="Shafin Ahamed Neon on LinkedIn (opens in a new tab)">LinkedIn ↗</a>
+          </div>
+          <p style="margin:0;font-size:12.5px;line-height:1.6;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Design, thermodynamic model, calculation engine and interface. Released under the MIT licence.</p>
         </section>
       </div>
     </sc-if>
   </main>
 
-  <footer style="border-top:1px solid var(--color-divider);padding:12px 16px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent)">
+  <footer style="border-top:1px solid var(--color-divider);padding:12px 16px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">
     <span style="font-family:var(--font-heading);letter-spacing:.12em">DISTILLEX</span>
     <span style="max-width:96ch;line-height:1.5">This simulator is intended for education and conceptual engineering analysis. Results depend on the selected thermodynamic model and assumptions and should not be used as the sole basis for industrial process design.</span>
     <span style="margin-left:auto">{{ modelBadge }}</span>
@@ -1020,7 +1106,7 @@
   <div style="{{ tipStyle }}">{{ tipText }}</div>
 </sc-if>
 <sc-if value="{{ toastOpen }}">
-  <div style="position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:80;padding:8px 16px;border:1px solid var(--color-accent);background:var(--color-bg);font-size:13px;box-shadow:var(--shadow-md)">{{ toast }}</div>
+  <div role="status" aria-live="polite" style="position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:80;padding:8px 16px;border:1px solid var(--color-accent);background:var(--color-bg);font-size:13px;box-shadow:var(--shadow-md)">{{ toast }}</div>
 </sc-if>
 </div>
 
@@ -1038,6 +1124,10 @@ class Component extends DCLogic {
     acetone:{name:'Acetone',cas:'67-64-1',A:7.11714,B:1210.595,C:229.664,MW:58.08,Tb:56.1,lat:29.10,lo:-13,hi:55}
   };
   static SOURCE = 'Antoine constants (mmHg, °C) from the Reid–Prausnitz–Poling / Lange compilations — the sets in general engineering use. Check: benzene at 80.0 °C → 759.0 mmHg (T_b 80.1 °C); water at 100.0 °C → 757.6 mmHg. Latent heats are at the normal boiling point.';
+  /** Convergence tolerance for the rating-mode shooting solve, in mole fraction.
+   *  A rating solution whose |x_N − x_B| exceeds this is reported as NOT CONVERGED
+   *  and is never presented as a valid result. */
+  static RATING_TOL = 1e-4;
   static MIX = {
     bt:{label:'Benzene / Toluene',a:'benzene',b:'toluene',alpha:2.45,ideal:true,az:null,note:'Close-boiling hydrocarbon pair and the classic teaching system. Raoult\u2019s law is an excellent approximation; \u03b1 \u2248 2.4\u20132.5 at 1 atm and no azeotrope exists at any pressure.'},
     ew:{label:'Ethanol / Water',a:'ethanol',b:'water',alpha:2.20,ideal:false,az:{x:0.894,T:78.2,txt:'95.6 wt% ethanol, boiling at 78.2 \u00b0C at 1 atm'},note:'Strongly non-ideal. A minimum-boiling azeotrope at 95.6 wt% ethanol (x \u2248 0.894 mole fraction), boiling at 78.2 \u00b0C at 1 atm, caps ordinary distillation \u2014 an ideal model cannot reproduce it. Anhydrous ethanol needs azeotropic, extractive or membrane separation.'},
@@ -1055,7 +1145,7 @@ class Component extends DCLogic {
     Qc:'Condenser duty, Qc = V\u00b7\u03bb, using a composition-weighted latent heat. Sensible heat and sub-cooling are neglected.',
     Qr:'Reboiler duty, Qr = V\u0304\u00b7\u03bb. Heat losses and feed pre-heat are neglected.'
   };
-  static NAV = [['sim','Simulation'],['vle','VLE Explorer'],['mt','McCabe\u2013Thiele'],['column','Column'],['results','Results'],['sens','Sensitivity'],['theory','Theory'],['exam','Exam Mode'],['about','About']];
+  static NAV = [['sim','Simulation'],['vle','VLE Explorer'],['mt','McCabe\u2013Thiele'],['column','Column'],['results','Results'],['sens','Sensitivity'],['theory','Theory'],['exam','Exam Mode'],['validate','Validation'],['about','About']];
   static EXPLAIN = [
     ['Feed enters the column','The feed stream F, at composition z\u1da0 and quality q, enters at the feed stage. Its quality decides how much of it joins the descending liquid and how much joins the rising vapour.'],
     ['The reboiler generates vapour','Heat Q\u1d3f boils the liquid held in the reboiler. The vapour it produces is the only source of the upward traffic that makes separation possible.'],
@@ -1073,7 +1163,7 @@ class Component extends DCLogic {
     pump:{title:'Feed pump (P-101)',body:'Centrifugal pump raising the feed from storage pressure to column pressure plus line and control-valve losses. Hydraulics are not part of the equilibrium model.'},
     preheat:{title:'Feed preheater (E-101)',body:'Sets the feed quality q that the simulation uses. Duty is what moves the feed between subcooled liquid, saturated liquid, part-vaporised and saturated vapour.'},
     column:{title:'Fractionating column (C-101)',body:'The counter-current contacting device. Stage count, feed stage and internals are set on the left; the stage table shows the resulting profile.'},
-    cond:{title:'Overhead condenser (E-102)',body:'Removes the latent heat of the overhead vapour. A total condenser gives a liquid distillate with y\u2081 = x_D; a partial condenser acts as an extra equilibrium stage.'},
+    cond:{title:'Overhead condenser (E-102)',body:'Removes the latent heat of the overhead vapour. A total condenser gives a liquid distillate with y\u2081 = x_D; a partial condenser acts as an extra equilibrium stage. This simulator models the total-condenser case only \u2014 no condenser stage is added to the stage count.'},
     drum:{title:'Reflux drum (V-101)',body:'Holds condensate and splits it between reflux and distillate product. Level control on the drum sets the distillate draw; the reflux ratio is the control handle you adjust.'},
     reb:{title:'Reboiler (E-103)',body:'Supplies the boil-up. A kettle reboiler behaves as one theoretical equilibrium stage, which is why the stage count here includes it.'},
     prod:{title:'Product draws',body:'Distillate D at x_D and bottoms B at x_B. Their rates follow directly from the overall and component material balances.'}
@@ -1093,7 +1183,7 @@ class Component extends DCLogic {
     ['t12','McCabe\u2013Thiele method','A graphical solution of the stage-by-stage balances, valid under constant molar overflow. Steps between the operating lines and the equilibrium curve count equilibrium stages directly.'],
     ['t13','Theoretical stages','A theoretical stage produces vapour and liquid in equilibrium. The number required follows from the specifications and the reflux; real trays are fewer in effect, hence efficiency.'],
     ['t14','Tray efficiency','Overall efficiency E\u2092 = N_theoretical / N_actual. Typical values are 0.5\u20130.8 for hydrocarbon systems. Murphree efficiency is defined per tray and is the more rigorous measure.'],
-    ['t15','Total vs partial condenser','A total condenser condenses all overhead vapour: y\u2081 = x_D and it is not an equilibrium stage. A partial condenser produces vapour distillate and does act as one extra stage.'],
+    ['t15','Total vs partial condenser','A total condenser condenses all overhead vapour: y\u2081 = x_D and it is not an equilibrium stage. A partial condenser produces vapour distillate and does act as one extra stage. Note on this simulator: only the total condenser is implemented, so every stage count on screen assumes y\u2081 = x_D.'],
     ['t16','Reboiler','A kettle reboiler is a partial reboiler and counts as one equilibrium stage. A thermosiphon reboiler with vapour return may be treated as less than a full stage.'],
     ['t17','Minimum reflux','At R_min an operating line touches the equilibrium curve \u2014 a pinch \u2014 and stage-to-stage progress stops. Real columns run at 1.1\u20131.5\u00d7R_min, the economic trade-off between column height and energy.'],
     ['t18','Total reflux','No products are withdrawn; the operating lines collapse onto the diagonal and the stage count reaches its minimum, N_min, given by the Fenske equation. Used for start-up and for column testing.'],
@@ -1104,9 +1194,9 @@ class Component extends DCLogic {
   state = {
     view:(this.props||{}).startView||'landing', mixKey:(this.props||{}).defaultMixture||'bt', model:'raoult', P:101.325, alphaC:2.45,
     F:100, zF:0.45, q:1.0, xD:0.96, xB:0.04, R:2.2, Nspec:12, DF:0.45,
-    eff:0.70, colType:'tray', cond:'total', reb:'partial', calcMode:'design',
+    eff:0.70, reb:'partial', calcMode:'design',
     mode:'learning', theme:'light', colView:'stages', equip:'column',
-    anim:999, playing:false, hoverStage:null, tip:null, tipXY:[0,0],
+    anim:999, hoverStage:null, tip:null, tipXY:[0,0],
     explaining:false, explainI:0, wiVar:'R', wiTo:3.2, whatIf:null,
     sens:{ind:'R',dep:'N',min:1.2,max:6,n:24}, exam:{i:0,reveal:'',input:''},
     theoryOpen:'t1', toast:'', vleShow:'xy', mtDrag:null, vleHover:null,
@@ -1225,7 +1315,7 @@ class Component extends DCLogic {
     if(E.length) return {ok:false,E,W,mix};
     if(mix && mix.ideal===false && s.model==='raoult') W.push('Non-ideal system: '+mix.label+' departs from Raoult\u2019s law. Results are indicative for teaching, not for design.');
 
-    let xD,xB,D,B,N,feedStage,stages,rating=false;
+    let xD,xB,D,B,N,feedStage,stages,rating=false,ratingResid=null;
     if(s.calcMode==='rating'){
       rating=true;
       D=+s.DF*F; B=F-D;
@@ -1244,12 +1334,25 @@ class Component extends DCLogic {
       for(let i=0;i<70;i++){
         const mid=(lo+hi)/2, o=shoot(mid);
         if(o.bad){ hi=mid; continue; }
-        best=Object.assign({xD:mid},o);
+        // Retain the best iterate seen, not merely the last one — the final
+        // bisection midpoint is not guaranteed to carry the smallest residual.
+        if(!best || Math.abs(o.resid)<Math.abs(best.resid)) best=Object.assign({xD:mid},o);
         if(o.n<Ntar || o.resid<0) lo=mid; else hi=mid;
       }
       if(!best){ E.push('No feasible operating point: with this cut and reflux the stripping line cannot be constructed. Reduce D/F or raise R.'); return {ok:false,E,W,mix}; }
+      // Gate on the real residual. The shooting solve is only a solution when the
+      // liquid the N-th stage actually delivers agrees with the x_B the component
+      // balance demands; otherwise there is no operating point and we say so.
+      ratingResid=best.resid;
+      if(!(Math.abs(ratingResid)<=Component.RATING_TOL)){
+        E.push('Rating solution did not converge. Shooting residual |x_N \u2212 x_B| = '+Math.abs(ratingResid).toExponential(3)+
+          ', against a tolerance of '+Component.RATING_TOL.toExponential(0)+' mole fraction. With N = '+Ntar+
+          ' stages at R = '+R.toFixed(2)+' and D/F = '+(+s.DF).toFixed(3)+' no distillate purity satisfies both the component balance and the stage count \u2014 the cut is asking for more separation than the column can deliver. '+
+          'Move D/F towards the feed composition z_F = '+zF.toFixed(3)+', reduce the stage count, or raise the reflux ratio.');
+        return {ok:false,E,W,mix,ratingResid};
+      }
       xD=best.xD; xB=best.xb; stages=best.r.stages; feedStage=best.r.feed; N=Ntar;
-      if(xD>0.9999||xB<1e-5) W.push('The rating solution has hit a composition bound; treat the extreme purity as approximate.');
+      if(xD>0.9999||xB<1e-5) W.push('The rating solution sits against a composition bound (x_D = '+xD.toFixed(5)+', x_B = '+xB.toFixed(5)+'). It converged to a residual of '+Math.abs(ratingResid).toExponential(2)+', but at this extreme the purity is very sensitive to the specification.');
     } else {
       xD=+s.xD; xB=+s.xB;
       if(!(xD>xB)) E.push('Distillate composition must be greater than bottoms composition for the selected separation.');
@@ -1287,16 +1390,32 @@ class Component extends DCLogic {
     const sep=(xD/(1-xD))/(xB/(1-xB));
     const nTrays = s.reb==='partial' ? N-1 : N;
     const Nact = Math.ceil(nTrays/(+s.eff));
+    // D and B are SOLVED FROM F = D + B and F·z_F = D·x_D + B·x_B, so these two
+    // residuals are forced to zero by construction. They are reported as an
+    // identity, never as an independent validation of the solution.
     const fRes=Math.abs(F-(D+B)), cRes=Math.abs(F*zF-(D*xD+B*xB));
+    // The residual that can actually fail: in rating mode the shooting residual
+    // between the stage the column delivers and the balance-implied x_B; in
+    // design mode the integer-stage terminal overshoot past the x_B specification.
+    const xN = stages.length ? stages[stages.length-1].x : NaN;
+    const stepResid = rating ? (xN-xB) : (xB-xN);
     const prof=stages.map(st=>({n:st.n,x:st.x,y:st.y,yn:st.yn,T:this.tempAt(st.x,s),a:this.alphaAt(st.x,s),rect:st.rect,
       L: st.rect?Lr:Lb, V: st.rect?V:Math.max(0,Vb)}));
     return {ok:E.length===0,E,W,mix,rating,F,D,B,zF,xD,xB,R,Rmin,Nmin,N,Nact,feedStage,stages:prof,q,
       xInt:Lf.xInt,yInt:Lf.yInt,slopeS:Lf.slopeS,mr:Lf.mr,br:Lf.br,pinch:mrObj.pinch,
       L:Lr,V,Lb,Vb,Qc,Qr,rec,recB,sep,aAvg,aTop,aBot,latTop,latBot,
       Ttop:this.tempAt(xD,s),Tbot:this.tempAt(xB,s),Tfeed:this.tempAt(zF,s),
-      bal:{fRes,cRes,ok:fRes<1e-6&&cRes<1e-6}};
+      ratingResid,
+      bal:{fRes,cRes,identity:true,xN,stepResid,rating,tol:Component.RATING_TOL,
+           converged: rating ? Math.abs(stepResid)<=Component.RATING_TOL : true}};
   }
-  variant(s,over){ return this.solve(Object.assign({},s,over)); }
+  variant(s,over){
+    // Guards the programmatic callers (sensitivity sweeps, what-if, exam) the
+    // same way renderVals guards the interactive path. solve() is unchanged.
+    const t=Object.assign({},s,over), v=this.validateInputs(t);
+    if(!v.ok) return {ok:false,E:v.errors.map(e=>e.msg),W:[],mix:Component.MIX[t.mixKey],invalid:true};
+    return this.solve(t);
+  }
 
   // ---------- formatting ----------
   f(v,d){ return (v===undefined||v===null||!isFinite(v)) ? '\u2014' : (+v).toFixed(d===undefined?3:d); }
@@ -1311,17 +1430,46 @@ class Component extends DCLogic {
   MX(x){ return 60+400*Math.min(Math.max(x,0),1); }
   MY(y){ return 420-400*Math.min(Math.max(y,0),1); }
 
-  set(k,v){ this.setState({[k]:v}); }
   flash(m){ this.setState({toast:m}); if(this._tt) clearTimeout(this._tt); this._tt=setTimeout(()=>this.setState({toast:''}),2200); }
   download(name,text,type){
     const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([text],{type:type||'text/plain'}));
     a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
   }
-  cfg(){ const s=this.state; const o={}; ['mixKey','model','P','alphaC','F','zF','q','xD','xB','R','Nspec','DF','eff','colType','cond','reb','calcMode'].forEach(k=>o[k]=s[k]); return o; }
+  /** The persisted configuration. One definition shared by saveCfg, the JSON
+   *  export and loadCfg, so a file can never carry a key that load ignores or
+   *  omit one that save produced. */
+  static CFG_KEYS = ['mixKey','model','P','alphaC','F','zF','q','xD','xB','R','Nspec','DF','eff','reb','calcMode'];
+  /** Every field of a user-supplied component. `lat` is not editable in the UI
+   *  but is part of the record and is carried so a reload reproduces the duties. */
+  static CUSTOM_FIELDS = ['name','A','B','C','MW','Tb','lat'];
+  /** Copies only the known component fields, and copies them exactly. A field
+   *  the source does not have stays absent rather than acquiring a default:
+   *  validateInputs must be able to see that it is missing. */
+  customRecord(c){
+    const side=(d)=>{
+      if(!d || typeof d!=='object' || Array.isArray(d)) return d;
+      const o={}; Component.CUSTOM_FIELDS.forEach(f=>{ if(d[f]!==undefined) o[f]=d[f]; }); return o;
+    };
+    if(!c || typeof c!=='object' || Array.isArray(c)) return c;
+    return {a:side(c.a), b:side(c.b)};
+  }
+  cfg(){
+    const s=this.state, o={};
+    Component.CFG_KEYS.forEach(k=>o[k]=s[k]);
+    // Without this the custom Antoine constants were dropped on save, and a
+    // reload silently substituted the built-in defaults under mixKey 'custom'.
+    o.custom=this.customRecord(s.custom);
+    return o;
+  }
 
   renderVals(){
-    const s=this.state, S=Component, r=this.solve(s);
+    const s=this.state, S=Component, vres=this.validateInputs(s);
+    // Invalid input never reaches the engine, and no previous result survives:
+    // the whole view-model is rebuilt from state on every render, so withholding
+    // r here withholds every derived number with it.
+    const r = vres.ok ? this.solve(s)
+      : {ok:false,E:[],W:[],mix:Component.MIX[s.mixKey],invalid:true,vE:vres.errors};
     const ok=r.ok, hasR=ok&&r.stages;
     const f=(v,d)=>this.f(v,d);
 
@@ -1391,10 +1539,13 @@ class Component extends DCLogic {
     }
 
     const navItems=S.NAV.map(([k,label])=>({k,label,
-      style:'min-height:30px;font-size:13px;padding:4px 10px;border-color:'+(s.view===k?'var(--color-accent)':'transparent')+';background:'+(s.view===k?'var(--color-accent)':'transparent')+';color:'+(s.view===k?'var(--color-bg)':'var(--color-text)')}));
+      style:'min-height:30px;font-size:13px;padding:4px 10px;border-color:'+(s.view===k?'var(--dx-ink-accent)':'transparent')+';background:'+(s.view===k?'var(--dx-ink-accent)':'transparent')+';color:'+(s.view===k?'var(--color-bg)':'var(--color-text)')}));
 
+    const KINDLABEL={input:'INVALID INPUT',spec:'INFEASIBLE SPECIFICATION',domain:'MODEL DOMAIN'};
+    const errStyle='font-size:12.5px;padding:6px 10px;border:1px solid var(--color-accent-700);background:color-mix(in srgb,var(--color-accent) 12%,transparent);color:var(--color-accent-800)';
     const issues=[].concat(
-      (r.E||[]).map(t=>({text:'\u26a0  '+t,style:'font-size:12.5px;padding:6px 10px;border:1px solid var(--color-accent-700);background:color-mix(in srgb,var(--color-accent) 12%,transparent);color:var(--color-accent-800)'})),
+      (vres.errors||[]).map(e=>({text:'\u26a0  '+KINDLABEL[e.kind]+'  \u00b7  '+e.msg,style:errStyle})),
+      (r.E||[]).map(t=>({text:'\u26a0  '+KINDLABEL[this.kindOf(t)]+'  \u00b7  '+t,style:errStyle})),
       (r.W||[]).map(t=>({text:'i  '+t,style:'font-size:12.5px;padding:6px 10px;border:1px dashed var(--color-divider);color:color-mix(in srgb,var(--color-text) 72%,transparent)'})));
 
     const liveRows=[
@@ -1434,7 +1585,7 @@ class Component extends DCLogic {
     return {
       v:{mixKey:s.mixKey,model:s.model,P:f(s.P,1),alphaC:f(s.alphaC,2),F:f(s.F,1),zF:f(s.zF,3),q:f(s.q,2),
          xD:f(s.xD,3),xB:f(s.xB,3),R:f(s.R,2),Nspec:String(s.Nspec),DF:f(s.DF,3),eff:f(s.eff,2),
-         mode:s.mode,cond:s.cond,reb:s.reb,wiVar:s.wiVar,wiTo:s.wiTo},
+         mode:s.mode,reb:s.reb,wiVar:s.wiVar,wiTo:s.wiTo},
       r:{mixNote:(r.mix&&r.mix.note)||'',qPhase:this.qPhase(+s.q),Tfeed:f(r.Tfeed,1),
          Rmin:f(r.Rmin,3),Rratio:hasR?f(r.R/r.Rmin,2):'\u2014',effPct:Math.round(+s.eff*100),
          N:f(r.N,0),Nact:f(r.Nact,0),feedStage:f(r.feedStage,0),D:f(r.D,2),B:f(r.B,2),F:f(r.F,1),
@@ -1442,7 +1593,7 @@ class Component extends DCLogic {
          feedY:feedY.toFixed(0),feedYt:(feedY-6).toFixed(0),feedYt2:(feedY+8).toFixed(0),
          flowAnim:'stroke-dasharray:6 4;animation:dxFlowR 1.2s linear infinite',
          actualLabel: s.reb==='partial'?'Actual trays (reboiler excluded)':'Actual trays',
-         colCaption: hasR? (nS>26? 'showing 26 of '+nS+' stages':'') + (s.colType==='packed'?' · packed equivalent':'') : 'no valid solution'},
+         colCaption: hasR? (nS>26? 'showing 26 of '+nS+' stages':'') : 'no valid solution'},
       isLanding:s.view==='landing', isApp:s.view!=='landing',
       isSim:s.view==='sim', isColumn:s.view==='column',
       navItems, issues, hasIssues:issues.length>0,
@@ -1450,14 +1601,10 @@ class Component extends DCLogic {
       mixOptions:Object.keys(S.MIX).map(k=>({k,label:S.MIX[k].label})),
       isRaoult:s.model==='raoult', isAlpha:s.model==='alpha',
       isDesign:s.calcMode==='design', isRating:s.calcMode==='rating',
-      isTray:s.colType==='tray', isPacked:s.colType==='packed',
       isStageView:s.colView==='stages', isIndView:s.colView==='industrial',
       specNote: s.calcMode==='design'
         ? 'Design mode: you fix both product purities and the reflux; the engine returns the stages required.'
         : 'Rating mode: you fix the stage count and the distillate cut; the engine solves for the purities that column actually delivers.',
-      colTypeNote: s.colType==='tray'
-        ? 'Tray column \u2014 rigorous stagewise mode. Each theoretical stage is a tray corrected by the overall efficiency.'
-        : 'Packed column \u2014 the same equilibrium stages are reported as an HETP-equivalent height. Packed hydraulics and mass-transfer units (NTU/HTU) are not modelled; the stage result is unchanged.',
       trays, bubbles, profiles, stageRows, liveRows, equipment,
       equipInfo:{title:eq.title,body:eq.body,duty},
       hover:!!hoverStg,
@@ -1467,16 +1614,12 @@ class Component extends DCLogic {
         {k:'x liquid',v:hoverStg.x.toFixed(4)},{k:'y vapour',v:hoverStg.y.toFixed(4)},
         {k:'T \u00b0C',v:hoverStg.T.toFixed(1)},{k:'\u03b1 local',v:hoverStg.a.toFixed(3)},
         {k:'L kmol/h',v:hoverStg.L.toFixed(1)},{k:'V kmol/h',v:hoverStg.V.toFixed(1)}]:[],
-      mb:{status: hasR? (r.bal.ok?'\u2713 Balanced':'\u26a0 Balance discrepancy') : '\u2014 no converged solution',
-          style:'font-size:14px;font-family:var(--font-heading);padding:5px 9px;border:1px solid '+(hasR&&r.bal.ok?'var(--color-accent)':'var(--color-divider)')+';color:'+(hasR&&r.bal.ok?'var(--color-accent-800)':'inherit')+';background:'+(hasR&&r.bal.ok?'color-mix(in srgb,var(--color-accent) 14%,transparent)':'transparent'),
-          total: hasR? f(r.F,3)+' = '+f(r.D,3)+' + '+f(r.B,3):'\u2014',
-          comp: hasR? f(r.F*r.zF,3)+' = '+f(r.D*r.xD,3)+' + '+f(r.B*r.xB,3):'\u2014',
-          resid: hasR? r.bal.fRes.toExponential(2)+' / '+r.bal.cRes.toExponential(2):'\u2014'},
+      mb:this.balanceReport(r,hasR),
       modelBadge:(s.model==='raoult'?'Model: Raoult / ideal VLE':'Model: constant \u03b1 = '+f(s.alphaC,2))+'  \u00b7  P = '+f(s.P,1)+' kPa  \u00b7  Demonstration case',
       explaining:s.explaining, explainLabel:s.explaining?'Close explainer':'Explain separation',
       explainNo:s.explainI+1, explainTitle:S.EXPLAIN[s.explainI][0], explainText:S.EXPLAIN[s.explainI][1],
       wiOptions:wiOpts.map(o=>({k:o[0],label:o[1]})), wiStep:s.wiVar==='P'?1:(s.wiVar==='Nspec'?1:0.05),
-      hasWhatIf:!!s.whatIf, whatIfRows, whatIfNote,
+      hasWhatIf:!!s.whatIf&&vres.ok, whatIfRows, whatIfNote,
       tipOpen:!!s.tip, tipText:s.tip?S.TIPS[s.tip]:'',
       tipStyle:'position:fixed;z-index:90;max-width:280px;padding:8px 10px;font-size:12px;line-height:1.45;background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);left:'+s.tipXY[0]+'px;top:'+s.tipXY[1]+'px',
       toastOpen:!!s.toast, toast:s.toast,
@@ -1484,7 +1627,11 @@ class Component extends DCLogic {
       home:()=>this.setState({view:'landing'}),
       tryExample:()=>this.setState({view:'sim',mixKey:'bt',model:'raoult',P:101.325,F:100,zF:0.45,q:1,xD:0.96,xB:0.04,R:2.2,calcMode:'design'}),
       toggleTheme:()=>this.setState({theme:s.theme==='dark'?'light':'dark'}),
-      setNum:(e)=>{const k=e.target.dataset.k,val=parseFloat(e.target.value); if(!isNaN(val)) this.setState({[k]:val, whatIf:null});},
+      setNum:(e)=>{const k=e.target.dataset.k, raw=e.target.value, val=parseFloat(raw);
+        // Keep the raw entry when it will not parse so validation reports it.
+        // Silently retaining the previous number would leave a valid-looking
+        // result attached to a field the user can see is wrong.
+        this.setState({[k]: Number.isFinite(val)?val:raw, whatIf:null});},
       setStr:(e)=>{const t=e.target; this.setState({[t.dataset.k]:t.value, whatIf:null});},
       tipIn:(e)=>{const b=e.currentTarget.getBoundingClientRect(); this.setState({tip:e.currentTarget.dataset.tip,tipXY:[Math.min(b.left,window.innerWidth-300),b.bottom+6]});},
       tipOut:()=>this.setState({tip:null}),
@@ -1494,24 +1641,335 @@ class Component extends DCLogic {
       explainToggle:()=>this.setState({explaining:!s.explaining,explainI:0}),
       explainNext:()=>this.setState({explainI:(s.explainI+1)%S.EXPLAIN.length}),
       explainPrev:()=>this.setState({explainI:(s.explainI+S.EXPLAIN.length-1)%S.EXPLAIN.length}),
-      reset:()=>{this.setState({mixKey:'bt',model:'raoult',P:101.325,alphaC:2.45,F:100,zF:0.45,q:1,xD:0.96,xB:0.04,R:2.2,Nspec:12,DF:0.45,eff:0.7,calcMode:'design',cond:'total',reb:'partial',colType:'tray',whatIf:null}); this.flash('Reset to the benzene / toluene demonstration case');},
+      reset:()=>{this.setState({mixKey:'bt',model:'raoult',P:101.325,alphaC:2.45,F:100,zF:0.45,q:1,xD:0.96,xB:0.04,R:2.2,Nspec:12,DF:0.45,eff:0.7,calcMode:'design',reb:'partial',whatIf:null}); this.flash('Reset to the benzene / toluene demonstration case');},
       saveCfg:()=>{this.download('distillex-config.json',JSON.stringify(this.cfg(),null,2),'application/json'); this.flash('Configuration saved');},
       loadClick:()=>{ if(this._file) this._file.click(); },
       fileRef:(el)=>{this._file=el;},
       loadCfg:(e)=>{const fl=e.target.files&&e.target.files[0]; if(!fl) return;
-        const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result); const clean={};
-          Object.keys(o).forEach(k=>{ if(k in this.state) clean[k]=o[k]; });
-          this.setState(Object.assign({whatIf:null},clean)); this.flash('Configuration loaded'); }
+        const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result);
+          if(!o || typeof o!=='object' || Array.isArray(o)) throw new Error('not an object');
+          const clean={};
+          // Load exactly the keys save writes. The previous version accepted any
+          // key that happened to exist in state, so a file could also set the
+          // current view, drag state or stored comparison.
+          Component.CFG_KEYS.forEach(k=>{ if(k in o) clean[k]=o[k]; });
+          // Files written before custom mixtures were persisted simply have no
+          // `custom` key; leave the session's own record alone rather than
+          // overwriting it with defaults.
+          if(o.custom!==undefined) clean.custom=this.customRecord(o.custom);
+          this.setState(Object.assign({whatIf:null},clean));
+          const vr=this.validateInputs(Object.assign({},this.state,clean));
+          this.flash(vr.ok? 'Configuration loaded'
+            : 'Configuration loaded, but '+vr.errors.length+' value(s) failed validation \u2014 see the messages at the top of the screen'); }
           catch(err){ this.flash('Could not read that file \u2014 expected DISTILLEX JSON'); } };
         rd.readAsText(fl); e.target.value='';},
       ...(()=>{ try { return this.extras(s,r,hasR); } catch(err){ console.error('DISTILLEX extras error: '+(err&&err.message)+' | '+(err&&err.stack)); return {}; } })(),
       runWhatIf:()=>{
-        const key=s.wiVar, to=+s.wiTo, before=this.solve(s), after=this.variant(s,{[key]:to});
+        // Both sides of the comparison must clear the same gate. The before
+        // side used to call solve() directly, so invalid state reached the
+        // equations from here and could throw out of the click handler.
+        const key=s.wiVar, to=+s.wiTo, before=this.variant(s,{}), after=this.variant(s,{[key]:to});
+        if(before.invalid){ this.flash('Current inputs are not valid \u2014 fix the reported problems before comparing.'); return; }
         if(!after.ok){ this.flash('That change gives no feasible solution: '+(after.E[0]||'')); return; }
         this.setState({whatIf:{key,from:+s[key],to,before,after,note:this.wiNote(key,before,after)}});
       },
       applyWhatIf:()=>{ this.setState({[s.wiVar]:+s.wiTo, whatIf:null}); this.flash('Applied'); }
     };
+  }
+  /** Domain of every user-settable numeric input. Bounds are physical or
+   *  solver-derived and each carries its reason; none is invented to make an
+   *  awkward case converge.
+   *   - mole fractions are the OPEN interval (0,1): 0 or 1 is a pure component,
+   *     not a binary separation problem;
+   *   - F, P, R, MW and latent heat are strictly positive quantities;
+   *   - eff is an OVERALL tray efficiency N_theoretical/N_actual, so 0 < E <= 1;
+   *     E > 1 would mean fewer real trays than theoretical stages;
+   *   - alpha must exceed 1: alpha = 1 gives y = x and no separation is
+   *     possible, alpha < 1 means the components are labelled the wrong way
+   *     round and should be swapped rather than accepted;
+   *   - N keeps the existing 3..60 stepping range, formalised rather than
+   *     re-invented;
+   *   - q is only required to be finite: subcooled (q>1) and superheated (q<0)
+   *     feeds are both legitimate in this model, so no artificial bound is set. */
+  static LIMITS = {
+    F     :{min:0,minOpen:true,label:'Feed flowrate F',unit:' kmol/h'},
+    zF    :{min:0,max:1,minOpen:true,maxOpen:true,label:'Feed composition z_F'},
+    xD    :{min:0,max:1,minOpen:true,maxOpen:true,label:'Distillate composition x_D'},
+    xB    :{min:0,max:1,minOpen:true,maxOpen:true,label:'Bottoms composition x_B'},
+    R     :{min:0,minOpen:true,label:'Reflux ratio R'},
+    P     :{min:0,minOpen:true,label:'Column pressure P',unit:' kPa'},
+    eff   :{min:0,max:1,minOpen:true,label:'Overall tray efficiency'},
+    DF    :{min:0,max:1,minOpen:true,maxOpen:true,label:'Distillate cut D/F'},
+    Nspec :{min:3,max:60,integer:true,label:'Theoretical stages N'},
+    alphaC:{min:1,minOpen:true,label:'Relative volatility α'},
+    q     :{label:'Feed quality q'}
+  };
+  /** Antoine C must keep T + C > 0 across the whole −80…500 °C interval that
+   *  bubbleT/dewT bisect over, so the correlation never crosses its pole inside
+   *  the solver's own search bracket. Solver-domain bound, not a literature
+   *  value; every shipped component satisfies it (lowest is n-heptane, 216.6). */
+  static ANTOINE_C_MIN = 80;
+  /** solve() emits plain strings and is deliberately left byte-identical, so its
+   *  messages are classified for display here rather than at source. */
+  static SOLVE_KIND = [
+    [/^Rating solution did not converge/, 'domain'],
+    [/^Antoine extrapolation/, 'domain']
+  ];
+
+  num(v){
+    if(typeof v === 'number') return v;
+    if(typeof v === 'string' && v.trim() !== '') return Number(v);
+    return NaN;
+  }
+  /** One numeric field against Component.LIMITS. Never coerces: an out-of-domain
+   *  value is reported, not clamped. */
+  checkNum(key,val,out){
+    const L = Component.LIMITS[key], n = this.num(val);
+    if(!Number.isFinite(n)){
+      const why = (val===''||val===undefined||val===null) ? ' — the field is empty.'
+        : (typeof val==='number' ? ' — got '+String(val)+'.' : ' — “'+String(val)+'” is not numeric.');
+      out.push({kind:'input',field:key,msg:L.label+' must be a finite number'+why});
+      return;
+    }
+    if(L.integer && !Number.isInteger(n)){
+      out.push({kind:'input',field:key,msg:L.label+' must be a whole number of stages; got '+n+'.'});
+      return;
+    }
+    if(L.min!==undefined && (L.minOpen ? !(n>L.min) : !(n>=L.min)))
+      out.push({kind:'input',field:key,msg:L.label+' must be '+(L.minOpen?'greater than ':'at least ')+L.min+(L.unit||'')+'; got '+n+(L.unit||'')+'.'});
+    else if(L.max!==undefined && (L.maxOpen ? !(n<L.max) : !(n<=L.max)))
+      out.push({kind:'input',field:key,msg:L.label+' must be '+(L.maxOpen?'less than ':'at most ')+L.max+(L.unit||'')+'; got '+n+(L.unit||'')+'.'});
+  }
+  checkCustom(s,out){
+    const c = s.custom;
+    if(!c || typeof c!=='object' || !c.a || !c.b || typeof c.a!=='object' || typeof c.b!=='object'){
+      out.push({kind:'input',field:'custom',msg:'Custom mixture: component data is missing or malformed.'});
+      return;
+    }
+    [['a','Custom component A'],['b','Custom component B']].forEach(pair=>{
+      const d = c[pair[0]], lbl = pair[1];
+      if(!String(d.name===undefined?'':d.name).trim())
+        out.push({kind:'input',field:'custom',msg:lbl+' needs a name.'});
+      const need=(f,unitless)=>{ const n=this.num(d[f]);
+        if(!Number.isFinite(n)){ out.push({kind:'input',field:'custom',msg:lbl+': '+unitless+' must be a finite number.'}); return null; }
+        return n; };
+      need('A','Antoine constant A');
+      const B=need('B','Antoine constant B');
+      if(B!==null && !(B>0)) out.push({kind:'input',field:'custom',msg:lbl+': Antoine constant B must be positive, otherwise vapour pressure would fall as temperature rises.'});
+      const C=need('C','Antoine constant C');
+      if(C!==null && !(C>Component.ANTOINE_C_MIN)) out.push({kind:'domain',field:'custom',msg:lbl+': Antoine constant C must exceed '+Component.ANTOINE_C_MIN+' so that T + C stays positive across the −80…500 °C range the bubble- and dew-point solver searches. Below that the correlation crosses its pole inside the solver’s own bracket and the vapour pressure is meaningless.'});
+      const MW=need('MW','Molar mass');
+      if(MW!==null && !(MW>0)) out.push({kind:'input',field:'custom',msg:lbl+': molar mass must be positive.'});
+      need('Tb','Normal boiling point T_b');
+      if(d.lat!==undefined){ const la=need('lat','Latent heat of vaporisation');
+        if(la!==null && !(la>0)) out.push({kind:'input',field:'custom',msg:lbl+': latent heat of vaporisation must be positive.'}); }
+    });
+    const na=String(c.a.name===undefined?'':c.a.name).trim().toLowerCase();
+    const nb=String(c.b.name===undefined?'':c.b.name).trim().toLowerCase();
+    if(na && na===nb) out.push({kind:'input',field:'custom',msg:'The two components of a binary mixture must have different names.'});
+  }
+  /** Single gate in front of the engine. Runs before solve() on every render and
+   *  inside variant(), so no programmatic caller (sensitivity sweep, what-if
+   *  comparison, exam generator) can reach the equations with invalid input. */
+  validateInputs(s){
+    const E=[];
+    ['F','zF','P','R','q'].forEach(k=>this.checkNum(k,s[k],E));
+    this.checkNum('eff',s.eff,E);
+    if(s.calcMode==='rating'){ this.checkNum('Nspec',s.Nspec,E); this.checkNum('DF',s.DF,E); }
+    else { this.checkNum('xD',s.xD,E); this.checkNum('xB',s.xB,E); }
+    if(s.model==='alpha') this.checkNum('alphaC',s.alphaC,E);
+    if(s.mixKey==='custom') this.checkCustom(s,E);
+    else if(!Component.MIX[s.mixKey]) E.push({kind:'input',field:'mixKey',msg:'Unknown mixture selection “'+String(s.mixKey)+'”.'});
+    return {ok:E.length===0, errors:E};
+  }
+  kindOf(msg){
+    const h=Component.SOLVE_KIND.find(k=>k[0].test(msg));
+    return h ? h[1] : 'spec';
+  }
+  /** Live self-validation. Each row recomputes something the engine claims and
+   *  checks it against a closed form, an identity, or the engine's own internal
+   *  consistency — never against a value transcribed from a reference. Built
+   *  only when the Validation view is open, since it re-solves several cases. */
+  validationReport(s){
+    const rows=[], f=(v,d)=>this.f(v,d);
+    // okFlag true = pass, false = fail, null = not applicable here, which is
+    // reported as such and counted as neither. A skipped check must never be
+    // tallied as a passing one.
+    const row=(group,check,got,ref,err,tolTxt,okFlag,note)=>rows.push({
+      group,check,got,ref,err,tol:tolTxt,
+      status:okFlag===null?'—':(okFlag?'✓':'✗'), skipped:okFlag===null,
+      style:'font-variant-numeric:tabular-nums;'+(okFlag===null?'opacity:.75':(okFlag?'':'color:var(--color-accent-800);font-weight:700')),
+      note:note?(check+' — '+note):''});
+
+    // — closed-form limiting cases, exact under constant relative volatility —
+    const a=2.45, xD=0.95, xB=0.05, zF=0.5;
+    // Through variant(), so these clear the same validation gate as every other
+    // engine call and solve() keeps exactly two call sites.
+    const r=this.variant(s,{model:'alpha',alphaC:a,zF,xD,xB,q:1,R:2.0,
+      F:100,calcMode:'design',mixKey:'bt',P:101.325,eff:0.7,reb:'partial'});
+    const cfOk=r.ok&&isFinite(r.Nmin)&&isFinite(r.Rmin);
+    const NminA=Math.log((xD/(1-xD))*((1-xB)/xB))/Math.log(a);
+    const RminA=(xD/zF-a*(1-xD)/(1-zF))/(a-1);
+    if(cfOk) row('Closed form (α = 2.45, x_D = 0.95, x_B = 0.05, z_F = 0.5, q = 1)',
+      'Fenske N_min',r.Nmin.toFixed(10),NminA.toFixed(10),
+      Math.abs(r.Nmin-NminA).toExponential(2),'1e-12',Math.abs(r.Nmin-NminA)<=1e-12,
+      'N_min = ln[(x_D/(1−x_D))((1−x_B)/x_B)] / ln α');
+    if(cfOk) row('Closed form (α = 2.45, x_D = 0.95, x_B = 0.05, z_F = 0.5, q = 1)',
+      'Underwood R_min',r.Rmin.toFixed(10),RminA.toFixed(10),
+      Math.abs(r.Rmin-RminA).toExponential(2),'1e-12',Math.abs(r.Rmin-RminA)<=1e-12,
+      'R_min = [x_D/z_F − α(1−x_D)/(1−z_F)] / (α−1)');
+    const tot=this.variant(s,{model:'alpha',alphaC:a,zF,xD,xB,q:1,R:1e4,
+      F:100,calcMode:'design',mixKey:'bt',P:101.325,eff:0.7,reb:'partial'});
+    if(cfOk&&tot.ok) row('Closed form (α = 2.45, x_D = 0.95, x_B = 0.05, z_F = 0.5, q = 1)',
+      'Stages at total reflux',String(tot.N),String(Math.ceil(NminA)),'0','exact',
+      tot.N===Math.ceil(NminA),'stepping at R = 10⁴ must reach ⌈N_min⌉');
+
+    // — each pure component must return 1 atm at its own normal boiling point —
+    Object.keys(Component.COMP).forEach(k=>{
+      const c=Component.COMP[k], p=this.psat(c,c.Tb), d=Math.abs(p-101.325)/101.325;
+      row('Pure-component vapour pressure at T_b (must give 1 atm)',
+        c.name,p.toFixed(4)+' kPa','101.3250 kPa',(100*d).toFixed(3)+' %','1 %',d<0.01,
+        'Antoine constants are data, not a fitted result — this checks the arithmetic and the units');
+    });
+
+    // — thermodynamic self-consistency of the current mixture —
+    // The current inputs may be invalid (a negative α, malformed Antoine
+    // constants). Invalid input must not reach the equations here either, so
+    // this whole group is behind the same gate every engine call uses; when it
+    // does not pass, the group is declared skipped rather than shown failing.
+    const gate=this.validateInputs(s);
+    const MG='Current mixture, self-consistency';
+    if(!gate.ok)
+      row(MG,'Not applicable — current inputs are not valid','—','—','—','—',null,
+        'these checks describe the equilibrium model for the case on screen; with invalid input '+
+        'there is no such case. Fix the reported problems and the checks reappear.');
+    let dt=0;
+    if(gate.ok){
+    for(let i=1;i<40;i++){ const x=i/40;
+      dt=Math.max(dt,Math.abs(this.dewT(this.yEq(x,s),s)-this.bubbleT(x,s))); }
+    // This is a Raoult identity. Under the constant-α model the equilibrium
+    // curve is generated from α alone while the temperatures still come from
+    // the pair's Antoine bubble curve, so the two are decoupled by construction
+    // and the identity does not hold — checking it there would report a false
+    // failure. The identity that does hold under α is checked instead.
+    if(s.model==='raoult')
+      row(MG,'T_bubble(x) = T_dew(y*(x))',
+        dt.toExponential(2)+' °C','0','—','1e-10',dt<1e-10,
+        'the dew point of the vapour in equilibrium with a liquid is that liquid’s bubble point');
+    if(s.model==='alpha'){
+      const ac=this.num(s.alphaC), NC=this.curve(s).xs.length-1;
+      let ne=0, me=0;
+      for(let i=0;i<=NC;i++){ const x=i/NC;                 // exact at a node
+        ne=Math.max(ne,Math.abs(this.yEq(x,s)-ac*x/(1+(ac-1)*x))); }
+      for(let i=0;i<NC;i++){ const x=(i+0.5)/NC;            // worst case between nodes
+        me=Math.max(me,Math.abs(this.yEq(x,s)-ac*x/(1+(ac-1)*x))); }
+      row(MG,'y*(x) = αx / (1 + (α−1)x) at the nodes',
+        ne.toExponential(2),'0',ne.toExponential(2),'1e-12',ne<=1e-12,
+        'the tabulated curve must reproduce the constant-α relation it is built from');
+      row(MG,'Interpolation error between nodes',
+        me.toExponential(2),'0',me.toExponential(2),'1e-4',me<1e-4,
+        'the same linear-interpolation bound the Raoult curve is held to');
+      row(MG,'Temperatures are not consistent with α',
+        dt.toFixed(3)+' °C','—','—','disclosed',null,
+        'max |T_dew(y*(x)) − T_bubble(x)| over the composition range. Under this model temperatures '+
+        'are read from the selected pair’s Antoine bubble curve and do not depend on α at all, so they '+
+        'are a nominal overlay only. This is a stated limitation of the model, not a numerical error.');
+    }
+    const cp=this.compsOf(s); let ie=0;
+    if(cp&&cp[0]&&isFinite(this.num(cp[0].A))&&s.model==='raoult'){
+      for(let i=0;i<=200;i++){ const x=i/200, T=this.bubbleT(x,s);
+        ie=Math.max(ie,Math.abs(this.yEq(x,s)-x*this.psat(cp[0],T)/s.P)); }
+      row(MG,'Equilibrium interpolation error',
+        ie.toExponential(2),'0',ie.toExponential(2),'1e-4',ie<1e-4,
+        'the 241-node table interpolated against the Raoult expression it tabulates');
+    }
+    }
+
+    // — invariants that must hold for whatever case is loaded right now —
+    // The current case may be invalid — variant() returns a rejection instead of
+    // reaching the equations, exactly as every other caller does.
+    const cur=this.variant(s,{});
+    if(cur.ok&&cur.stages){
+      const mr=cur.R/(cur.R+1), br=cur.xD/(cur.R+1);
+      let step=0, opline=0;
+      cur.stages.forEach((st,i)=>{
+        step=Math.max(step,Math.abs(this.xEq(st.y,s)-st.x));
+        opline=Math.max(opline,Math.abs(st.yn-(st.rect?mr*st.x+br:cur.xB+cur.slopeS*(st.x-cur.xB))));
+      });
+      const G='Current case, engine invariants';
+      row(G,'Overall balance F = D + B',Math.abs(cur.F-(cur.D+cur.B)).toExponential(2),'0','—','1e-9',
+        Math.abs(cur.F-(cur.D+cur.B))<1e-9,'an identity: D and B are solved from it');
+      row(G,'Component balance',Math.abs(cur.F*cur.zF-(cur.D*cur.xD+cur.B*cur.xB)).toExponential(2),'0','—','1e-9',
+        Math.abs(cur.F*cur.zF-(cur.D*cur.xD+cur.B*cur.xB))<1e-9,'also an identity — it cannot fail, and validates nothing');
+      row(G,'Constant molar overflow V = (R+1)D',Math.abs(cur.V-(cur.R+1)*cur.D).toExponential(2),'0','—','1e-9',
+        Math.abs(cur.V-(cur.R+1)*cur.D)<1e-9,'');
+      row(G,'Stage liquid in equilibrium, x = x*(y)',step.toExponential(2),'0','—','1e-9',step<1e-9,
+        'every stage, checked against the equilibrium curve');
+      row(G,'Stage vapour on its operating line',opline.toExponential(2),'0','—','1e-9',opline<1e-9,'');
+      row(G,'Total condenser, y₁ = x_D',Math.abs(cur.stages[0].y-cur.xD).toExponential(2),'0','—','1e-12',
+        Math.abs(cur.stages[0].y-cur.xD)<1e-12,'');
+      row(G,'N_min ≤ N',f(cur.Nmin,3)+' ≤ '+cur.N,'—','—','—',cur.Nmin<=cur.N+1e-9,
+        'the Fenske minimum cannot exceed the stepped stage count');
+      row(G,'R > R_min',f(cur.R,3)+' > '+f(cur.Rmin,3),'—','—','—',cur.R>cur.Rmin-1e-12,'');
+    }
+    const failed=rows.filter(x=>x.status==='✗').length;
+    const skipped=rows.filter(x=>x.skipped).length, total=rows.length-skipped;
+    const tail=skipped?(', '+skipped+' not applicable'):'';
+    const groups=[]; rows.forEach(x=>{ let g=groups.find(y=>y.name===x.group);
+      if(!g){ g={name:x.group,rows:[]}; groups.push(g); } g.rows.push(x); });
+    return {groups,total,skipped,failed,
+      summary:(failed?('✗ '+failed+' of '+total+' checks failed'+tail)
+        :(total?('✓ all '+total+' checks pass'+tail):('— no checks apply'+tail))),
+      summaryStyle:'font-size:15px;font-family:var(--font-heading);padding:6px 11px;border:1px solid '+
+        (failed?'var(--color-accent-700)':'var(--color-accent)')+';color:var(--color-accent-800);background:color-mix(in srgb,var(--color-accent) 14%,transparent)'};
+  }
+  /** Splits what used to be a single "mass balance check" into the two things it
+   *  actually contains: the material balance (an identity — D and B are solved
+   *  from it, so it cannot fail and validates nothing) and the numerical residual
+   *  of the solve (which can fail, and in rating mode does). The identity is never
+   *  presented as a passed check. */
+  balanceReport(r,hasR){
+    const f=(v,d)=>this.f(v,d);
+    const box=(kind)=>'font-size:13px;font-family:var(--font-heading);padding:5px 9px;border:1px '+
+      (kind==='ok'?'solid var(--color-accent)':kind==='bad'?'solid var(--color-accent-700)':'dashed var(--color-divider)')+
+      ';color:'+(kind==='none'?'inherit':'var(--color-accent-800)')+
+      ';background:'+(kind==='none'?'transparent':'color-mix(in srgb,var(--color-accent) 14%,transparent)');
+    if(!hasR){
+      const rr=(r&&r.ratingResid!=null)? Math.abs(r.ratingResid).toExponential(3)+
+        '  (tolerance '+Component.RATING_TOL.toExponential(0)+' mole fraction \u2014 exceeded)' : '\u2014';
+      return {identityHead:'Material balance \u2014 identity',
+        identityNote:'No solution to report a balance for.',
+        total:'\u2014', comp:'\u2014',
+        convHead:'Numerical convergence',
+        convStatus:(r&&r.ratingResid!=null)?'\u26a0 NOT CONVERGED':'\u2014 no solution',
+        convStyle:box((r&&r.ratingResid!=null)?'bad':'none'),
+        residLabel:(r&&r.ratingResid!=null)?'Shooting residual |x_N \u2212 x_B|':'Residual',
+        residValue:rr,
+        residNote:(r&&r.ratingResid!=null)?'The stage count and the distillate cut cannot both be satisfied; see the message at the top of the screen.':''};
+    }
+    const b=r.bal;
+    const common={
+      identityHead:'Material balance \u2014 identity',
+      total:f(r.F,3)+' = '+f(r.D,3)+' + '+f(r.B,3),
+      comp:f(r.F*r.zF,3)+' = '+f(r.D*r.xD,3)+' + '+f(r.B*r.xB,3),
+      identityNote:'D and B are solved from these two equations, so the residuals ('+
+        b.fRes.toExponential(1)+' / '+b.cRes.toExponential(1)+' kmol/h) are zero by construction. '+
+        'This confirms the arithmetic, not the solution \u2014 it is not an independent check.'};
+    if(b.rating) return Object.assign({},common,{
+      convHead:'Numerical convergence \u2014 rating shooting solve',
+      convStatus:'\u2713 Converged',
+      convStyle:box('ok'),
+      residLabel:'Shooting residual |x_N \u2212 x_B|',
+      residValue:Math.abs(b.stepResid).toExponential(3)+'  (tolerance '+b.tol.toExponential(0)+' mole fraction)',
+      residNote:'x_N = '+b.xN.toFixed(6)+' is the liquid the '+f(r.N,0)+'th stage actually delivers; x_B = '+
+        r.xB.toFixed(6)+' is what the component balance requires. Agreement between the two is the real test.'});
+    return Object.assign({},common,{
+      convHead:'Numerical residual \u2014 stage-stepping discretisation',
+      convStatus:'Design mode \u2014 not an iterative solve',
+      convStyle:box('none'),
+      residLabel:'Terminal overshoot x_B \u2212 x_N',
+      residValue:b.stepResid.toExponential(3)+' mole fraction',
+      residNote:'Stepping stops on the first stage whose liquid falls at or below x_B, so the last stage overshoots the specification by this much. Stages are whole numbers: this is discretisation error, not a convergence failure.'});
   }
   sensLists(s){
     const ind=[['R','Reflux ratio R'],['zF','Feed composition z_F'],['q','Feed quality q'],['P','Pressure (kPa)'],['eff','Tray efficiency']]
@@ -1522,8 +1980,20 @@ class Component extends DCLogic {
     return {ind,dep};
   }
   extras(s,r,hasR){
-    const f=(v,d)=>this.f(v,d), S=Component, C=this.curve(s), MX=(x)=>this.MX(x), MY=(y)=>this.MY(y);
+    const f=(v,d)=>this.f(v,d), S=Component, MX=(x)=>this.MX(x), MY=(y)=>this.MY(y);
     const out={};
+    // When validation rejected the mixture data itself (malformed custom
+    // component, unknown mixture key) the equilibrium table cannot be built:
+    // compsOf/curve/alphaAt/tempAt would dereference missing records and throw
+    // into the catch in renderVals, silently stripping the whole view-model.
+    // Skip them and let the validation messages stand in for the diagrams.
+    const dataOk = !(r && r.invalid);
+    const C = dataOk ? this.curve(s) : {xs:[],ys:[],Ts:[],as:[]};
+    // Everything that stopped this run, in one list: pre-engine validation
+    // failures first, then whatever solve() rejected. Exports declare it so a
+    // downloaded report can never look like a completed calculation.
+    const runIssues = (((r&&r.vE)||[]).map(e=>({kind:e.kind,field:e.field,msg:e.msg})))
+      .concat((((r&&r.E)||[]).map(t=>({kind:this.kindOf(t),field:'',msg:t}))));
     const eqPts=[], bub=[], dew=[];
     let tmin=1e9,tmax=-1e9;
     for(let i=0;i<C.xs.length;i++){ if(C.Ts[i]<tmin) tmin=C.Ts[i]; if(C.Ts[i]>tmax) tmax=C.Ts[i]; }
@@ -1536,22 +2006,25 @@ class Component extends DCLogic {
     out.axTicks=[0,0.2,0.4,0.6,0.8,1].map(t=>({x:MX(t).toFixed(0),y:MY(t).toFixed(0),label:t.toFixed(1)}));
     out.tTicks=[0,1,2,3,4].map(i=>({y:(420-100*i).toFixed(0),label:(tmin+(tmax-tmin)*i/4).toFixed(1)}));
     out.isXY=s.vleShow==='xy'; out.isTXY=s.vleShow==='txy';
-    const [cA,cB]=this.compsOf(s);
-    out.compRows=[cA,cB].map((c,i)=>({name:c.name,role:i===0?'A — more volatile':'B — less volatile',
-      mw:c.MW.toFixed(2),tb:c.Tb.toFixed(1),ant:c.A.toFixed(4)+' / '+c.B.toFixed(2)+' / '+c.C.toFixed(2),lat:c.lat.toFixed(2),
+    const cPair = dataOk ? this.compsOf(s) : [{},{}];
+    // Uses the non-finite-safe formatter: malformed custom data must render as
+    // an em dash next to the validation message, never throw the whole view.
+    out.compRows=[cPair[0]||{},cPair[1]||{}].map((c,i)=>({name:c.name||'—',role:i===0?'A — more volatile':'B — less volatile',
+      mw:f(c.MW,2),tb:f(c.Tb,1),ant:f(c.A,4)+' / '+f(c.B,2)+' / '+f(c.C,2),lat:f(c.lat,2),
       cas:c.cas||'user data',rng:c.lo===undefined?'—':(c.lo+' to '+c.hi+' °C'),
-      chk:c.Tb===undefined?'—':(this.psat(c,c.Tb)/0.13332239).toFixed(1)+' mmHg at T_b'}));
+      chk:!isFinite(this.num(c.Tb))?'—':f(this.psat(c,c.Tb)/0.13332239,1)+' mmHg at T_b'}));
     const azm=Component.MIX[s.mixKey];
     out.azNote=(azm&&azm.az)? 'Azeotrope: x ≈ '+azm.az.x.toFixed(3)+' — '+azm.az.txt+'. Ordinary distillation cannot cross it.' : 'No azeotrope reported for this pair at ordinary pressures.';
     out.vleFacts=[
       {k:'Model',v:s.model==='raoult'?'Ideal VLE — Raoult\u2019s law with Antoine vapour pressures':'Constant relative volatility'},
       {k:'Pressure',v:f(s.P,1)+' kPa'},
-      {k:'\u03b1 at x=0.05 / 0.5 / 0.95',v:f(this.alphaAt(0.05,s),3)+' / '+f(this.alphaAt(0.5,s),3)+' / '+f(this.alphaAt(0.95,s),3)},
-      {k:'Boiling range at P',v:f(this.tempAt(1,s),1)+' \u00b0C (pure A) to '+f(this.tempAt(0,s),1)+' \u00b0C (pure B)'},
+      {k:'\u03b1 at x=0.05 / 0.5 / 0.95',v:dataOk? f(this.alphaAt(0.05,s),3)+' / '+f(this.alphaAt(0.5,s),3)+' / '+f(this.alphaAt(0.95,s),3) : '\u2014'},
+      {k:'Boiling range at P',v:dataOk? f(this.tempAt(1,s),1)+' \u00b0C (pure A) to '+f(this.tempAt(0,s),1)+' \u00b0C (pure B)' : '\u2014'},
       {k:'Azeotrope',v:out.azNote},
       {k:'Data source',v:Component.SOURCE}];
     out.vleHoverOn=!!s.vleHover;
-    if(s.vleHover){ const x=s.vleHover, y=this.yEq(x,s);
+    out.vleHoverOn = out.vleHoverOn && dataOk;
+    if(s.vleHover && dataOk){ const x=s.vleHover, y=this.yEq(x,s);
       out.vleHover={cx:MX(x).toFixed(1),cy:MY(y).toFixed(1),lx:Math.min(MX(x)+8,330).toFixed(1),
         label:'x = '+x.toFixed(3)+'   y* = '+y.toFixed(3)+'   T = '+this.tempAt(x,s).toFixed(1)+' \u00b0C   \u03b1 = '+this.alphaAt(x,s).toFixed(2)}; }
     else out.vleHover={cx:0,cy:0,lx:0,label:''};
@@ -1602,9 +2075,16 @@ class Component extends DCLogic {
       else this.setState({zF:Math.min(Math.max(x,+st.xB+0.005),+st.xD-0.005),whatIf:null});
     };
     out.runSteps=()=>{ if(this._t) clearInterval(this._t);
+      // Never start on state the gate rejects, and never keep ticking on it.
+      // The tick used to call solve() directly; its throw pre-empted
+      // clearInterval, so the interval raised on every tick indefinitely.
+      if(!this.validateInputs(this.state).ok){
+        this.flash('Fix the reported input problems before stepping the stages.'); return; }
       this.setState({anim:0});
-      this._t=setInterval(()=>{ const n=(this.state.anim||0)+1; const tot=(this.solve(this.state).stages||[]).length;
-        this.setState({anim:n}); if(n>=tot){ clearInterval(this._t); this._t=null; } },260); };
+      this._t=setInterval(()=>{ const n=(this.state.anim||0)+1;
+        const v=this.variant(this.state,{}), tot=v.ok?(v.stages||[]).length:0;
+        this.setState({anim:n});
+        if(!v.ok || n>=tot){ clearInterval(this._t); this._t=null; } },260); };
     out.stepOne=()=>this.setState({anim:(s.anim>=900?0:s.anim)+1});
     out.stepBack=()=>this.setState({anim:Math.max(0,(s.anim>=900?0:s.anim)-1)});
     out.stepAll=()=>{ if(this._t) clearInterval(this._t); this.setState({anim:999}); };
@@ -1617,8 +2097,8 @@ class Component extends DCLogic {
       s.calcMode==='design'?['Distillate spec x_D',f(s.xD,4)]:['Stages specified N',String(s.Nspec)],
       s.calcMode==='design'?['Bottoms spec x_B',f(s.xB,4)]:['Distillate cut D/F',f(s.DF,3)],
       ['Reflux ratio R',f(s.R,3)],['Overall efficiency',f(s.eff,2)],
-      ['Condenser',s.cond==='total'?'Total':'Partial'],['Reboiler',s.reb==='partial'?'Partial (kettle)':'Total'],
-      ['Internals',s.colType==='tray'?'Trays':'Packing (HETP equivalent)']].map(a=>({k:a[0],v:a[1]}));
+      ['Condenser','Total condenser \u2014 the only treatment this model implements'],['Reboiler',s.reb==='partial'?'Partial (kettle)':'Total'],
+      ['Internals','Trays \u2014 stagewise model; packed columns and HETP are not modelled']].map(a=>({k:a[0],v:a[1]}));
     out.calcRows=hasR?[['Distillate D',f(r.D,3)+' kmol/h'],['Bottoms B',f(r.B,3)+' kmol/h'],
       ['x_D',f(r.xD,5)],['x_B',f(r.xB,5)],['Recovery of light key',(100*r.rec).toFixed(2)+' %'],
       ['Heavy-key recovery in bottoms',(100*r.recB).toFixed(2)+' %'],
@@ -1632,18 +2112,32 @@ class Component extends DCLogic {
       ['Top / bottom temperature',f(r.Ttop,2)+' / '+f(r.Tbot,2)+' \u00b0C']].map(a=>({k:a[0],v:a[1]})):[];
     out.assumptions=['Steady-state operation','Binary mixture; the two components account for the whole stream',
       'Constant molar overflow in each section (equimolar latent heats)',
-      s.model==='raoult'?'Ideal vapour\u2013liquid equilibrium: Raoult\u2019s law with Antoine vapour pressures; ideal gas vapour phase':'Constant relative volatility independent of composition and temperature',
+      s.model==='raoult'?'Ideal vapour\u2013liquid equilibrium: Raoult\u2019s law with Antoine vapour pressures; ideal gas vapour phase':'Constant relative volatility independent of composition and temperature. Stage, top and bottom temperatures are still read from the selected pair\u2019s Antoine bubble-point curve and do not depend on \u03b1, so they are a nominal overlay and are not thermodynamically consistent with the \u03b1 in use \u2014 the mismatch reaches a few \u00b0C when \u03b1 differs from the pair\u2019s true value.',
       'Uniform column pressure — no tray pressure drop','Negligible heat loss to the environment',
       s.reb==='partial'?'Partial reboiler treated as one theoretical equilibrium stage':'Total reboiler contributes no equilibrium stage',
-      s.cond==='total'?'Total condenser — the distillate has the composition of the overhead vapour':'Partial condenser acts as one additional equilibrium stage',
+      'Total condenser only: the overhead vapour is condensed completely, so y\u2081 = x_D and the condenser is not an equilibrium stage. A partial condenser \u2014 which would contribute one additional equilibrium stage \u2014 is NOT modelled; the stage count is unchanged whatever condenser hardware a real column would use.',
       'Overall tray efficiency applied uniformly; Murphree efficiencies not resolved per tray',
+      'Tray column only: the stage calculation is internals-agnostic. Packed columns are NOT modelled \u2014 no HETP, packed height or transfer-unit (HTU/NTU) calculation is performed.',
       'Condenser and reboiler duties are latent-heat only; sensible heat, sub-cooling and feed pre-heat are excluded',
       'Column hydraulics (flooding, weeping, pressure drop, sizing) are outside this model'];
     out.exportCSV=()=>{
-      const rows=[['DISTILLEX simulation export'],['Generated',new Date().toISOString()],[],['USER INPUTS']]
+      const rows=[['DISTILLEX simulation export'],['Generated',new Date().toISOString()],
+        ['Run status',runIssues.length
+          ? 'REJECTED - no results were produced; the inputs below are the entries as submitted'
+          : 'completed']]
+        .concat(runIssues.map(e=>['  '+e.kind+' issue',e.msg]),[[],['USER INPUTS']])
         .concat(out.inputRows.map(a=>[a.k,a.v]),[[],['CALCULATED RESULTS']],out.calcRows.map(a=>[a.k,a.v]),
-        [[],['MASS BALANCE'],['F = D + B',hasR?f(r.F,4)+' = '+f(r.D,4)+' + '+f(r.B,4):'n/a'],
-         ['Residual',hasR?r.bal.fRes.toExponential(3):'n/a']],
+        [[],['MATERIAL BALANCE (identity - D and B are solved from it; not an independent check)'],
+         ['F = D + B',hasR?f(r.F,4)+' = '+f(r.D,4)+' + '+f(r.B,4):'n/a'],
+         ['F.zF = D.xD + B.xB',hasR?f(r.F*r.zF,4)+' = '+f(r.D*r.xD,4)+' + '+f(r.B*r.xB,4):'n/a'],
+         ['Identity residual overall / component (kmol/h)',hasR?r.bal.fRes.toExponential(3)+' / '+r.bal.cRes.toExponential(3):'n/a'],
+         [],['NUMERICAL CONVERGENCE'],
+         ['Solve mode',hasR?(r.bal.rating?'Rating - shooting on x_D':'Design - direct stage stepping'):'n/a'],
+         ['Terminal stage liquid x_N',hasR?r.bal.xN.toFixed(6):'n/a'],
+         [hasR&&r.bal.rating?'Shooting residual |x_N - x_B| (mole fraction)':'Terminal overshoot x_B - x_N (mole fraction)',
+          hasR?Math.abs(r.bal.stepResid).toExponential(3):'n/a'],
+         ['Convergence tolerance (mole fraction)',hasR?(r.bal.rating?r.bal.tol.toExponential(0):'n/a - design mode is not iterative'):'n/a'],
+         ['Converged',hasR?(r.bal.converged?'yes':'NO'):'n/a']],
         [[],['STAGE PROFILE'],['Stage','Section','x','y','T (C)','alpha','L','V']],
         (hasR?r.stages:[]).map(a=>[a.n,a.rect?'Rectifying':'Stripping',a.x.toFixed(5),a.y.toFixed(5),a.T.toFixed(2),a.a.toFixed(4),a.L.toFixed(2),a.V.toFixed(2)]),
         [[],['ASSUMPTIONS']],out.assumptions.map(a=>[a]));
@@ -1652,10 +2146,19 @@ class Component extends DCLogic {
     };
     out.exportJSON=()=>{
       this.download('distillex-results.json',JSON.stringify({generated:new Date().toISOString(),
+        run:{completed:runIssues.length===0,
+          issues:runIssues.map(e=>({kind:e.kind,field:e.field||undefined,message:e.msg}))},
         inputs:this.cfg(),model:s.model,assumptions:out.assumptions,
         results:hasR?{D:r.D,B:r.B,xD:r.xD,xB:r.xB,N:r.N,Nact:r.Nact,feedStage:r.feedStage,Rmin:r.Rmin,Nmin:r.Nmin,
           recovery:r.rec,Qc_MW:r.Qc,Qr_MW:r.Qr,L:r.L,V:r.V,Lbar:r.Lb,Vbar:r.Vb,Ttop:r.Ttop,Tbot:r.Tbot,
-          massBalanceResidual:{overall:r.bal.fRes,component:r.bal.cRes}}:null,
+          materialBalanceIdentity:{overall:r.bal.fRes,component:r.bal.cRes,
+            note:'D and B are solved from F = D + B and F.zF = D.xD + B.xB, so these residuals are zero by construction and are not an independent validation.'},
+          convergence:{mode:r.bal.rating?'rating-shooting':'design-stepping',
+            terminalStageLiquid_xN:r.bal.xN,
+            residual:r.bal.stepResid,
+            residualDefinition:r.bal.rating?'x_N - x_B (shooting residual)':'x_B - x_N (integer-stage terminal overshoot)',
+            toleranceMoleFraction:r.bal.rating?r.bal.tol:null,
+            converged:r.bal.converged}}:null,
         stages:hasR?r.stages.map(a=>({n:a.n,section:a.rect?'rectifying':'stripping',x:a.x,y:a.y,T:a.T,alpha:a.a,L:a.L,V:a.V})):[]
       },null,2),'application/json');
       this.flash('JSON exported');
@@ -1670,8 +2173,9 @@ class Component extends DCLogic {
       const ind=L.ind.some(a=>a[0]===s.sens.ind)?s.sens.ind:L.ind[0][0];
       const dep=L.dep.some(a=>a[0]===s.sens.dep)?s.sens.dep:L.dep[0][0];
       const n=Math.max(3,Math.min(60,Math.round(+s.sens.n))), lo=+s.sens.min, hi=+s.sens.max;
+      const rangeOk=Number.isFinite(lo)&&Number.isFinite(hi);
       const pts=[]; let fails=0;
-      for(let i=0;i<n;i++){
+      for(let i=0;rangeOk&&i<n;i++){
         const val=lo+(hi-lo)*i/(n-1);
         const v=this.variant(s,{[ind]:ind==='Nspec'?Math.round(val):val});
         if(!v.ok){ fails++; continue; }
@@ -1700,8 +2204,10 @@ class Component extends DCLogic {
           ' moves from '+a[1].toFixed(4)+' to '+b[1].toFixed(4)+
           (isFinite(pct)?' ('+(pct>=0?'+':'')+pct.toFixed(1)+'%)':'')+'. The response is '+
           (mono?(dir>0?'monotonically increasing':(dir<0?'monotonically decreasing':'flat')):'non-monotonic over this range')+'.'+
-          (fails?' '+fails+' of '+n+' points gave no feasible solution and were omitted.':'');
-      } else out.sensNote='No feasible points in this range — narrow the range or change the specification.';
+          (fails?' '+fails+' of '+n+' points were invalid or infeasible and were omitted.':'');
+      } else out.sensNote = !rangeOk
+        ? 'Sensitivity range must be numeric: enter finite values for the start and end of the sweep.'
+        : 'No valid or feasible points in this range — narrow the range or change the specification.';
       out.sensCSV=()=>{ this.download('distillex-sensitivity.csv',
         [out.sensXLabel+','+out.sensYLabel].concat(pts.map(p=>p[0].toFixed(6)+','+p[1].toFixed(6))).join('\n'),'text/csv');
         this.flash('Sensitivity data exported'); };
@@ -1715,7 +2221,7 @@ class Component extends DCLogic {
     // ---- theory ----
     out.theoryItems=S.THEORY.map(t=>({k:t[0],title:t[1],body:t[2],open:s.theoryOpen===t[0],
       bodyStyle:'margin:0;font-size:13.5px;line-height:1.6;max-width:82ch;display:'+(s.theoryOpen===t[0]?'block':'none'),
-      headStyle:'display:flex;gap:10px;align-items:baseline;cursor:pointer;padding:9px 0;border:0;background:transparent;width:100%;text-align:left;font-family:var(--font-heading);font-size:19px;color:'+(s.theoryOpen===t[0]?'var(--color-accent)':'var(--color-text)'),
+      headStyle:'display:flex;gap:10px;align-items:baseline;cursor:pointer;padding:9px 0;border:0;background:transparent;width:100%;text-align:left;font-family:var(--font-heading);font-size:19px;color:'+(s.theoryOpen===t[0]?'var(--dx-ink-accent)':'var(--color-text)'),
       no:String(S.THEORY.indexOf(t)+1).padStart(2,'0')}));
     out.setTheory=(e)=>this.setState({theoryOpen:e.currentTarget.dataset.k});
 
@@ -1783,12 +2289,12 @@ class Component extends DCLogic {
       : s.mode==='advanced'
       ? {title:'Model & numerics',lines:[
           s.model==='raoult'? 'VLE: y_A = x_A·P_A^sat(T)/P with log₁₀P^sat[mmHg] = A − B/(T+C); the stage temperature is the bubble point of its liquid.' : 'VLE: y = αx/(1+(α−1)x) with α held constant; temperatures are still bubble points from the Antoine data.',
-          'Bubble/dew points: bisection over −80…500 °C, 70 iterations (≈4×10⁻¹⁶ °C interval).',
+          'Bubble/dew points: bisection over −80…500 °C. 70 halvings take the 580 °C bracket to ~5×10⁻¹⁹ °C, far below what a double can represent, so the root is resolved to the floating-point limit (~10⁻¹³ °C at column temperatures).',
           'Equilibrium curve tabulated at 241 points; y*(x) and x*(y) obtained by linear interpolation on that table (error < 10⁻⁴ mole fraction).',
           'Operating lines from constant molar overflow; q-line intersection by direct solution, or bisection when the q-line is not vertical.',
-          'Minimum reflux: q-line pinch plus a 60-point scan for a tangent pinch; the larger requirement governs.',
-          s.calcMode==='rating'? 'Rating mode: shooting on x_D with 70 bisection steps; the residual is the N-th stage liquid composition minus the balance-implied x_B.' : 'Design mode: direct stage stepping, terminated when x ≤ x_B or when the step makes no downward progress.',
-          hasR? 'Mass-balance residuals: overall '+r.bal.fRes.toExponential(2)+' kmol/h, component '+r.bal.cRes.toExponential(2)+' kmol/h against a 10⁻⁶ tolerance.' : 'No converged solution to report residuals for.']}
+          'Minimum reflux: q-line pinch plus a scan of 59 interior points for a tangent pinch; the larger requirement governs.',
+          s.calcMode==='rating'? 'Rating mode: shooting on x_D with 70 bisection steps; the residual is the N-th stage liquid composition minus the balance-implied x_B, and the solve is rejected unless |x_N − x_B| ≤ 10⁻⁴ mole fraction.' : 'Design mode: direct stage stepping, terminated when x ≤ x_B or when the step makes no downward progress. Not an iterative solve, so there is nothing to converge.',
+          hasR? 'The material balance is an identity here — D and B are solved from it, so its residuals are zero by construction and check nothing. The residual that carries information is '+(r.bal.rating? 'the rating shooting residual |x_N − x_B| = '+Math.abs(r.bal.stepResid).toExponential(2)+' against a 10⁻⁴ mole-fraction tolerance.' : 'the terminal overshoot x_B − x_N = '+r.bal.stepResid.toExponential(2)+' mole fraction, which is integer-stage discretisation error.') : 'No converged solution to report residuals for.']}
       : {title:'Engineering summary',lines:[
           hasR? 'Internal traffic: L = '+f(r.L,1)+', V = '+f(r.V,1)+', L̄ = '+f(r.Lb,1)+', V̄ = '+f(r.Vb,1)+' kmol/h.' : 'No converged solution.',
           hasR? 'Duties: condenser '+f(r.Qc,3)+' MW, reboiler '+f(r.Qr,3)+' MW (latent heat only).' : '',
@@ -1796,9 +2302,16 @@ class Component extends DCLogic {
           hasR? 'Volatility: α = '+f(r.aTop,2)+' at the top, '+f(r.aBot,2)+' at the bottom, mean '+f(r.aAvg,2)+'.' : ''].filter(Boolean)};
     out.modeTitle=mp.title; out.modeLines=mp.lines;
     out.isCustom=s.mixKey==='custom';
-    out.cust={aName:s.custom.a.name,aA:s.custom.a.A,aB:s.custom.a.B,aC:s.custom.a.C,aMW:s.custom.a.MW,aTb:s.custom.a.Tb,
-              bName:s.custom.b.name,bA:s.custom.b.A,bB:s.custom.b.B,bC:s.custom.b.C,bMW:s.custom.b.MW,bTb:s.custom.b.Tb};
+    // The editor must still render when the stored custom record is malformed,
+    // otherwise the user cannot see or repair the values validation rejected.
+    const cu=(s.custom&&typeof s.custom==='object')?s.custom:{}, cuA=cu.a||{}, cuB=cu.b||{};
+    out.cust={aName:cuA.name,aA:cuA.A,aB:cuA.B,aC:cuA.C,aMW:cuA.MW,aTb:cuA.Tb,
+              bName:cuB.name,bA:cuB.A,bB:cuB.B,bC:cuB.C,bMW:cuB.MW,bTb:cuB.Tb};
     out.setCust=(e)=>{const t=e.target; this.setCustom(t.dataset.side,t.dataset.f,t.value);};
+    out.isValidate=s.view==='validate';
+    // Re-solves several cases, so it is built only when the view is open.
+    out.val=out.isValidate? this.validationReport(s)
+      : {groups:[],total:0,failed:0,summary:'',summaryStyle:''};
     out.isVLE=s.view==='vle'; out.isMT=s.view==='mt'; out.isResults=s.view==='results';
     out.isSens=s.view==='sens'; out.isTheory=s.view==='theory'; out.isExam=s.view==='exam'; out.isAbout=s.view==='about';
     out.setVleShow=(e)=>this.setState({vleShow:e.target.value});
