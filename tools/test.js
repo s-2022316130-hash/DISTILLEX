@@ -334,6 +334,82 @@ function suiteDisclosures() {
      'that caveat is not shown under the Raoult model, where it does not apply');
 }
 
+/* ── 12. deployment security headers ───────────────────────────────────── */
+function suiteHeaders() {
+  const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'vercel.json'), 'utf8'));
+  const rules = cfg.headers || [];
+  const all = rules.filter(r => r.source === '/(.*)');
+  ok(all.length === 1, 'exactly one catch-all header rule covers every path');
+  if (!all.length) return;
+  const H = {};
+  for (const h of all[0].headers) H[h.key.toLowerCase()] = h.value;
+
+  for (const [k, want] of [
+    ['x-content-type-options', 'nosniff'],
+    ['x-frame-options', 'SAMEORIGIN'],
+    ['referrer-policy', 'no-referrer'],
+    ['cross-origin-opener-policy', 'same-origin'],
+    ['cross-origin-resource-policy', 'same-origin'],
+  ]) ok(H[k] === want, k + ' is ' + want, String(H[k]));
+  ok(/^max-age=\d+/.test(H['strict-transport-security'] || ''),
+     'HSTS is set with a max-age', H['strict-transport-security']);
+  ok(/camera=\(\)/.test(H['permissions-policy'] || '') && /geolocation=\(\)/.test(H['permissions-policy'] || ''),
+     'Permissions-Policy denies the sensor and capture features the app never uses');
+
+  const csp = H['content-security-policy'] || '';
+  const dir = {};
+  csp.split(';').map(d => d.trim()).filter(Boolean).forEach(d => {
+    const p = d.split(/\s+/); dir[p[0]] = p.slice(1);
+  });
+  const has = (d, v) => (dir[d] || []).indexOf(v) >= 0;
+
+  // locked down
+  ok(has('default-src', "'self'"), "CSP default-src is 'self'");
+  ok(has('object-src', "'none'"), "CSP object-src is 'none'");
+  ok(has('base-uri', "'self'"), "CSP base-uri is 'self'");
+  ok(has('form-action', "'none'"), "CSP form-action is 'none'");
+  ok(!!dir['frame-ancestors'], 'CSP constrains frame-ancestors', String(dir['frame-ancestors']));
+  ok(!!dir['connect-src'] && !has('connect-src', '*'), 'CSP constrains connect-src', String(dir['connect-src']));
+
+  // nothing may open the policy back up
+  for (const d of Object.keys(dir)) {
+    ok(dir[d].indexOf('*') < 0, 'CSP ' + d + ' has no wildcard source');
+    ok(dir[d].indexOf('http:') < 0 && dir[d].indexOf('https:') < 0,
+       'CSP ' + d + ' allows no scheme-wide origin');
+  }
+  ok(!has('script-src', 'data:'), "CSP script-src does not allow data: (a script-injection sink)");
+
+  // Each risky allowance must still be *needed*. The runtime is gzipped inside
+  // the manifest, so it is decompressed and read rather than taken on trust:
+  // if a future runtime stops using the Function constructor, 'unsafe-eval'
+  // has to come out of the policy and this check is what says so.
+  const idx = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const man = JSON.parse(/<script type="__bundler\/manifest">\s*([\s\S]*?)\s*<\/script>/.exec(idx)[1]);
+  const zlib = require('zlib');
+  let runtime = '', fonts = 0;
+  for (const e of Object.values(man)) {
+    if (/^font\//.test(e.mime)) { fonts++; continue; }
+    if (!/javascript/.test(e.mime)) continue;
+    const raw = Buffer.from(e.data, 'base64');
+    const txt = (e.compressed ? zlib.gunzipSync(raw) : raw).toString('utf8');
+    if (/new Function\(/.test(txt)) runtime += txt;
+  }
+  ok(runtime.length > 0 && /new Function\(/.test(runtime),
+     "the shipped runtime really does use the Function constructor, so 'unsafe-eval' is required");
+  ok(has('script-src', "'unsafe-eval'"), "CSP script-src allows 'unsafe-eval' (the runtime needs it)");
+  ok(has('script-src', "'unsafe-inline'"),
+     "CSP script-src allows 'unsafe-inline' (the loader re-creates inline scripts)");
+  ok(has('script-src', 'blob:'), 'CSP script-src allows blob: (bundled assets are minted as blobs)');
+  ok(fonts > 0 && has('font-src', 'data:'),
+     'CSP font-src allows data: (the ' + fonts + ' bundled fonts are inlined as data URIs)');
+  ok(has('img-src', 'data:'), 'CSP img-src allows data: (the favicon is an inline SVG)');
+  ok(has('style-src', "'unsafe-inline'"),
+     "CSP style-src allows 'unsafe-inline' (the design system and markup use inline styles)");
+  // and nothing beyond what was shown to be needed
+  ok(!has('connect-src', 'blob:') && !has('img-src', 'blob:'),
+     'no blob: allowance is kept where the app was shown not to need one');
+}
+
 /* ── 11. text contrast (WCAG 1.4.3) ────────────────────────────────────── */
 function suiteContrast() {
   // The palette the page actually ships: the light tokens live in the inlined
@@ -410,7 +486,8 @@ const SUITES = {
   identity: suiteIdentity, analytic: suiteAnalytic, 'pure-component': suitePureComponent,
   thermo: suiteThermo, invariants: suiteInvariants, matrix: suiteMatrix,
   validation: suiteValidation, 'save-load': suiteSaveLoad,
-  disclosures: suiteDisclosures, contrast: suiteContrast, build: suiteBuild,
+  disclosures: suiteDisclosures, contrast: suiteContrast,
+  headers: suiteHeaders, build: suiteBuild,
 };
 
 function main() {

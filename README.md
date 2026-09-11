@@ -159,7 +159,7 @@ node tools/test.js --list     # list the suites
 node tools/test.js thermo     # run selected suites
 ```
 
-170 checks in eleven suites, standard library only, no dependencies. The suite loads the calculation
+217 checks in twelve suites, standard library only, no dependencies. The suite loads the calculation
 engine straight out of `src/DISTILLEX.dc.html`, so it tests the same code the page ships.
 
 | Suite | What it anchors against |
@@ -174,6 +174,7 @@ engine straight out of `src/DISTILLEX.dc.html`, so it tests the same code the pa
 | `save-load` | a configuration must round-trip exactly and reproduce the same solution |
 | `disclosures` | every numeric the interface states about its own method is re-read from the code |
 | `contrast` | the palette the page ships must clear WCAG 1.4.3 (4.5:1) wherever the accent carries text, in both themes, and no text may fall back to the raw accent |
+| `headers` | the deployed security headers, and every CSP allowance still being one the shipped runtime demonstrably needs |
 | `build` | `index.html` must be reproducible from `src/` |
 
 The `contrast` suite checks the palette and how the source uses it, which is what can be
@@ -196,6 +197,61 @@ is and is not checked.
 4. **Deploy**, then open the generated `*.vercel.app` URL.
 5. To update the live site, commit and push to the tracked branch — Vercel rebuilds and
    redeploys automatically. Pull requests get their own preview URLs.
+
+## Security headers
+
+`vercel.json` sets a catch-all header rule for every path:
+
+| Header | Value |
+| --- | --- |
+| `Content-Security-Policy` | see below |
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `SAMEORIGIN` |
+| `Referrer-Policy` | `no-referrer` — the page makes no outbound request and has no external link, so no referrer ever needs to leave |
+| `Permissions-Policy` | camera, microphone, geolocation, USB, payment, sensors and the rest denied outright |
+| `Cross-Origin-Opener-Policy` | `same-origin` |
+| `Cross-Origin-Resource-Policy` | `same-origin` |
+| `Strict-Transport-Security` | `max-age=31536000` (one year, no `includeSubDomains`, not preloaded) |
+
+The CSP is:
+
+```
+default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:;
+style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;
+connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none';
+frame-src 'none'; worker-src 'none'; frame-ancestors 'self'
+```
+
+Three allowances are wider than one would like, and each is forced by how the
+page is published rather than chosen:
+
+- `'unsafe-eval'` — the component runtime executes the page's logic through the
+  `Function` constructor. Removing it leaves the application unable to start.
+- `'unsafe-inline'` for scripts — the loader unpacks the bundle and re-creates
+  every script element inline. Removing it leaves nothing rendered at all.
+- `blob:` in `script-src` — React, ReactDOM and the runtime are unpacked from
+  the manifest into blob URLs. Removing it breaks the application.
+
+`data:` is needed by `font-src` for the fifteen inlined font faces and by
+`img-src` for the inline SVG favicon; removing the first silently drops the
+page to fallback typography. Each of these was confirmed by serving the real
+`vercel.json` locally, removing one allowance at a time and observing what
+broke. `blob:` is deliberately **not** granted to `connect-src` or `img-src`,
+where the application was shown not to need it.
+
+Everything else is closed: no wildcard or scheme-wide source anywhere, objects
+and forms denied, `base-uri` pinned, and cross-origin framing refused. Verified
+in a browser: an injected external script, an `<object>`, a `<base>` hijack, a
+cross-origin `fetch`, a cross-origin form submission and a cross-origin embed
+are all blocked.
+
+**What this does not do.** A CSP carrying `'unsafe-inline'` and `'unsafe-eval'`
+does not stop script injection — it cannot, given how the bundle loads. Its
+value here is confining the page to its own origin: no third-party script, no
+exfiltration endpoint, no injected form target, no clickjacking frame. The
+application has no server, no accounts, no cookies and no stored data, so there
+is no session to steal; these headers reduce the blast radius of a compromised
+*asset*, not of injected script.
 
 ## Roadmap
 
