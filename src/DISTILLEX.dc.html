@@ -1549,7 +1549,11 @@ class Component extends DCLogic {
         rd.readAsText(fl); e.target.value='';},
       ...(()=>{ try { return this.extras(s,r,hasR); } catch(err){ console.error('DISTILLEX extras error: '+(err&&err.message)+' | '+(err&&err.stack)); return {}; } })(),
       runWhatIf:()=>{
-        const key=s.wiVar, to=+s.wiTo, before=this.solve(s), after=this.variant(s,{[key]:to});
+        // Both sides of the comparison must clear the same gate. The before
+        // side used to call solve() directly, so invalid state reached the
+        // equations from here and could throw out of the click handler.
+        const key=s.wiVar, to=+s.wiTo, before=this.variant(s,{}), after=this.variant(s,{[key]:to});
+        if(before.invalid){ this.flash('Current inputs are not valid \u2014 fix the reported problems before comparing.'); return; }
         if(!after.ok){ this.flash('That change gives no feasible solution: '+(after.E[0]||'')); return; }
         this.setState({whatIf:{key,from:+s[key],to,before,after,note:this.wiNote(key,before,after)}});
       },
@@ -1818,9 +1822,16 @@ class Component extends DCLogic {
       else this.setState({zF:Math.min(Math.max(x,+st.xB+0.005),+st.xD-0.005),whatIf:null});
     };
     out.runSteps=()=>{ if(this._t) clearInterval(this._t);
+      // Never start on state the gate rejects, and never keep ticking on it.
+      // The tick used to call solve() directly; its throw pre-empted
+      // clearInterval, so the interval raised on every tick indefinitely.
+      if(!this.validateInputs(this.state).ok){
+        this.flash('Fix the reported input problems before stepping the stages.'); return; }
       this.setState({anim:0});
-      this._t=setInterval(()=>{ const n=(this.state.anim||0)+1; const tot=(this.solve(this.state).stages||[]).length;
-        this.setState({anim:n}); if(n>=tot){ clearInterval(this._t); this._t=null; } },260); };
+      this._t=setInterval(()=>{ const n=(this.state.anim||0)+1;
+        const v=this.variant(this.state,{}), tot=v.ok?(v.stages||[]).length:0;
+        this.setState({anim:n});
+        if(!v.ok || n>=tot){ clearInterval(this._t); this._t=null; } },260); };
     out.stepOne=()=>this.setState({anim:(s.anim>=900?0:s.anim)+1});
     out.stepBack=()=>this.setState({anim:Math.max(0,(s.anim>=900?0:s.anim)-1)});
     out.stepAll=()=>{ if(this._t) clearInterval(this._t); this.setState({anim:999}); };
