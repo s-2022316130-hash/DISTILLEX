@@ -26,6 +26,19 @@
   .dx-dark { --color-bg:#101418; --color-surface:#181d23; --color-text:#e4e9ee; --color-accent:#7fa8d1; --color-divider: color-mix(in srgb, #e4e9ee 20%, transparent);
     --color-accent-100:#1b2836; --color-accent-200:#22344a; --color-accent-800:#bfd6ee; --color-accent-700:#a8c6e4; --color-neutral-100:#1b2026; --color-neutral-800:#cdd4db;
     --shadow-sm:0 1px 2px rgba(0,0,0,.5); --shadow-md:0 3px 10px rgba(0,0,0,.55); --shadow-lg:0 12px 32px rgba(0,0,0,.6); }
+  /* WCAG 1.4.3. The light accent #5980a6 is 3.71:1 on the page background and
+     3.42:1 on a card — below the 4.5:1 required of body-size text, and it also
+     sat behind button labels at the same ratio. It is unchanged for borders,
+     diagram strokes, slider thumbs and fills, which are non-text and need only
+     3:1 (1.4.11), and one step further down the same ramp is used wherever the
+     accent carries text or sits behind it. The dark palette already clears
+     4.5:1, so --dx-ink-accent is the dark accent itself and nothing shifts. */
+  :root { --dx-ink-accent: var(--color-accent-700); }
+  .dx-dark { --dx-ink-accent: var(--color-accent); }
+  a, .btn-ghost, .card-kicker, .tag-outline { color: var(--dx-ink-accent); }
+  .nav a:hover, .nav a[aria-current='page'] { color: var(--dx-ink-accent); }
+  .btn-primary { background: var(--dx-ink-accent); border-color: var(--dx-ink-accent); }
+  .seg-opt:has(input:checked) { background: var(--dx-ink-accent); }
   .dx-grid3 { display:grid; grid-template-columns:minmax(0,320px) minmax(0,1fr) minmax(0,300px); gap:14px; align-items:start }
   .dx-grid2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; align-items:start }
   .dx-grid3b { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; align-items:start }
@@ -87,7 +100,7 @@
 
   <div class="dx-hero">
     <div>
-      <div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-accent);margin-bottom:18px">Separation processes · Unit operations laboratory</div>
+      <div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dx-ink-accent);margin-bottom:18px">Separation processes · Unit operations laboratory</div>
       <h1 style="font-size:clamp(40px,11vw,76px);letter-spacing:.02em;margin:0 0 8px;line-height:.98">DISTILLEX</h1>
       <h3 style="font-weight:400;font-size:26px;margin:0 0 18px;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Interactive Fractional Distillation Laboratory</h3>
       <p style="max-width:52ch;font-size:16px;color:color-mix(in srgb,var(--color-text) 72%,transparent);text-wrap:pretty">Understand separation by controlling the column yourself. Explore vapour–liquid equilibrium, column operation, stagewise separation and process design — every number on screen is computed in your browser from the thermodynamic model you select.</p>
@@ -195,7 +208,7 @@
         <div style="display:flex;flex-direction:column;gap:14px">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Mixture &amp; model</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Mixture &amp; model</h6>
             <div class="field">
               <label for="dx-mix">Binary mixture</label>
               <select class="input" id="dx-mix" value="{{ v.mixKey }}" data-k="mixKey" onChange="{{ setStr }}">
@@ -227,7 +240,7 @@
 
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Feed conditions</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Feed conditions</h6>
             <div class="dx-grid2" style="gap:8px">
               <div class="field"><label for="dx-F">Flowrate F — kmol/h</label><input class="input" id="dx-F" type="number" min="0.1" step="1" value="{{ v.F }}" data-k="F" onChange="{{ setNum }}"></div>
               <div class="field"><label for="dx-Tf">Feed pressure — kPa</label><input class="input" id="dx-Tf" type="number" min="1" step="1" value="{{ v.P }}" disabled="{{ true }}"></div>
@@ -245,15 +258,15 @@
 
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">{{ modeTitle }}</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">{{ modeTitle }}</h6>
             <sc-for list="{{ modeLines }}" as="ln" hint-placeholder-count="4">
-              <div style="display:flex;gap:8px;font-size:12px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 78%,transparent)"><span style="color:var(--color-accent)">—</span><span>{{ ln }}</span></div>
+              <div style="display:flex;gap:8px;font-size:12px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 78%,transparent)"><span style="color:var(--dx-ink-accent)">—</span><span>{{ ln }}</span></div>
             </sc-for>
           </section>
 
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Specification</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Specification</h6>
             <div class="seg" style="width:100%">
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxcalc" value="design" checked="{{ isDesign }}" data-k="calcMode" onChange="{{ setStr }}"><span>Design</span></label>
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxcalc" value="rating" checked="{{ isRating }}" data-k="calcMode" onChange="{{ setStr }}"><span>Rating</span></label>
@@ -295,7 +308,7 @@
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-              <h6 style="margin:0;color:var(--color-accent)">Fractionating column</h6>
+              <h6 style="margin:0;color:var(--dx-ink-accent)">Fractionating column</h6>
               <span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ r.colCaption }}</span>
               <button class="btn btn-secondary dx-noprint" onClick="{{ explainToggle }}" style="margin-left:auto;min-height:30px">{{ explainLabel }}</button>
             </div>
@@ -377,7 +390,7 @@
         <div style="display:flex;flex-direction:column;gap:14px">
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Live results</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Live results</h6>
             <sc-for list="{{ liveRows }}" as="row" hint-placeholder-count="8">
               <div style="{{ row.style }}">
                 <span style="font-size:12.5px;color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ row.k }}</span>
@@ -388,7 +401,7 @@
 
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Material balance &amp; convergence</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Material balance &amp; convergence</h6>
             <div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityHead }}</div>
             <div style="font-size:11.5px;font-variant-numeric:tabular-nums;line-height:1.7;color:color-mix(in srgb,var(--color-text) 75%,transparent)">
               <div>F = D + B → {{ mb.total }}</div>
@@ -403,7 +416,7 @@
 
           <section class="card blueprint dx-noprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">What happens if?</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">What happens if?</h6>
             <div style="display:flex;gap:6px">
               <select class="input" value="{{ v.wiVar }}" data-k="wiVar" onChange="{{ setStr }}" style="flex:1" aria-label="Variable to change">
                 <sc-for list="{{ wiOptions }}" as="o" hint-placeholder-count="5">
@@ -438,7 +451,7 @@
       <section class="card blueprint" style="padding:14px;gap:10px;margin-top:14px">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-          <h6 style="margin:0;color:var(--color-accent)">Stage profiles</h6>
+          <h6 style="margin:0;color:var(--dx-ink-accent)">Stage profiles</h6>
           <span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Stage 1 = top tray · stage {{ r.N }} = reboiler</span>
         </div>
         <div class="dx-grid2" style="gap:14px">
@@ -471,7 +484,7 @@
         <div style="display:flex;flex-direction:column;gap:14px">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Column configuration</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Column configuration</h6>
             <div class="field">
               <label>Internals</label>
               <div class="input" style="display:flex;align-items:center;background:transparent;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Trays — stagewise model</div>
@@ -499,7 +512,7 @@
           </section>
           <section class="card blueprint dx-noprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">View</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">View</h6>
             <div class="seg" style="width:100%">
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxview" value="stages" checked="{{ isStageView }}" data-k="colView" onChange="{{ setStr }}"><span>Stage table</span></label>
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxview" value="industrial" checked="{{ isIndView }}" data-k="colView" onChange="{{ setStr }}"><span>Industrial</span></label>
@@ -511,7 +524,7 @@
           <sc-if value="{{ isStageView }}">
             <section class="card blueprint" style="padding:14px;gap:8px">
               <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              <h6 style="margin:0;color:var(--color-accent)">Stage-by-stage results</h6>
+              <h6 style="margin:0;color:var(--dx-ink-accent)">Stage-by-stage results</h6>
               <div style="overflow:auto;max-height:620px">
                 <table class="table">
                   <thead><tr><th>Stage</th><th>Section</th><th>x (liquid)</th><th>y (vapour)</th><th>T °C</th><th>α local</th><th>L kmol/h</th><th>V kmol/h</th></tr></thead>
@@ -527,7 +540,7 @@
           <sc-if value="{{ isIndView }}">
             <section class="card blueprint" style="padding:14px;gap:10px">
               <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              <div style="display:flex;align-items:baseline;gap:10px"><h6 style="margin:0;color:var(--color-accent)">Industrial flowsheet</h6><span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Click an item for its engineering information</span></div>
+              <div style="display:flex;align-items:baseline;gap:10px"><h6 style="margin:0;color:var(--dx-ink-accent)">Industrial flowsheet</h6><span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Click an item for its engineering information</span></div>
               <svg viewBox="0 0 900 420" style="width:100%;height:auto" role="img" aria-label="Process flow diagram of the distillation unit">
                 <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1"><path d="M0 60 H900 M0 140 H900 M0 220 H900 M0 300 H900 M0 380 H900 M100 0 V420 M300 0 V420 M500 0 V420 M700 0 V420"></path></g>
                 <defs><marker id="dxA2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--color-accent)"></path></marker></defs>
@@ -563,7 +576,7 @@
         <div style="display:flex;flex-direction:column;gap:14px">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Equilibrium parameters</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Equilibrium parameters</h6>
             <div class="field">
               <label for="dx-vmix">Binary mixture</label>
               <select class="input" id="dx-vmix" value="{{ v.mixKey }}" data-k="mixKey" onChange="{{ setStr }}">
@@ -593,7 +606,7 @@
           <sc-if value="{{ isCustom }}">
             <section class="card blueprint" style="padding:14px;gap:10px">
               <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              <h6 style="margin:0;color:var(--color-accent)">Custom binary — Antoine data</h6>
+              <h6 style="margin:0;color:var(--dx-ink-accent)">Custom binary — Antoine data</h6>
               <div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">log₁₀ P<sup>sat</sup>[mmHg] = A − B/(T[°C] + C). Component A must be the more volatile one.</div>
               <div class="dx-grid2" style="gap:8px">
                 <div class="field"><label>Name A</label><input class="input" value="{{ cust.aName }}" data-side="a" data-f="name" onChange="{{ setCust }}"></div>
@@ -614,7 +627,7 @@
 
           <section class="card blueprint" style="padding:14px;gap:6px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Model facts</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Model facts</h6>
             <sc-for list="{{ vleFacts }}" as="fct" hint-placeholder-count="5">
               <div style="display:flex;flex-direction:column;gap:1px;padding:4px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 7%,transparent)">
                 <span style="font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ fct.k }}</span>
@@ -628,7 +641,7 @@
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <h6 style="margin:0;color:var(--color-accent)">Vapour–liquid equilibrium</h6>
+              <h6 style="margin:0;color:var(--dx-ink-accent)">Vapour–liquid equilibrium</h6>
               <div class="seg" style="margin-left:auto">
                 <label class="seg-opt"><input type="radio" name="dxvle" value="xy" checked="{{ isXY }}" onChange="{{ setVleShow }}"><span>x–y diagram</span></label>
                 <label class="seg-opt"><input type="radio" name="dxvle" value="txy" checked="{{ isTXY }}" onChange="{{ setVleShow }}"><span>T–x–y diagram</span></label>
@@ -679,7 +692,7 @@
 
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Component data</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Component data</h6>
             <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Component data table, scrolls horizontally">
             <table class="table">
               <thead><tr><th>Component</th><th>CAS</th><th>Role</th><th>MW g/mol</th><th>T<sub>b</sub> °C</th><th>Antoine A / B / C</th><th>Valid range</th><th>Check</th><th>λ kJ/mol</th></tr></thead>
@@ -701,7 +714,7 @@
         <div style="display:flex;flex-direction:column;gap:14px">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Construction inputs</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Construction inputs</h6>
             <div class="field">
               <label style="display:flex;justify-content:space-between"><span>Distillate x<sub>D</sub></span><span style="font-variant-numeric:tabular-nums">{{ v.xD }}</span></label>
               <input type="range" min="0.05" max="0.999" step="0.001" value="{{ v.xD }}" data-k="xD" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Distillate composition x_D, mole fraction">
@@ -727,7 +740,7 @@
           </section>
           <section class="card blueprint dx-noprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Stage stepping</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Stage stepping</h6>
             <button class="btn btn-primary btn-block" onClick="{{ runSteps }}" style="margin-top:0">▶ Run stage calculation</button>
             <div style="display:flex;gap:6px">
               <button class="btn btn-secondary" onClick="{{ stepBack }}" style="flex:1">‹ Back</button>
@@ -739,7 +752,7 @@
           </section>
           <section class="card blueprint" style="padding:14px;gap:4px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Construction results</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Construction results</h6>
             <sc-for list="{{ mtSummary }}" as="row" hint-placeholder-count="8">
               <div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:3px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 7%,transparent)">
                 <span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ row.k }}</span><span style="font-variant-numeric:tabular-nums">{{ row.v }}</span>
@@ -750,7 +763,7 @@
 
         <section class="card blueprint" style="padding:14px;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--color-accent)">McCabe–Thiele diagram</h6>
+          <h6 style="margin:0;color:var(--dx-ink-accent)">McCabe–Thiele diagram</h6>
           <svg viewBox="0 0 500 480" style="width:100%;height:auto;touch-action:none;user-select:none" onPointerMove="{{ mtMove }}" onPointerUp="{{ mtUp }}" onPointerLeave="{{ mtUp }}" role="img" aria-label="McCabe-Thiele construction">
             <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1">
               <path d="M60 340 H460 M60 260 H460 M60 180 H460 M60 100 H460 M140 20 V420 M220 20 V420 M300 20 V420 M380 20 V420"></path>
@@ -800,7 +813,7 @@
         <section class="card blueprint dx-noprint" style="padding:14px;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <h6 style="margin:0;color:var(--color-accent)">Export</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Export</h6>
             <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap">
               <button class="btn btn-secondary" onClick="{{ exportCSV }}">Export CSV</button>
               <button class="btn btn-secondary" onClick="{{ exportJSON }}">Export JSON</button>
@@ -813,7 +826,7 @@
         <div class="dx-grid2">
           <section class="card blueprint" style="padding:14px;gap:6px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">User inputs</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">User inputs</h6>
             <sc-for list="{{ inputRows }}" as="row" hint-placeholder-count="10">
               <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:3px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 7%,transparent)">
                 <span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ row.k }}</span><span style="font-variant-numeric:tabular-nums;text-align:right">{{ row.v }}</span>
@@ -822,7 +835,7 @@
           </section>
           <section class="card blueprint" style="padding:14px;gap:6px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Calculated values</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Calculated values</h6>
             <sc-for list="{{ calcRows }}" as="row" hint-placeholder-count="12">
               <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:3px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 7%,transparent)">
                 <span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ row.k }}</span><span style="font-variant-numeric:tabular-nums;text-align:right">{{ row.v }}</span>
@@ -834,7 +847,7 @@
         <div class="dx-grid2">
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Material balance &amp; numerical convergence</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Material balance &amp; numerical convergence</h6>
             <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityHead }}</div>
             <div style="font-size:12px;font-variant-numeric:tabular-nums;line-height:1.8;color:color-mix(in srgb,var(--color-text) 75%,transparent)">
               <div>Overall: F = D + B → {{ mb.total }}</div>
@@ -848,9 +861,9 @@
           </section>
           <section class="card blueprint" style="padding:14px;gap:6px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Model assumptions</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Model assumptions</h6>
             <sc-for list="{{ assumptions }}" as="a" hint-placeholder-count="8">
-              <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--color-accent)">—</span><span>{{ a }}</span></div>
+              <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--dx-ink-accent)">—</span><span>{{ a }}</span></div>
             </sc-for>
           </section>
         </div>
@@ -861,7 +874,7 @@
       <div class="dx-side">
         <section class="card blueprint" style="padding:14px;gap:12px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--color-accent)">Study definition</h6>
+          <h6 style="margin:0;color:var(--dx-ink-accent)">Study definition</h6>
           <div class="field">
             <label for="dx-si">Independent variable</label>
             <select class="input" id="dx-si" value="{{ sv.ind }}" data-k="ind" onChange="{{ setSens }}">
@@ -885,7 +898,7 @@
 
         <section class="card blueprint" style="padding:14px;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--color-accent)">{{ sensTitle }}</h6>
+          <h6 style="margin:0;color:var(--dx-ink-accent)">{{ sensTitle }}</h6>
           <svg viewBox="0 0 660 300" style="width:100%;height:auto" role="img" aria-label="Sensitivity chart">
             <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1"><path d="M70 40 H620 M70 92 H620 M70 145 H620 M70 197 H620"></path></g>
             <path d="M70 30 V250 H620" fill="none" stroke="var(--color-divider)" stroke-width="1.4"></path>
@@ -907,7 +920,7 @@
             <text x="16" y="140" text-anchor="middle" font-size="11.5" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 16 140)">{{ sensYLabel }}</text>
           </svg>
           <div class="blueprint" style="padding:10px 12px;background:var(--color-surface)">
-            <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent)">Key observation</div>
+            <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dx-ink-accent)">Key observation</div>
             <p style="margin:4px 0 0;font-size:13px;line-height:1.55">{{ sensNote }}</p>
           </div>
         </section>
@@ -917,7 +930,7 @@
     <sc-if value="{{ isTheory }}">
       <div style="max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:8px">
         <div style="padding:4px 0 12px">
-          <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-accent)">Reference</div>
+          <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dx-ink-accent)">Reference</div>
           <h2 style="margin:4px 0 6px">Theory of fractional distillation</h2>
           <p style="max-width:76ch;font-size:14px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Twenty topics, each written against the same equations the simulator solves. Numbers quoted in the simulator can be traced back to the relationships described here.</p>
         </div>
@@ -925,7 +938,7 @@
           <div class="blueprint" style="padding:4px 14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <button data-k="{{ t.k }}" onClick="{{ setTheory }}" style="{{ t.headStyle }}">
-              <span style="font-size:12px;font-variant-numeric:tabular-nums;color:var(--color-accent)">{{ t.no }}</span>
+              <span style="font-size:12px;font-variant-numeric:tabular-nums;color:var(--dx-ink-accent)">{{ t.no }}</span>
               <span>{{ t.title }}</span>
             </button>
             <p style="{{ t.bodyStyle }}">{{ t.body }}</p>
@@ -965,13 +978,13 @@
           </div>
           <sc-if value="{{ showHint }}">
             <div class="blueprint" style="padding:10px 12px;background:var(--color-surface)">
-              <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent)">Hint</div>
+              <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dx-ink-accent)">Hint</div>
               <p style="margin:4px 0 0;font-size:13.5px;line-height:1.55">{{ examHint }}</p>
             </div>
           </sc-if>
           <sc-if value="{{ showSol }}">
             <div class="blueprint" style="padding:10px 12px;background:var(--color-surface)">
-              <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent)">Worked solution</div>
+              <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dx-ink-accent)">Worked solution</div>
               <p style="margin:4px 0 0;font-size:13.5px;line-height:1.6">{{ examSol }}</p>
             </div>
           </sc-if>
@@ -994,7 +1007,7 @@
         <sc-for list="{{ val.groups }}" as="g" hint-placeholder-count="4">
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">{{ g.name }}</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">{{ g.name }}</h6>
             <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Validation results, scrolls horizontally">
             <table class="table">
               <thead><tr><th>Result</th><th>Check</th><th>Computed</th><th>Reference</th><th>Error</th><th>Tolerance</th></tr></thead>
@@ -1012,7 +1025,7 @@
         </sc-for>
         <section class="card blueprint" style="padding:14px;gap:6px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--color-accent)">Reproducing this outside the browser</h6>
+          <h6 style="margin:0;color:var(--dx-ink-accent)">Reproducing this outside the browser</h6>
           <p style="margin:0;font-size:13px;line-height:1.6">The same checks, plus a 648-case numerical fingerprint, the hostile-input matrix, the save/load round-trip and a build-reproducibility check, run headless against the source: <code>node tools/test.js</code>. It exits non-zero on any failure.</p>
         </section>
       </div>
@@ -1028,24 +1041,24 @@
         <div class="dx-grid2">
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Engineering models</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Engineering models</h6>
             <p style="margin:0;font-size:13px;line-height:1.6">Ideal VLE (Raoult's law) with Antoine vapour pressures in mmHg and °C, and a constant-relative-volatility model. Stage calculations follow McCabe–Thiele under constant molar overflow; minimum reflux includes a tangent-pinch check; minimum stages use Fenske with a geometric-mean α. Activity-coefficient models (Wilson, NRTL, UNIQUAC) are <strong>not</strong> implemented — mixtures that need them are flagged rather than silently approximated.</p>
           </section>
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Data provenance &amp; validation</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Data provenance &amp; validation</h6>
             <p style="margin:0;font-size:13px;line-height:1.6">Antoine constants are the Reid–Prausnitz–Poling / Lange sets in mmHg and °C, each stored with the temperature range it was fitted over; the VLE Explorer prints that range and re-derives each pure-component vapour pressure at its own normal boiling point as a self-check (benzene 759.0 mmHg at 80.0 °C, water 757.6 mmHg at 100.0 °C — both ≈ 760). Latent heats are values at the normal boiling point. Stage temperatures outside a fitted range raise an extrapolation warning rather than silently degrading. Known azeotropes are recorded per mixture — ethanol/water at 95.6 wt% ethanol (x ≈ 0.894), boiling at 78.2 °C at 1 atm — and any specification that crosses one is flagged as physically unreachable, whatever the ideal model computes.</p>
           </section>
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Limitations</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Limitations</h6>
             <p style="margin:0;font-size:13px;line-height:1.6">Binary systems only. No column hydraulics (flooding, weeping, pressure drop, diameter). Duties are latent-heat only. Tray efficiency is applied as a single overall value. Packed columns are not modelled: no HETP, packed height or transfer-unit (HTU/NTU) calculation is performed. Azeotropic systems cannot be represented by either model offered.</p>
           </section>
         </div>
         <div class="dx-grid2">
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Deployment</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Deployment</h6>
             <ol style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">
               <li>Create a GitHub repository and push this project.</li>
               <li>Import the repository into Vercel — it is a static client-side app, so no build configuration or environment variables are required.</li>
@@ -1055,15 +1068,15 @@
           </section>
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-accent)">Extending it</h6>
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Extending it</h6>
             <p style="margin:0;font-size:13px;line-height:1.6">The thermodynamic layer (vapour pressure, equilibrium, temperatures), the unit-operation engine (balances, stage stepping, duties), the visualisation layer and the mixture data are separate concerns. A new unit operation — absorption, extraction, evaporation, a heat exchanger — needs a new engine module and view; the thermodynamic and data layers are reused unchanged.</p>
           </section>
         </div>
         <section class="card blueprint" style="padding:16px;gap:6px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--color-accent)">Standing assumptions</h6>
+          <h6 style="margin:0;color:var(--dx-ink-accent)">Standing assumptions</h6>
           <sc-for list="{{ assumptions }}" as="a" hint-placeholder-count="8">
-            <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--color-accent)">—</span><span>{{ a }}</span></div>
+            <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--dx-ink-accent)">—</span><span>{{ a }}</span></div>
           </sc-for>
         </section>
       </div>
@@ -1516,7 +1529,7 @@ class Component extends DCLogic {
     }
 
     const navItems=S.NAV.map(([k,label])=>({k,label,
-      style:'min-height:30px;font-size:13px;padding:4px 10px;border-color:'+(s.view===k?'var(--color-accent)':'transparent')+';background:'+(s.view===k?'var(--color-accent)':'transparent')+';color:'+(s.view===k?'var(--color-bg)':'var(--color-text)')}));
+      style:'min-height:30px;font-size:13px;padding:4px 10px;border-color:'+(s.view===k?'var(--dx-ink-accent)':'transparent')+';background:'+(s.view===k?'var(--dx-ink-accent)':'transparent')+';color:'+(s.view===k?'var(--color-bg)':'var(--color-text)')}));
 
     const KINDLABEL={input:'INVALID INPUT',spec:'INFEASIBLE SPECIFICATION',domain:'MODEL DOMAIN'};
     const errStyle='font-size:12.5px;padding:6px 10px;border:1px solid var(--color-accent-700);background:color-mix(in srgb,var(--color-accent) 12%,transparent);color:var(--color-accent-800)';
@@ -2198,7 +2211,7 @@ class Component extends DCLogic {
     // ---- theory ----
     out.theoryItems=S.THEORY.map(t=>({k:t[0],title:t[1],body:t[2],open:s.theoryOpen===t[0],
       bodyStyle:'margin:0;font-size:13.5px;line-height:1.6;max-width:82ch;display:'+(s.theoryOpen===t[0]?'block':'none'),
-      headStyle:'display:flex;gap:10px;align-items:baseline;cursor:pointer;padding:9px 0;border:0;background:transparent;width:100%;text-align:left;font-family:var(--font-heading);font-size:19px;color:'+(s.theoryOpen===t[0]?'var(--color-accent)':'var(--color-text)'),
+      headStyle:'display:flex;gap:10px;align-items:baseline;cursor:pointer;padding:9px 0;border:0;background:transparent;width:100%;text-align:left;font-family:var(--font-heading);font-size:19px;color:'+(s.theoryOpen===t[0]?'var(--dx-ink-accent)':'var(--color-text)'),
       no:String(S.THEORY.indexOf(t)+1).padStart(2,'0')}));
     out.setTheory=(e)=>this.setState({theoryOpen:e.currentTarget.dataset.k});
 

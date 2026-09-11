@@ -56,7 +56,8 @@ step, no account, no telemetry, no stored data.
   cases, pure-component vapour pressures, equilibrium self-consistency and the invariants of the
   case on screen, each with its computed value, tolerance and error. Internal validation only —
   see below.
-- Dark mode; responsive from desktop down to mobile.
+- Dark mode; responsive from desktop down to mobile; text contrast meets WCAG 2.1 AA (4.5:1)
+  in both themes.
 
 ---
 
@@ -158,7 +159,7 @@ node tools/test.js --list     # list the suites
 node tools/test.js thermo     # run selected suites
 ```
 
-158 checks in ten suites, standard library only, no dependencies. The suite loads the calculation
+170 checks in eleven suites, standard library only, no dependencies. The suite loads the calculation
 engine straight out of `src/DISTILLEX.dc.html`, so it tests the same code the page ships.
 
 | Suite | What it anchors against |
@@ -172,7 +173,13 @@ engine straight out of `src/DISTILLEX.dc.html`, so it tests the same code the pa
 | `validation` | hostile inputs must be rejected with no NaN, no stale result, no uncaught error, and never reach `solve()` |
 | `save-load` | a configuration must round-trip exactly and reproduce the same solution |
 | `disclosures` | every numeric the interface states about its own method is re-read from the code |
+| `contrast` | the palette the page ships must clear WCAG 1.4.3 (4.5:1) wherever the accent carries text, in both themes, and no text may fall back to the raw accent |
 | `build` | `index.html` must be reproducible from `src/` |
+
+The `contrast` suite checks the palette and how the source uses it, which is what can be
+verified without a browser; it does not walk the rendered page. The per-view sweep that found
+the original 103 failing text instances was run separately with a headless browser and is not
+part of this suite.
 
 **Internal validation only.** Nothing is compared against a published worked example, tabulated
 experimental VLE data, or another simulator — no such comparison has been carried out. These

@@ -334,6 +334,65 @@ function suiteDisclosures() {
      'that caveat is not shown under the Raoult model, where it does not apply');
 }
 
+/* ── 11. text contrast (WCAG 1.4.3) ────────────────────────────────────── */
+function suiteContrast() {
+  // The palette the page actually ships: the light tokens live in the inlined
+  // design-system <style> of index.html, the dark overrides in the .dx-dark
+  // rule of the source. Both are read back rather than restated here.
+  const idx = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const tplRaw = /<script type="__bundler\/template">\s*([\s\S]*?)\s*<\/script>/.exec(idx)[1];
+  const tpl = JSON.parse(tplRaw.replace(/<\\u002F/g, '</'));
+  const dsCss = /<style>\/\* Industry[\s\S]*?<\/style>/.exec(tpl)[0];
+  const darkRule = /\.dx-dark \{([\s\S]*?)\}/.exec(source)[1];
+
+  const tok = (css, name) => {
+    const m = new RegExp('--' + name + ':\\s*(#[0-9a-fA-F]{6})').exec(css);
+    return m ? m[1] : null;
+  };
+  const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const lum = c => {
+    const [r, g, b] = c.map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const ratio = (a, b) => {
+    const L = lum(rgb(a)), M = lum(rgb(b));
+    return (Math.max(L, M) + 0.05) / (Math.min(L, M) + 0.05);
+  };
+
+  // --dx-ink-accent is defined as an alias in each theme; resolve it.
+  const inkLight = /:root \{ --dx-ink-accent: var\(--(color-[a-z0-9-]+)\); \}/.exec(source);
+  const inkDark = /\.dx-dark \{ --dx-ink-accent: var\(--(color-[a-z0-9-]+)\); \}/.exec(source);
+  ok(!!inkLight && !!inkDark, 'the text-safe accent is defined for both themes');
+  if (!inkLight || !inkDark) return;
+
+  const themes = [
+    ['light', tok(dsCss, inkLight[1]), tok(dsCss, 'color-bg'), tok(dsCss, 'color-surface')],
+    ['dark', tok(darkRule, inkDark[1]), tok(darkRule, 'color-bg'), tok(darkRule, 'color-surface')],
+  ];
+  for (const [name, ink, bg, surf] of themes) {
+    ok(!!ink && !!bg && !!surf, name + ': palette resolved', ink + ' / ' + bg + ' / ' + surf);
+    if (!ink || !bg || !surf) continue;
+    for (const [what, ground] of [['page background', bg], ['card surface', surf]]) {
+      const r = ratio(ink, ground);
+      ok(r >= 4.5, name + ': accent text on the ' + what + ' meets 4.5:1',
+         ink + ' on ' + ground + ' = ' + r.toFixed(2) + ':1');
+    }
+    // the accent also sits behind button labels painted in --color-bg
+    ok(ratio(bg, ink) >= 4.5, name + ': button labels on the accent meet 4.5:1',
+       ratio(bg, ink).toFixed(2) + ':1');
+  }
+  // the raw accent stays available for non-text use, where 3:1 (1.4.11) applies
+  const rawLight = tok(dsCss, 'color-accent');
+  ok(ratio(rawLight, tok(dsCss, 'color-bg')) >= 3,
+     'the unchanged accent still meets the 3:1 non-text bound',
+     ratio(rawLight, tok(dsCss, 'color-bg')).toFixed(2) + ':1');
+  // no text may go back to the raw accent, but controls legitimately keep it
+  const textUses = (source.match(/(?:^|[^-a-z])color:var\(--color-accent\)/g) || []).length;
+  ok(textUses === 0, 'no text is painted with the raw accent', String(textUses));
+  ok((source.match(/accent-color:var\(--color-accent\)/g) || []).length > 0,
+     'slider accent-color still uses the raw accent (a control colour, not text)');
+}
+
 /* ── 10. the bundle is reproducible from source ─────────────────────────── */
 function suiteBuild() {
   const build = path.join(__dirname, 'build.py');
@@ -351,7 +410,7 @@ const SUITES = {
   identity: suiteIdentity, analytic: suiteAnalytic, 'pure-component': suitePureComponent,
   thermo: suiteThermo, invariants: suiteInvariants, matrix: suiteMatrix,
   validation: suiteValidation, 'save-load': suiteSaveLoad,
-  disclosures: suiteDisclosures, build: suiteBuild,
+  disclosures: suiteDisclosures, contrast: suiteContrast, build: suiteBuild,
 };
 
 function main() {
