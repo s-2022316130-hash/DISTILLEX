@@ -127,8 +127,19 @@ python3 -m http.server 8000     # or: npx serve .
 To edit the application, open `src/DISTILLEX.dc.html` — the markup and the calculation engine
 (`class Component`) live in that one file, with the engineering functions (`psat`, `bubbleT`,
 `dewT`, `curve`, `yEq`, `xEq`, `qIntersect`, `minReflux`, `lines`, `stepStages`, `solve`,
-`variant`) kept separate from the UI. Re-generate `index.html` from `src/` when you are done, or
-serve `src/DISTILLEX.dc.html` directly during development.
+`variant`) kept separate from the UI. Serve `src/DISTILLEX.dc.html` directly while you work, then
+regenerate the deployable bundle:
+
+```bash
+python3 tools/build.py           # rewrite index.html from src/DISTILLEX.dc.html
+python3 tools/build.py --check   # verify index.html is in sync (non-zero exit if stale)
+```
+
+`src/DISTILLEX.dc.html` is the single source of truth for the markup and the engine.
+`tools/build.py` regenerates only the part of `index.html` derived from it and reuses the
+published asset layer — the loader, the gzipped font/React manifest and the inlined
+design-system CSS — verbatim, since those are binary artifacts this repository does not rebuild.
+Standard library only, no dependencies.
 
 ## Deployment (GitHub → Vercel)
 

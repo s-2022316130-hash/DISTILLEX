@@ -1375,7 +1375,32 @@ class Component extends DCLogic {
     a.href=URL.createObjectURL(new Blob([text],{type:type||'text/plain'}));
     a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
   }
-  cfg(){ const s=this.state; const o={}; ['mixKey','model','P','alphaC','F','zF','q','xD','xB','R','Nspec','DF','eff','reb','calcMode'].forEach(k=>o[k]=s[k]); return o; }
+  /** The persisted configuration. One definition shared by saveCfg, the JSON
+   *  export and loadCfg, so a file can never carry a key that load ignores or
+   *  omit one that save produced. */
+  static CFG_KEYS = ['mixKey','model','P','alphaC','F','zF','q','xD','xB','R','Nspec','DF','eff','reb','calcMode'];
+  /** Every field of a user-supplied component. `lat` is not editable in the UI
+   *  but is part of the record and is carried so a reload reproduces the duties. */
+  static CUSTOM_FIELDS = ['name','A','B','C','MW','Tb','lat'];
+  /** Copies only the known component fields, and copies them exactly. A field
+   *  the source does not have stays absent rather than acquiring a default:
+   *  validateInputs must be able to see that it is missing. */
+  customRecord(c){
+    const side=(d)=>{
+      if(!d || typeof d!=='object' || Array.isArray(d)) return d;
+      const o={}; Component.CUSTOM_FIELDS.forEach(f=>{ if(d[f]!==undefined) o[f]=d[f]; }); return o;
+    };
+    if(!c || typeof c!=='object' || Array.isArray(c)) return c;
+    return {a:side(c.a), b:side(c.b)};
+  }
+  cfg(){
+    const s=this.state, o={};
+    Component.CFG_KEYS.forEach(k=>o[k]=s[k]);
+    // Without this the custom Antoine constants were dropped on save, and a
+    // reload silently substituted the built-in defaults under mixKey 'custom'.
+    o.custom=this.customRecord(s.custom);
+    return o;
+  }
 
   renderVals(){
     const s=this.state, S=Component, vres=this.validateInputs(s);
@@ -1560,8 +1585,17 @@ class Component extends DCLogic {
       loadClick:()=>{ if(this._file) this._file.click(); },
       fileRef:(el)=>{this._file=el;},
       loadCfg:(e)=>{const fl=e.target.files&&e.target.files[0]; if(!fl) return;
-        const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result); const clean={};
-          Object.keys(o).forEach(k=>{ if(k in this.state) clean[k]=o[k]; });
+        const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result);
+          if(!o || typeof o!=='object' || Array.isArray(o)) throw new Error('not an object');
+          const clean={};
+          // Load exactly the keys save writes. The previous version accepted any
+          // key that happened to exist in state, so a file could also set the
+          // current view, drag state or stored comparison.
+          Component.CFG_KEYS.forEach(k=>{ if(k in o) clean[k]=o[k]; });
+          // Files written before custom mixtures were persisted simply have no
+          // `custom` key; leave the session's own record alone rather than
+          // overwriting it with defaults.
+          if(o.custom!==undefined) clean.custom=this.customRecord(o.custom);
           this.setState(Object.assign({whatIf:null},clean));
           const vr=this.validateInputs(Object.assign({},this.state,clean));
           this.flash(vr.ok? 'Configuration loaded'
