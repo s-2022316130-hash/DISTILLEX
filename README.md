@@ -5,7 +5,7 @@ equilibrium, McCabe–Thiele stage construction, column operation, stage profile
 studies, theory and an exam mode. Everything is computed in the browser — no server, no build
 step, no account, no telemetry, no stored data.
 
-**Live entry point:** `index.html` (self-contained, ~521 KB, works offline by double-click).
+**Live entry point:** `index.html` (self-contained, ~522 KB, works offline by double-click).
 
 ---
 
@@ -83,8 +83,8 @@ step, no account, no telemetry, no stored data.
 Antoine constants are the Reid–Prausnitz–Poling / Lange sets in **mmHg and °C**, each stored with
 the temperature range it was fitted over. The VLE Explorer prints that range and re-derives each
 pure component's vapour pressure at its own normal boiling point as a self-check — benzene gives
-759.0 mmHg at 80.0 °C and water 757.6 mmHg at 100.0 °C, both ≈ 760 mmHg as they must. Latent
-heats are values at the normal boiling point. Stage temperatures outside a fitted range raise an
+760.0 mmHg at its normal boiling point of 80.1 °C and water 760.1 mmHg at 100.0 °C, both ≈ 760 mmHg
+as they must. Latent heats are values at the normal boiling point. Stage temperatures outside a fitted range raise an
 explicit extrapolation warning instead of silently degrading.
 
 Known azeotropes are recorded per mixture — ethanol/water at 95.6 wt% ethanol (x ≈ 0.894),
@@ -151,6 +151,20 @@ published asset layer — the loader, the gzipped font/React manifest and the in
 design-system CSS — verbatim, since those are binary artifacts this repository does not rebuild.
 Standard library only, no dependencies.
 
+**The rest of `src/` is a mirror, not an input.** Only `src/DISTILLEX.dc.html` is compiled into
+`index.html`. `src/support.js` and `src/_ds/` are byte-identical copies of what the published
+bundle already carries, kept so the shipped runtime and design system are readable and
+diffable — but editing them changes nothing, because the build lifts those assets out of the
+existing `index.html` rather than rebuilding them. A design-system change therefore has to be
+made as an override in the `<style>` block of `src/DISTILLEX.dc.html`, which the build does
+compile and which is loaded after the inlined design-system CSS. Two consequences worth knowing:
+`src/_ds/…/_ds_bundle.js` looks inert but is a real shipped asset and its `<script>` tag is the
+anchor `build.py` uses to place the design-system layer, so neither may be deleted; and
+`src/_ds/…/styles.css` still carries the upstream `@import` of Google Fonts that the publisher
+replaced with inlined `@font-face` rules, so the deployed page makes no font request — were that
+layer ever rebuilt from source it would reintroduce one, which the Content-Security-Policy would
+then block.
+
 ## Validation
 
 ```bash
@@ -159,7 +173,7 @@ node tools/test.js --list     # list the suites
 node tools/test.js thermo     # run selected suites
 ```
 
-217 checks in twelve suites, standard library only, no dependencies. The suite loads the calculation
+225 checks in twelve suites, standard library only, no dependencies. The suite loads the calculation
 engine straight out of `src/DISTILLEX.dc.html`, so it tests the same code the page ships.
 
 | Suite | What it anchors against |

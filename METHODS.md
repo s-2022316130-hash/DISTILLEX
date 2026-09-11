@@ -275,6 +275,8 @@ duty. `λ` is taken at the normal boiling point and treated as constant.
 | Input validation | hostile inputs must be rejected with no NaN, no stale result, no uncaught error |
 | Save/load | a configuration must round-trip exactly and reproduce the same solution |
 | Reported numerics | the interface's stated bracket, iteration count, resolution, scan size, node count and tolerance are re-read from the source |
+| Text contrast | the shipped palette must clear WCAG 1.4.3 (4.5:1) wherever the accent carries text, in both themes |
+| Deployment headers | the security headers the site serves, and every Content-Security-Policy allowance still being one the shipped runtime demonstrably needs |
 | Build | `index.html` must be reproducible from `src/` |
 
 **Not checked.** No comparison has been made against published worked examples,

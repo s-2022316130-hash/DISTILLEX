@@ -1419,7 +1419,6 @@ class Component extends DCLogic {
   MX(x){ return 60+400*Math.min(Math.max(x,0),1); }
   MY(y){ return 420-400*Math.min(Math.max(y,0),1); }
 
-  set(k,v){ this.setState({[k]:v}); }
   flash(m){ this.setState({toast:m}); if(this._tt) clearTimeout(this._tt); this._tt=setTimeout(()=>this.setState({toast:''}),2200); }
   download(name,text,type){
     const a=document.createElement('a');

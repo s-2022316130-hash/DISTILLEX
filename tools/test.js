@@ -332,6 +332,43 @@ function suiteDisclosures() {
   const ra = C(); ra.state = S({ view: 'results', model: 'raoult' });
   ok(!/nominal overlay/.test(ra.renderVals().assumptions.join('\n')),
      'that caveat is not shown under the Raoult model, where it does not apply');
+
+  // The README quotes engine-derived figures. They drifted once, so they are
+  // recomputed here rather than trusted.
+  const readme = fs.readFileSync(path.join(__dirname, '..', 'README.md'), 'utf8');
+  const mmHg = (k) => {
+    const comp = Component.COMP[k];
+    return { t: comp.Tb, v: i.psat(comp, comp.Tb) / 0.13332239 };
+  };
+  for (const [k, label] of [['benzene', 'benzene'], ['water', 'water']]) {
+    const { t, v } = mmHg(k);
+    const want = v.toFixed(1) + ' mmHg';
+    ok(readme.indexOf(want) >= 0,
+       'README quotes the computed ' + label + ' self-check (' + want + ')', want);
+    ok(readme.indexOf(String(t) + ' °C') >= 0 || readme.indexOf(t.toFixed(1) + ' °C') >= 0,
+       'README quotes ' + label + "'s actual normal boiling point", String(t) + ' °C');
+  }
+  ok(readme.indexOf('~' + Math.round(fs.statSync(path.join(__dirname, '..', 'index.html')).size / 1024) + ' KB') >= 0,
+     'README quotes the actual size of index.html');
+  // the src/ mirror must stay a mirror: what ships has to match what is stored
+  const idx2 = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const man2 = JSON.parse(/<script type="__bundler\/manifest">\s*([\s\S]*?)\s*<\/script>/.exec(idx2)[1]);
+  const zlib2 = require('zlib');
+  const shipped = Object.values(man2).map(e => {
+    const raw = Buffer.from(e.data, 'base64');
+    return e.compressed ? zlib2.gunzipSync(raw) : raw;
+  });
+  const stored = fs.readFileSync(path.join(__dirname, '..', 'src', 'support.js'));
+  ok(shipped.some(b => b.equals(stored)),
+     'src/support.js is byte-identical to the runtime the bundle actually ships');
+  const dsDir = path.join(__dirname, '..', 'src', '_ds');
+  const themeDir = path.join(dsDir, fs.readdirSync(dsDir)[0]);
+  const dsb = fs.readFileSync(path.join(themeDir, '_ds_bundle.js'));
+  ok(shipped.some(b => b.equals(dsb)),
+     'src/_ds/_ds_bundle.js is a real shipped asset, not an inert stub');
+  // and the build must keep depending on its <script> tag
+  ok(/<script src="_ds\/[^"]+_ds_bundle\.js"><\/script>/.test(source),
+     'the _ds_bundle.js script tag is present — build.py uses it to place the design-system layer');
 }
 
 /* ── 12. deployment security headers ───────────────────────────────────── */
