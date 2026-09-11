@@ -5,7 +5,7 @@ equilibrium, McCabe–Thiele stage construction, column operation, stage profile
 studies, theory and an exam mode. Everything is computed in the browser — no server, no build
 step, no account, no telemetry, no stored data.
 
-**Live entry point:** `index.html` (self-contained, ~522 KB, works offline by double-click).
+**Live entry point:** `index.html` (self-contained, ~523 KB, works offline by double-click).
 
 ---
 
@@ -221,7 +221,7 @@ is and is not checked.
 | `Content-Security-Policy` | see below |
 | `X-Content-Type-Options` | `nosniff` |
 | `X-Frame-Options` | `SAMEORIGIN` |
-| `Referrer-Policy` | `no-referrer` — the page makes no outbound request and has no external link, so no referrer ever needs to leave |
+| `Referrer-Policy` | `no-referrer` — the page fetches nothing at runtime; the only outgoing link is the author's profile, which needs no referrer |
 | `Permissions-Policy` | camera, microphone, geolocation, USB, payment, sensors and the rest denied outright |
 | `Cross-Origin-Opener-Policy` | `same-origin` |
 | `Cross-Origin-Resource-Policy` | `same-origin` |
@@ -273,6 +273,12 @@ Activity-coefficient models (Wilson, NRTL, UNIQUAC); multicomponent shortcut des
 (Fenske–Underwood–Gilliland); rigorous tray-by-tray energy balances; column hydraulics and
 sizing; further unit operations — absorption, liquid–liquid extraction, evaporation, drying,
 heat exchangers — reusing the same thermodynamic and data layers.
+
+## Author
+
+**Shafin Ahamed Neon** — developer. Design, thermodynamic model, calculation engine and interface.
+
+- LinkedIn: <https://www.linkedin.com/in/shafin-ahamed-neon-aa9596213>
 
 ## Licence
 

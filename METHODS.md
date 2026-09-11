@@ -1,5 +1,7 @@
 # DISTILLEX — Methods
 
+Shafin Ahamed Neon — [LinkedIn](https://www.linkedin.com/in/shafin-ahamed-neon-aa9596213)
+
 What the simulator computes, how each quantity is derived, and where the model
 stops. Every equation below is the one the code actually evaluates; the file is
 kept honest by `tools/test.js`, whose `disclosures` suite re-reads the numeric
@@ -9,7 +11,7 @@ claims out of the source and fails if they drift.
 deliberately contains no literature citations and no comparison against
 published worked examples, because no such comparison has been carried out. The
 validation that *has* been performed is described in
-[Validation](#8-validation--what-is-and-is-not-checked) and is entirely
+[Validation](#9-validation--what-is-and-is-not-checked) and is entirely
 self-contained. Do not read this file as evidence of external verification.
 
 ## Nomenclature
