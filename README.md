@@ -5,7 +5,7 @@ equilibrium, McCabe–Thiele stage construction, column operation, stage profile
 studies, theory and an exam mode. Everything is computed in the browser — no server, no build
 step, no account, no telemetry, no stored data.
 
-**Live entry point:** `index.html` (self-contained, ~480 KB, works offline by double-click).
+**Live entry point:** `index.html` (self-contained, ~505 KB, works offline by double-click).
 
 ---
 
@@ -18,6 +18,8 @@ step, no account, no telemetry, no stored data.
 │   ├── DISTILLEX.dc.html    the application source (markup + calculation engine)
 │   ├── support.js           component runtime
 │   └── _ds/…                design-system tokens and stylesheet
+├── tools/
+│   └── build.py             regenerates index.html from src/ (see below)
 ├── vercel.json
 ├── README.md
 ├── LICENSE

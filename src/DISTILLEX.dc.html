@@ -1134,7 +1134,7 @@ class Component extends DCLogic {
     F:100, zF:0.45, q:1.0, xD:0.96, xB:0.04, R:2.2, Nspec:12, DF:0.45,
     eff:0.70, reb:'partial', calcMode:'design',
     mode:'learning', theme:'light', colView:'stages', equip:'column',
-    anim:999, playing:false, hoverStage:null, tip:null, tipXY:[0,0],
+    anim:999, hoverStage:null, tip:null, tipXY:[0,0],
     explaining:false, explainI:0, wiVar:'R', wiTo:3.2, whatIf:null,
     sens:{ind:'R',dep:'N',min:1.2,max:6,n:24}, exam:{i:0,reveal:'',input:''},
     theoryOpen:'t1', toast:'', vleShow:'xy', mtDrag:null, vleHover:null,
@@ -1615,11 +1615,6 @@ class Component extends DCLogic {
       applyWhatIf:()=>{ this.setState({[s.wiVar]:+s.wiTo, whatIf:null}); this.flash('Applied'); }
     };
   }
-  /** Splits what used to be a single "mass balance check" into the two things it
-   *  actually contains: the material balance (an identity — D and B are solved
-   *  from it, so it cannot fail and validates nothing) and the numerical residual
-   *  of the solve (which can fail, and in rating mode does). The identity is never
-   *  presented as a passed check. */
   /** Domain of every user-settable numeric input. Bounds are physical or
    *  solver-derived and each carries its reason; none is invented to make an
    *  awkward case converge.
@@ -1730,6 +1725,11 @@ class Component extends DCLogic {
     const h=Component.SOLVE_KIND.find(k=>k[0].test(msg));
     return h ? h[1] : 'spec';
   }
+  /** Splits what used to be a single "mass balance check" into the two things it
+   *  actually contains: the material balance (an identity — D and B are solved
+   *  from it, so it cannot fail and validates nothing) and the numerical residual
+   *  of the solve (which can fail, and in rating mode does). The identity is never
+   *  presented as a passed check. */
   balanceReport(r,hasR){
     const f=(v,d)=>this.f(v,d);
     const box=(kind)=>'font-size:13px;font-family:var(--font-heading);padding:5px 9px;border:1px '+
@@ -2091,10 +2091,10 @@ class Component extends DCLogic {
       : s.mode==='advanced'
       ? {title:'Model & numerics',lines:[
           s.model==='raoult'? 'VLE: y_A = x_A·P_A^sat(T)/P with log₁₀P^sat[mmHg] = A − B/(T+C); the stage temperature is the bubble point of its liquid.' : 'VLE: y = αx/(1+(α−1)x) with α held constant; temperatures are still bubble points from the Antoine data.',
-          'Bubble/dew points: bisection over −80…500 °C, 70 iterations (≈4×10⁻¹⁶ °C interval).',
+          'Bubble/dew points: bisection over −80…500 °C. 70 halvings take the 580 °C bracket to ~5×10⁻¹⁹ °C, far below what a double can represent, so the root is resolved to the floating-point limit (~10⁻¹³ °C at column temperatures).',
           'Equilibrium curve tabulated at 241 points; y*(x) and x*(y) obtained by linear interpolation on that table (error < 10⁻⁴ mole fraction).',
           'Operating lines from constant molar overflow; q-line intersection by direct solution, or bisection when the q-line is not vertical.',
-          'Minimum reflux: q-line pinch plus a 60-point scan for a tangent pinch; the larger requirement governs.',
+          'Minimum reflux: q-line pinch plus a scan of 59 interior points for a tangent pinch; the larger requirement governs.',
           s.calcMode==='rating'? 'Rating mode: shooting on x_D with 70 bisection steps; the residual is the N-th stage liquid composition minus the balance-implied x_B, and the solve is rejected unless |x_N − x_B| ≤ 10⁻⁴ mole fraction.' : 'Design mode: direct stage stepping, terminated when x ≤ x_B or when the step makes no downward progress. Not an iterative solve, so there is nothing to converge.',
           hasR? 'The material balance is an identity here — D and B are solved from it, so its residuals are zero by construction and check nothing. The residual that carries information is '+(r.bal.rating? 'the rating shooting residual |x_N − x_B| = '+Math.abs(r.bal.stepResid).toExponential(2)+' against a 10⁻⁴ mole-fraction tolerance.' : 'the terminal overshoot x_B − x_N = '+r.bal.stepResid.toExponential(2)+' mole fraction, which is integer-stage discretisation error.') : 'No converged solution to report residuals for.']}
       : {title:'Engineering summary',lines:[
