@@ -5,7 +5,7 @@ equilibrium, McCabe–Thiele stage construction, column operation, stage profile
 studies, theory and an exam mode. Everything is computed in the browser — no server, no build
 step, no account, no telemetry, no stored data.
 
-**Live entry point:** `index.html` (self-contained, ~505 KB, works offline by double-click).
+**Live entry point:** `index.html` (self-contained, ~521 KB, works offline by double-click).
 
 ---
 
@@ -19,8 +19,11 @@ step, no account, no telemetry, no stored data.
 │   ├── support.js           component runtime
 │   └── _ds/…                design-system tokens and stylesheet
 ├── tools/
-│   └── build.py             regenerates index.html from src/ (see below)
+│   ├── build.py             regenerates index.html from src/ (see below)
+│   ├── engine.js            loads the calculation engine out of src/ for testing
+│   └── test.js              the regression suite (see Validation)
 ├── vercel.json
+├── METHODS.md               derivations, assumptions and what is / is not validated
 ├── README.md
 ├── LICENSE
 └── .gitignore
@@ -49,6 +52,10 @@ step, no account, no telemetry, no stored data.
 - **Theory** — twenty topics written against the same equations the engine solves.
 - **Exam mode** — questions generated from the live case, with hint, worked solution and answer
   checking against the engine's own values.
+- **Validation** — the engine's self-checks recomputed live in the browser: closed-form limiting
+  cases, pure-component vapour pressures, equilibrium self-consistency and the invariants of the
+  case on screen, each with its computed value, tolerance and error. Internal validation only —
+  see below.
 - Dark mode; responsive from desktop down to mobile.
 
 ---
@@ -142,6 +149,36 @@ python3 tools/build.py --check   # verify index.html is in sync (non-zero exit i
 published asset layer — the loader, the gzipped font/React manifest and the inlined
 design-system CSS — verbatim, since those are binary artifacts this repository does not rebuild.
 Standard library only, no dependencies.
+
+## Validation
+
+```bash
+node tools/test.js            # the whole suite; exits non-zero on any failure
+node tools/test.js --list     # list the suites
+node tools/test.js thermo     # run selected suites
+```
+
+158 checks in ten suites, standard library only, no dependencies. The suite loads the calculation
+engine straight out of `src/DISTILLEX.dc.html`, so it tests the same code the page ships.
+
+| Suite | What it anchors against |
+| --- | --- |
+| `identity` | `solve()` is byte-for-byte unchanged and still has exactly two call sites, both behind the validation gate |
+| `analytic` | Fenske and Underwood against their closed forms; stage count at total reflux against ⌈N_min⌉ |
+| `pure-component` | every component's vapour pressure at its own normal boiling point must give 1 atm |
+| `thermo` | bubble/dew consistency, interpolation error, and the constant-α curve against the relation it is built from |
+| `invariants` | balances, constant molar overflow, stage recurrence and ordering over ~258 feasible cases |
+| `matrix` | a 648-case SHA-256 fingerprint that changes if any computed number changes |
+| `validation` | hostile inputs must be rejected with no NaN, no stale result, no uncaught error, and never reach `solve()` |
+| `save-load` | a configuration must round-trip exactly and reproduce the same solution |
+| `disclosures` | every numeric the interface states about its own method is re-read from the code |
+| `build` | `index.html` must be reproducible from `src/` |
+
+**Internal validation only.** Nothing is compared against a published worked example, tabulated
+experimental VLE data, or another simulator — no such comparison has been carried out. These
+checks show the implementation is faithful to *its own model*; they say nothing about how well
+that model describes a real column. `METHODS.md` gives the derivations and §9 lists exactly what
+is and is not checked.
 
 ## Deployment (GitHub → Vercel)
 

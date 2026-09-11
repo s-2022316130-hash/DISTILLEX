@@ -980,6 +980,44 @@
       </div>
     </sc-if>
 
+    <sc-if value="{{ isValidate }}">
+      <div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px">
+        <section class="card blueprint" style="padding:18px;gap:10px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+            <h2 style="margin:0">Validation</h2>
+            <div style="{{ val.summaryStyle }}">{{ val.summary }}</div>
+          </div>
+          <p style="margin:0;max-width:80ch;font-size:13.5px;line-height:1.6">Every figure below is recomputed in your browser each time this page is drawn, from the same engine the rest of the application uses. Each check compares the engine either against a <strong>closed-form result</strong>, against an <strong>identity</strong> it must satisfy, or against <strong>its own internal consistency</strong>.</p>
+          <p style="margin:0;max-width:80ch;font-size:13.5px;line-height:1.6;border-left:2px solid var(--color-accent);padding-left:10px">This is <strong>internal validation only</strong>. Nothing here is compared against a published worked example, tabulated experimental VLE data, or another simulator — no such comparison has been carried out. These checks show the implementation is faithful to its own model; they say nothing about how well that model describes a real column. The derivations and the full list of what is and is not checked are in <code>METHODS.md</code>.</p>
+        </section>
+        <sc-for list="{{ val.groups }}" as="g" hint-placeholder-count="4">
+          <section class="card blueprint" style="padding:14px;gap:8px">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0;color:var(--color-accent)">{{ g.name }}</h6>
+            <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Validation results, scrolls horizontally">
+            <table class="table">
+              <thead><tr><th>Result</th><th>Check</th><th>Computed</th><th>Reference</th><th>Error</th><th>Tolerance</th></tr></thead>
+              <tbody>
+                <sc-for list="{{ g.rows }}" as="v" hint-placeholder-count="3">
+                  <tr style="{{ v.style }}"><td>{{ v.status }}</td><td>{{ v.check }}</td><td>{{ v.got }}</td><td>{{ v.ref }}</td><td>{{ v.err }}</td><td>{{ v.tol }}</td></tr>
+                </sc-for>
+              </tbody>
+            </table>
+            </div>
+            <sc-for list="{{ g.rows }}" as="v" hint-placeholder-count="3">
+              <div style="font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ v.note }}</div>
+            </sc-for>
+          </section>
+        </sc-for>
+        <section class="card blueprint" style="padding:14px;gap:6px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <h6 style="margin:0;color:var(--color-accent)">Reproducing this outside the browser</h6>
+          <p style="margin:0;font-size:13px;line-height:1.6">The same checks, plus a 648-case numerical fingerprint, the hostile-input matrix, the save/load round-trip and a build-reproducibility check, run headless against the source: <code>node tools/test.js</code>. It exits non-zero on any failure.</p>
+        </section>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ isAbout }}">
       <div style="max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:14px">
         <section class="card blueprint" style="padding:18px;gap:8px">
@@ -1083,7 +1121,7 @@ class Component extends DCLogic {
     Qc:'Condenser duty, Qc = V\u00b7\u03bb, using a composition-weighted latent heat. Sensible heat and sub-cooling are neglected.',
     Qr:'Reboiler duty, Qr = V\u0304\u00b7\u03bb. Heat losses and feed pre-heat are neglected.'
   };
-  static NAV = [['sim','Simulation'],['vle','VLE Explorer'],['mt','McCabe\u2013Thiele'],['column','Column'],['results','Results'],['sens','Sensitivity'],['theory','Theory'],['exam','Exam Mode'],['about','About']];
+  static NAV = [['sim','Simulation'],['vle','VLE Explorer'],['mt','McCabe\u2013Thiele'],['column','Column'],['results','Results'],['sens','Sensitivity'],['theory','Theory'],['exam','Exam Mode'],['validate','Validation'],['about','About']];
   static EXPLAIN = [
     ['Feed enters the column','The feed stream F, at composition z\u1da0 and quality q, enters at the feed stage. Its quality decides how much of it joins the descending liquid and how much joins the rising vapour.'],
     ['The reboiler generates vapour','Heat Q\u1d3f boils the liquid held in the reboiler. The vapour it produces is the only source of the upward traffic that makes separation possible.'],
@@ -1725,6 +1763,143 @@ class Component extends DCLogic {
     const h=Component.SOLVE_KIND.find(k=>k[0].test(msg));
     return h ? h[1] : 'spec';
   }
+  /** Live self-validation. Each row recomputes something the engine claims and
+   *  checks it against a closed form, an identity, or the engine's own internal
+   *  consistency — never against a value transcribed from a reference. Built
+   *  only when the Validation view is open, since it re-solves several cases. */
+  validationReport(s){
+    const rows=[], f=(v,d)=>this.f(v,d);
+    // okFlag true = pass, false = fail, null = not applicable here, which is
+    // reported as such and counted as neither. A skipped check must never be
+    // tallied as a passing one.
+    const row=(group,check,got,ref,err,tolTxt,okFlag,note)=>rows.push({
+      group,check,got,ref,err,tol:tolTxt,
+      status:okFlag===null?'—':(okFlag?'✓':'✗'), skipped:okFlag===null,
+      style:'font-variant-numeric:tabular-nums;'+(okFlag===null?'opacity:.75':(okFlag?'':'color:var(--color-accent-800);font-weight:700')),
+      note:note?(check+' — '+note):''});
+
+    // — closed-form limiting cases, exact under constant relative volatility —
+    const a=2.45, xD=0.95, xB=0.05, zF=0.5;
+    // Through variant(), so these clear the same validation gate as every other
+    // engine call and solve() keeps exactly two call sites.
+    const r=this.variant(s,{model:'alpha',alphaC:a,zF,xD,xB,q:1,R:2.0,
+      F:100,calcMode:'design',mixKey:'bt',P:101.325,eff:0.7,reb:'partial'});
+    const cfOk=r.ok&&isFinite(r.Nmin)&&isFinite(r.Rmin);
+    const NminA=Math.log((xD/(1-xD))*((1-xB)/xB))/Math.log(a);
+    const RminA=(xD/zF-a*(1-xD)/(1-zF))/(a-1);
+    if(cfOk) row('Closed form (α = 2.45, x_D = 0.95, x_B = 0.05, z_F = 0.5, q = 1)',
+      'Fenske N_min',r.Nmin.toFixed(10),NminA.toFixed(10),
+      Math.abs(r.Nmin-NminA).toExponential(2),'1e-12',Math.abs(r.Nmin-NminA)<=1e-12,
+      'N_min = ln[(x_D/(1−x_D))((1−x_B)/x_B)] / ln α');
+    if(cfOk) row('Closed form (α = 2.45, x_D = 0.95, x_B = 0.05, z_F = 0.5, q = 1)',
+      'Underwood R_min',r.Rmin.toFixed(10),RminA.toFixed(10),
+      Math.abs(r.Rmin-RminA).toExponential(2),'1e-12',Math.abs(r.Rmin-RminA)<=1e-12,
+      'R_min = [x_D/z_F − α(1−x_D)/(1−z_F)] / (α−1)');
+    const tot=this.variant(s,{model:'alpha',alphaC:a,zF,xD,xB,q:1,R:1e4,
+      F:100,calcMode:'design',mixKey:'bt',P:101.325,eff:0.7,reb:'partial'});
+    if(cfOk&&tot.ok) row('Closed form (α = 2.45, x_D = 0.95, x_B = 0.05, z_F = 0.5, q = 1)',
+      'Stages at total reflux',String(tot.N),String(Math.ceil(NminA)),'0','exact',
+      tot.N===Math.ceil(NminA),'stepping at R = 10⁴ must reach ⌈N_min⌉');
+
+    // — each pure component must return 1 atm at its own normal boiling point —
+    Object.keys(Component.COMP).forEach(k=>{
+      const c=Component.COMP[k], p=this.psat(c,c.Tb), d=Math.abs(p-101.325)/101.325;
+      row('Pure-component vapour pressure at T_b (must give 1 atm)',
+        c.name,p.toFixed(4)+' kPa','101.3250 kPa',(100*d).toFixed(3)+' %','1 %',d<0.01,
+        'Antoine constants are data, not a fitted result — this checks the arithmetic and the units');
+    });
+
+    // — thermodynamic self-consistency of the current mixture —
+    // The current inputs may be invalid (a negative α, malformed Antoine
+    // constants). Invalid input must not reach the equations here either, so
+    // this whole group is behind the same gate every engine call uses; when it
+    // does not pass, the group is declared skipped rather than shown failing.
+    const gate=this.validateInputs(s);
+    const MG='Current mixture, self-consistency';
+    if(!gate.ok)
+      row(MG,'Not applicable — current inputs are not valid','—','—','—','—',null,
+        'these checks describe the equilibrium model for the case on screen; with invalid input '+
+        'there is no such case. Fix the reported problems and the checks reappear.');
+    let dt=0;
+    if(gate.ok){
+    for(let i=1;i<40;i++){ const x=i/40;
+      dt=Math.max(dt,Math.abs(this.dewT(this.yEq(x,s),s)-this.bubbleT(x,s))); }
+    // This is a Raoult identity. Under the constant-α model the equilibrium
+    // curve is generated from α alone while the temperatures still come from
+    // the pair's Antoine bubble curve, so the two are decoupled by construction
+    // and the identity does not hold — checking it there would report a false
+    // failure. The identity that does hold under α is checked instead.
+    if(s.model==='raoult')
+      row(MG,'T_bubble(x) = T_dew(y*(x))',
+        dt.toExponential(2)+' °C','0','—','1e-10',dt<1e-10,
+        'the dew point of the vapour in equilibrium with a liquid is that liquid’s bubble point');
+    if(s.model==='alpha'){
+      const ac=this.num(s.alphaC), NC=this.curve(s).xs.length-1;
+      let ne=0, me=0;
+      for(let i=0;i<=NC;i++){ const x=i/NC;                 // exact at a node
+        ne=Math.max(ne,Math.abs(this.yEq(x,s)-ac*x/(1+(ac-1)*x))); }
+      for(let i=0;i<NC;i++){ const x=(i+0.5)/NC;            // worst case between nodes
+        me=Math.max(me,Math.abs(this.yEq(x,s)-ac*x/(1+(ac-1)*x))); }
+      row(MG,'y*(x) = αx / (1 + (α−1)x) at the nodes',
+        ne.toExponential(2),'0',ne.toExponential(2),'1e-12',ne<=1e-12,
+        'the tabulated curve must reproduce the constant-α relation it is built from');
+      row(MG,'Interpolation error between nodes',
+        me.toExponential(2),'0',me.toExponential(2),'1e-4',me<1e-4,
+        'the same linear-interpolation bound the Raoult curve is held to');
+      row(MG,'Temperatures are not consistent with α',
+        dt.toFixed(3)+' °C','—','—','disclosed',null,
+        'max |T_dew(y*(x)) − T_bubble(x)| over the composition range. Under this model temperatures '+
+        'are read from the selected pair’s Antoine bubble curve and do not depend on α at all, so they '+
+        'are a nominal overlay only. This is a stated limitation of the model, not a numerical error.');
+    }
+    const cp=this.compsOf(s); let ie=0;
+    if(cp&&cp[0]&&isFinite(this.num(cp[0].A))&&s.model==='raoult'){
+      for(let i=0;i<=200;i++){ const x=i/200, T=this.bubbleT(x,s);
+        ie=Math.max(ie,Math.abs(this.yEq(x,s)-x*this.psat(cp[0],T)/s.P)); }
+      row(MG,'Equilibrium interpolation error',
+        ie.toExponential(2),'0',ie.toExponential(2),'1e-4',ie<1e-4,
+        'the 241-node table interpolated against the Raoult expression it tabulates');
+    }
+    }
+
+    // — invariants that must hold for whatever case is loaded right now —
+    // The current case may be invalid — variant() returns a rejection instead of
+    // reaching the equations, exactly as every other caller does.
+    const cur=this.variant(s,{});
+    if(cur.ok&&cur.stages){
+      const mr=cur.R/(cur.R+1), br=cur.xD/(cur.R+1);
+      let step=0, opline=0;
+      cur.stages.forEach((st,i)=>{
+        step=Math.max(step,Math.abs(this.xEq(st.y,s)-st.x));
+        opline=Math.max(opline,Math.abs(st.yn-(st.rect?mr*st.x+br:cur.xB+cur.slopeS*(st.x-cur.xB))));
+      });
+      const G='Current case, engine invariants';
+      row(G,'Overall balance F = D + B',Math.abs(cur.F-(cur.D+cur.B)).toExponential(2),'0','—','1e-9',
+        Math.abs(cur.F-(cur.D+cur.B))<1e-9,'an identity: D and B are solved from it');
+      row(G,'Component balance',Math.abs(cur.F*cur.zF-(cur.D*cur.xD+cur.B*cur.xB)).toExponential(2),'0','—','1e-9',
+        Math.abs(cur.F*cur.zF-(cur.D*cur.xD+cur.B*cur.xB))<1e-9,'also an identity — it cannot fail, and validates nothing');
+      row(G,'Constant molar overflow V = (R+1)D',Math.abs(cur.V-(cur.R+1)*cur.D).toExponential(2),'0','—','1e-9',
+        Math.abs(cur.V-(cur.R+1)*cur.D)<1e-9,'');
+      row(G,'Stage liquid in equilibrium, x = x*(y)',step.toExponential(2),'0','—','1e-9',step<1e-9,
+        'every stage, checked against the equilibrium curve');
+      row(G,'Stage vapour on its operating line',opline.toExponential(2),'0','—','1e-9',opline<1e-9,'');
+      row(G,'Total condenser, y₁ = x_D',Math.abs(cur.stages[0].y-cur.xD).toExponential(2),'0','—','1e-12',
+        Math.abs(cur.stages[0].y-cur.xD)<1e-12,'');
+      row(G,'N_min ≤ N',f(cur.Nmin,3)+' ≤ '+cur.N,'—','—','—',cur.Nmin<=cur.N+1e-9,
+        'the Fenske minimum cannot exceed the stepped stage count');
+      row(G,'R > R_min',f(cur.R,3)+' > '+f(cur.Rmin,3),'—','—','—',cur.R>cur.Rmin-1e-12,'');
+    }
+    const failed=rows.filter(x=>x.status==='✗').length;
+    const skipped=rows.filter(x=>x.skipped).length, total=rows.length-skipped;
+    const tail=skipped?(', '+skipped+' not applicable'):'';
+    const groups=[]; rows.forEach(x=>{ let g=groups.find(y=>y.name===x.group);
+      if(!g){ g={name:x.group,rows:[]}; groups.push(g); } g.rows.push(x); });
+    return {groups,total,skipped,failed,
+      summary:(failed?('✗ '+failed+' of '+total+' checks failed'+tail)
+        :(total?('✓ all '+total+' checks pass'+tail):('— no checks apply'+tail))),
+      summaryStyle:'font-size:15px;font-family:var(--font-heading);padding:6px 11px;border:1px solid '+
+        (failed?'var(--color-accent-700)':'var(--color-accent)')+';color:var(--color-accent-800);background:color-mix(in srgb,var(--color-accent) 14%,transparent)'};
+  }
   /** Splits what used to be a single "mass balance check" into the two things it
    *  actually contains: the material balance (an identity — D and B are solved
    *  from it, so it cannot fail and validates nothing) and the numerical residual
@@ -1914,7 +2089,7 @@ class Component extends DCLogic {
       ['Top / bottom temperature',f(r.Ttop,2)+' / '+f(r.Tbot,2)+' \u00b0C']].map(a=>({k:a[0],v:a[1]})):[];
     out.assumptions=['Steady-state operation','Binary mixture; the two components account for the whole stream',
       'Constant molar overflow in each section (equimolar latent heats)',
-      s.model==='raoult'?'Ideal vapour\u2013liquid equilibrium: Raoult\u2019s law with Antoine vapour pressures; ideal gas vapour phase':'Constant relative volatility independent of composition and temperature',
+      s.model==='raoult'?'Ideal vapour\u2013liquid equilibrium: Raoult\u2019s law with Antoine vapour pressures; ideal gas vapour phase':'Constant relative volatility independent of composition and temperature. Stage, top and bottom temperatures are still read from the selected pair\u2019s Antoine bubble-point curve and do not depend on \u03b1, so they are a nominal overlay and are not thermodynamically consistent with the \u03b1 in use \u2014 the mismatch reaches a few \u00b0C when \u03b1 differs from the pair\u2019s true value.',
       'Uniform column pressure — no tray pressure drop','Negligible heat loss to the environment',
       s.reb==='partial'?'Partial reboiler treated as one theoretical equilibrium stage':'Total reboiler contributes no equilibrium stage',
       'Total condenser only: the overhead vapour is condensed completely, so y\u2081 = x_D and the condenser is not an equilibrium stage. A partial condenser \u2014 which would contribute one additional equilibrium stage \u2014 is NOT modelled; the stage count is unchanged whatever condenser hardware a real column would use.',
@@ -2110,6 +2285,10 @@ class Component extends DCLogic {
     out.cust={aName:cuA.name,aA:cuA.A,aB:cuA.B,aC:cuA.C,aMW:cuA.MW,aTb:cuA.Tb,
               bName:cuB.name,bA:cuB.A,bB:cuB.B,bC:cuB.C,bMW:cuB.MW,bTb:cuB.Tb};
     out.setCust=(e)=>{const t=e.target; this.setCustom(t.dataset.side,t.dataset.f,t.value);};
+    out.isValidate=s.view==='validate';
+    // Re-solves several cases, so it is built only when the view is open.
+    out.val=out.isValidate? this.validationReport(s)
+      : {groups:[],total:0,failed:0,summary:'',summaryStyle:''};
     out.isVLE=s.view==='vle'; out.isMT=s.view==='mt'; out.isResults=s.view==='results';
     out.isSens=s.view==='sens'; out.isTheory=s.view==='theory'; out.isExam=s.view==='exam'; out.isAbout=s.view==='about';
     out.setVleShow=(e)=>this.setState({vleShow:e.target.value});
