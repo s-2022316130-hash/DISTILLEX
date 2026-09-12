@@ -193,6 +193,23 @@
   .blueprint > .corner { opacity: .3; }
   .card.blueprint:hover > .corner { opacity: .55; }
 
+  /* The blueprint corner ticks were the flat design's signature: each one
+     draws a full-width and full-height hairline, which read as registration
+     marks on an isolated card but as doubled rules once cards are stacked in
+     a list — visible as ghost dividers between every theory topic. With real
+     borders, radii and elevation they are redundant decoration, so they are
+     retired in one place rather than removed from 184 call sites. */
+  .blueprint > .corner { display: none }
+  /* Bare .blueprint containers (no .card) lose their only boundary with the
+     ticks gone, so they get a quiet one of their own. */
+  .blueprint:not(.card) {
+    border: 1px solid var(--dx-hairline); border-radius: var(--dx-r-md);
+    background: color-mix(in srgb, var(--dx-raised) 60%, transparent);
+    transition: border-color var(--dx-t-base) var(--dx-ease),
+                background var(--dx-t-base) var(--dx-ease);
+  }
+  .blueprint:not(.card):hover { border-color: color-mix(in srgb, var(--color-accent) 26%, var(--dx-hairline)) }
+
   /* Hover elevation only where the card is genuinely interactive. */
   .dx-lift { cursor: pointer; }
   .dx-lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-md);
@@ -308,9 +325,9 @@
   .dx-stage {
     position: relative; border-radius: var(--dx-r-lg); overflow: hidden;
     background:
-      radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--color-accent) 9%, transparent), transparent 62%),
-      linear-gradient(180deg, var(--dx-raised), var(--color-surface));
-    border: 1px solid var(--dx-hairline);
+      radial-gradient(120% 85% at 50% -6%, color-mix(in srgb, var(--color-accent) 20%, transparent), transparent 60%),
+      linear-gradient(180deg, color-mix(in srgb, var(--color-accent) 6%, var(--dx-raised)), var(--color-surface));
+    border: 1px solid color-mix(in srgb, var(--color-accent) 16%, var(--dx-hairline));
     box-shadow: var(--shadow-md);
     perspective: 1400px; perspective-origin: 50% 42%;
   }
@@ -322,13 +339,21 @@
   /* Viewpoints. Each is a single transform so switching interpolates. */
   .dx-vp-front { transform: none }
   .dx-vp-iso   { transform: rotateX(16deg) rotateY(-22deg) rotateZ(1deg) scale(.92) }
-  .dx-vp-side  { transform: rotateY(-58deg) scale(.9) }
+  /* the hero has more room than the simulator panel, so the column fills it */
+  .dx-stage-hero .dx-vp-iso { transform: rotateX(15deg) rotateY(-24deg) rotateZ(1deg) scale(1.0) }
+  /* A cylinder is rotationally symmetric, so rotating it sideways shows the
+     same silhouette as the front and the view earns nothing. The useful
+     fourth view is a section: the near half of the shell is taken away and
+     you look straight in at the trays and the traffic. */
+  .dx-vp-sec   { transform: rotateX(9deg) rotateY(-7deg) scale(1.04) }
+  .dx-vp-sec .dx-slat.near { opacity:.05 }
+  .dx-vp-sec .dx-tray { border-width:2px }
   .dx-vp-top   { transform: rotateX(82deg) scale(.74) }
   .dx-vp-xpl   { transform: rotateX(20deg) rotateY(-18deg) scale(.88) }
   /* Exploded pulls the annotation plane away from the vessel plane. */
   .dx-vp-xpl .dx-layer-notes { transform: translateZ(120px) }
   /* callouts are unreadable edge-on, so they step aside in those two views */
-  .dx-vp-side .dx-layer-notes, .dx-vp-top .dx-layer-notes { opacity:0 }
+  .dx-vp-top .dx-layer-notes { opacity:0 }
   .dx-vp-xpl .dx-layer-flow  { transform: translateZ(56px) }
   .dx-layer-notes, .dx-layer-flow { transition: transform var(--dx-t-slow) var(--dx-ease) }
   .dx-stage-grid {
@@ -397,11 +422,11 @@
   .dx-slat {
     position:absolute; left:0; top:0; transform-origin:50% 50%;
     background:linear-gradient(90deg,
-      color-mix(in srgb, var(--color-accent) 15%, transparent),
-      color-mix(in srgb, var(--color-accent) 3%, transparent) 45%,
-      color-mix(in srgb, var(--color-accent) 15%, transparent));
-    border-top:1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
-    border-bottom:1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+      color-mix(in srgb, var(--color-accent) 24%, transparent),
+      color-mix(in srgb, var(--color-accent) 5%, transparent) 45%,
+      color-mix(in srgb, var(--color-accent) 24%, transparent));
+    border-top:1px solid color-mix(in srgb, var(--color-accent) 42%, transparent);
+    border-bottom:1px solid color-mix(in srgb, var(--color-accent) 42%, transparent);
     backface-visibility:visible;
   }
   /* The shell carries the temperature profile: cool overhead, warm sump.
@@ -488,7 +513,7 @@
   .dx-grid2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:18px; align-items:start }
   .dx-grid3b { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; align-items:start }
   .dx-side { display:grid; grid-template-columns:minmax(0,310px) minmax(0,1fr); gap:18px; align-items:start }
-  .dx-hero { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:56px; align-items:center; padding:72px 0 60px }
+  .dx-hero { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:48px; align-items:center; padding:40px 0 52px }
   @media (max-width:1180px){ .dx-grid3 { grid-template-columns:minmax(0,1fr) } .dx-grid3b { grid-template-columns:minmax(0,1fr) } }
   @media (max-width:900px){
     .dx-hero { grid-template-columns:minmax(0,1fr); gap:28px; padding:34px 0 28px }
@@ -568,13 +593,13 @@
       </div>
       <div style="margin-top:22px;font-size:12px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Runs entirely client-side · Ideal VLE (Raoult) and constant-volatility models · No account, no server</div>
     </div>
-    <div class="dx-stage dx-stage-hero" style="aspect-ratio:1/1;display:grid;place-items:center" role="img" aria-label="Three-dimensional cutaway of a fractionating column showing its trays, the feed stage and counter-current vapour and liquid traffic.">
+    <div class="dx-stage dx-stage-hero" style="aspect-ratio:6/5;display:grid;place-items:center" role="img" aria-label="Three-dimensional cutaway of a fractionating column showing its trays, the feed stage and counter-current vapour and liquid traffic.">
       <i class="dx-stage-grid" aria-hidden="true"></i>
       <div class="dx-stage-inner dx-vp-iso" style="position:absolute;inset:0;display:grid;place-items:center">
         <div class="dx-col" style="width:{{ scene.W }}px;height:{{ scene.H }}px">
           <div class="dx-col-mid" style="height:{{ scene.H }}px">
             <sc-for list="{{ scene.slats }}" as="sl" hint-placeholder-count="16">
-              <i class="dx-slat" style="{{ sl.style }}"></i>
+              <i class="{{ sl.cls }}" style="{{ sl.style }}"></i>
             </sc-for>
             <i class="dx-therm" style="{{ scene.thermStyle }}"></i>
             <sc-for list="{{ scene.caps }}" as="cp" hint-placeholder-count="2">
@@ -801,7 +826,7 @@
                 <div class="dx-col" style="width:{{ scene.W }}px;height:{{ scene.H }}px">
                   <div class="dx-col-mid" style="height:{{ scene.H }}px">
                     <sc-for list="{{ scene.slats }}" as="sl" hint-placeholder-count="16">
-                      <i class="dx-slat" style="{{ sl.style }}"></i>
+                      <i class="{{ sl.cls }}" style="{{ sl.style }}"></i>
                     </sc-for>
                     <i class="dx-therm" style="{{ scene.thermStyle }}"></i>
                     <sc-for list="{{ scene.caps }}" as="cp" hint-placeholder-count="2">
@@ -2301,9 +2326,12 @@ class Component extends DCLogic {
     // vessel wall — a ring of slats at a fixed radius
     const w = (2 * Math.PI * RAD) / SLATS + 1.5;
     for (let i = 0; i < SLATS; i++){
-      scene.slats.push({ style:
+      const ang = i * (360 / SLATS);
+      // the half facing the viewer, which the section view takes away
+      const near = Math.cos(ang * Math.PI / 180) > 0.01;
+      scene.slats.push({ cls: 'dx-slat' + (near ? ' near' : ''), style:
         'width:' + w.toFixed(2) + 'px;height:' + H + 'px;margin-left:' + (-w / 2).toFixed(2) + 'px;' +
-        'transform:rotateY(' + (i * (360 / SLATS)).toFixed(2) + 'deg) translateZ(' + RAD + 'px)' });
+        'transform:rotateY(' + ang.toFixed(2) + 'deg) translateZ(' + RAD + 'px)' });
     }
     // thermal wash over the shell, stops taken from the solved end temperatures
     const tt = ok ? this.num(r.Ttop) : NaN, tb = ok ? this.num(r.Tbot) : NaN;
@@ -2594,7 +2622,7 @@ class Component extends DCLogic {
     out.scene = this.columnScene(s, r, hasR);
     out.vpCls = 'dx-stage-inner dx-vp-' + (s.colVP || 'front');
     out.colPaused = s.explaining ? '' : '';
-    out.vpBtns = [['front','Front'],['iso','Isometric'],['side','Side'],['top','Top'],['xpl','Exploded']]
+    out.vpBtns = [['front','Front'],['iso','Isometric'],['sec','Section'],['top','Plan'],['xpl','Exploded']]
       .map(([k,label])=>({k,label,on:(s.colVP||'front')===k?'1':'0',
         cur:(s.colVP||'front')===k?'true':'false'}));
     out.setVP = (e)=>{ const el=e.target.closest('[data-vp]'); if(el) this.setState({colVP:el.dataset.vp}); };
