@@ -1427,6 +1427,35 @@
                 <p style="margin:0;font-size:13.5px;line-height:1.55">{{ explainText }}</p>
               </div>
             </sc-if>
+        <section class="card blueprint" style="padding:14px;gap:10px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+            <h6 style="margin:0;color:var(--dx-ink-accent)">Stage profiles</h6>
+            <span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Stage 1 = top tray · stage {{ r.N }} = reboiler</span>
+          </div>
+          <div class="dx-grid2" style="gap:14px">
+            <sc-for list="{{ profiles }}" as="p" hint-placeholder-count="4">
+              <figure class="blueprint" style="padding:10px 8px 6px">
+                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                <svg viewBox="0 0 360 190" style="width:100%;height:auto" role="img" aria-label="{{ p.title }}">
+                  <text x="8" y="14" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-text)">{{ p.title }}</text>
+                  <g stroke="var(--color-divider)" stroke-width="1" fill="none"><path d="M46 24 V162 H352"></path></g>
+                  <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1"><path d="{{ p.grid }}"></path></g>
+                  <sc-for list="{{ p.series }}" as="s" hint-placeholder-count="1">
+                    <polyline points="{{ s.pts }}" fill="none" stroke="{{ s.color }}" stroke-width="1.6" stroke-dasharray="{{ s.dash }}"></polyline>
+                  </sc-for>
+                  <sc-for list="{{ p.ticks }}" as="t" hint-placeholder-count="4">
+                    <text x="{{ t.x }}" y="{{ t.y }}" text-anchor="{{ t.anchor }}" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
+                  </sc-for>
+                  <text x="200" y="184" text-anchor="middle" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">Stage number (top → bottom)</text>
+                  <sc-for list="{{ p.legend }}" as="g" hint-placeholder-count="1">
+                    <g><rect x="{{ g.x }}" y="20" width="14" height="2" fill="{{ g.color }}"></rect><text x="{{ g.tx }}" y="25" font-size="9" fill="color-mix(in srgb,var(--color-text) 65%,transparent)">{{ g.label }}</text></g>
+                  </sc-for>
+                </svg>
+              </figure>
+            </sc-for>
+          </div>
+        </section>
           </section>
         </div>
 
@@ -1512,35 +1541,6 @@
         </div>
       </div>
 
-      <section class="card blueprint" style="padding:14px;gap:10px;margin-top:14px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-          <h6 style="margin:0;color:var(--dx-ink-accent)">Stage profiles</h6>
-          <span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Stage 1 = top tray · stage {{ r.N }} = reboiler</span>
-        </div>
-        <div class="dx-grid2" style="gap:14px">
-          <sc-for list="{{ profiles }}" as="p" hint-placeholder-count="4">
-            <figure class="blueprint" style="padding:10px 8px 6px">
-              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              <svg viewBox="0 0 360 190" style="width:100%;height:auto" role="img" aria-label="{{ p.title }}">
-                <text x="8" y="14" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-text)">{{ p.title }}</text>
-                <g stroke="var(--color-divider)" stroke-width="1" fill="none"><path d="M46 24 V162 H352"></path></g>
-                <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1"><path d="{{ p.grid }}"></path></g>
-                <sc-for list="{{ p.series }}" as="s" hint-placeholder-count="1">
-                  <polyline points="{{ s.pts }}" fill="none" stroke="{{ s.color }}" stroke-width="1.6" stroke-dasharray="{{ s.dash }}"></polyline>
-                </sc-for>
-                <sc-for list="{{ p.ticks }}" as="t" hint-placeholder-count="4">
-                  <text x="{{ t.x }}" y="{{ t.y }}" text-anchor="{{ t.anchor }}" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
-                </sc-for>
-                <text x="200" y="184" text-anchor="middle" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">Stage number (top → bottom)</text>
-                <sc-for list="{{ p.legend }}" as="g" hint-placeholder-count="1">
-                  <g><rect x="{{ g.x }}" y="20" width="14" height="2" fill="{{ g.color }}"></rect><text x="{{ g.tx }}" y="25" font-size="9" fill="color-mix(in srgb,var(--color-text) 65%,transparent)">{{ g.label }}</text></g>
-                </sc-for>
-              </svg>
-            </figure>
-          </sc-for>
-        </div>
-      </section>
     </sc-if>
 
     <sc-if value="{{ isColumn }}">
@@ -3284,7 +3284,9 @@ class Component extends DCLogic {
     return (v === null || v === undefined) ? null : Math.round(v);
   }
   columnScene(s, r, ok){
-    const H = 384, RAD = 46, SLATS = 16;
+    // the split gives the column half the width, so it draws narrower there;
+    // on its own it fills the frame it is given
+    const H = 384, RAD = (s.colMode === 'split') ? 46 : 58, SLATS = 16;
     const top = 18, bot = H - 16;                    // usable vessel span
     const scene = { H, RAD, W: RAD * 2, slats: [], trays: [], hits: [], parts: [], caps: [], notes: [] };
 
@@ -3383,7 +3385,7 @@ class Component extends DCLogic {
     // the split puts the column in half the width, so the callouts come in
     // closer and wrap rather than run off the panel
     const tight = s.colMode === 'split';
-    const NOFF = tight ? 13 : 30;
+    const NOFF = tight ? 13 : 52;
     // in the split the callouts have roughly a third of the room, so they
     // carry the headline number only; the full set is still on the right-hand
     // summary and in the results table
