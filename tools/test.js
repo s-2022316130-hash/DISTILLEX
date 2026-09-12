@@ -699,12 +699,198 @@ function suiteCDU() {
      'warns about cracking above 375 °C rather than refusing');
 }
 
+
+/* ── rig: geometry, plant, flow sheet and the view model ────────────────
+   The simulator's presentation layers. They must not compute a process
+   quantity, they must not invent one when there is no result, and the
+   geometry they hand the renderer must be well formed. Everything here is
+   structural — no reference values.                                       */
+function suiteRig() {
+  const { GEO, GLM, PLANT, RIG2D, RIGINFO, CDU } = load().modules;
+  const r = CDU.run(CDU.baseCase());
+
+  // ── meshes ───────────────────────────────────────────────────────────
+  const meshes = {
+    cyl: GEO.cylinder(24, false, false), cylCap: GEO.cylinder(24, true, true),
+    cone: GEO.cone(24, 0.62), skirt: GEO.cone(24, 0.94), dish: GEO.dish(20, 6),
+    box: GEO.box(), annulus: GEO.annulus(24, 0.62, true),
+    ringThin: GEO.annulus(24, 0.90, true), disc: GEO.annulus(24, 0.06, true),
+    cylArc: GEO.cylArc(28, Math.PI * 1.44, 0.055), sphere: GEO.sphere(16, 10)
+  };
+  for (const k in meshes) {
+    const m = meshes[k], nv = m.pos.length / 3;
+    ok(m.idx.length === m.count && m.count % 3 === 0, 'mesh ' + k + ' has whole triangles');
+    let bad = 0, badN = 0;
+    for (let i = 0; i < m.idx.length; i++) if (m.idx[i] >= nv || m.idx[i] < 0) bad++;
+    for (let i = 0; i < nv; i++) {
+      const L = Math.hypot(m.nrm[i*3], m.nrm[i*3+1], m.nrm[i*3+2]);
+      if (!(L > 0.92 && L < 1.08)) badN++;
+    }
+    ok(bad === 0, 'mesh ' + k + ' indexes only existing vertices', 'out of range: ' + bad);
+    ok(badN === 0, 'mesh ' + k + ' has unit normals', 'bad: ' + badN + ' of ' + nv);
+  }
+
+  // ── the plant ────────────────────────────────────────────────────────
+  const P = PLANT.build();
+  ok(P.objects.length > 400, 'plant builds a detailed model', P.objects.length + ' objects');
+  ok(P.objects.every(o => meshes[o.mesh] !== undefined),
+     'every object names a mesh the renderer builds',
+     P.objects.filter(o => meshes[o.mesh] === undefined).map(o => o.mesh).join(','));
+  ok(P.objects.every(o => o.m && o.m.length === 16 && Array.prototype.every.call(o.m, Number.isFinite)),
+     'every object carries a finite 4x4 transform');
+  ok(P.objects.every(o => o.col && o.col.length === 3 && o.col.every(c => c >= 0 && c <= 1.2)),
+     'every object colour is in range');
+  const feet = P.objects.filter(o => o.m[13] < -0.01);
+  ok(feet.length === 0, 'nothing is modelled below the paving', feet.length + ' objects');
+  ok(P.streams.length === 11, 'every stream the result reports has a pipe run', P.streams.length);
+  ok(P.streams.every(st => st.pts.length >= 2 &&
+        st.pts.every(q => q.length === 3 && q.every(Number.isFinite))),
+     'every stream is a well-formed polyline');
+  ok(P.shellTop > P.skirtTop && P.skirtTop > 0 && P.feedY > P.skirtTop && P.feedY < P.shellTop,
+     'the flash zone sits inside the shell');
+  ok(P.sideY.length === 3 && P.sideY[0] > P.sideY[1] && P.sideY[1] > P.sideY[2],
+     'the side draws descend in the right order');
+
+  // pick ids are shared with the information layer and the flow sheet
+  const picks = {};
+  P.objects.forEach(o => { if (o.pick) picks[o.pick] = true; });
+  Object.keys(picks).forEach(k => ok(!!RIGINFO.describe(k),
+    'pick id "' + k + '" has an information record'));
+  Object.keys(RIGINFO.FOCUS).forEach(k => ok(!!RIGINFO.describe(k),
+    'focus target "' + k + '" has an information record'));
+  ok(RIGINFO.TOUR.every(t => RIGINFO.describe(t.sel) && t.title && t.text),
+     'every guided-tour stop names a real component');
+
+  // cameras are derived from the plant, so they must move with it
+  const cams = RIGINFO.cameras(P);
+  ok(cams.length >= 6, 'there are camera presets for every part of the unit');
+  ok(cams.every(c => c.t.every(Number.isFinite) && c.dist > 10 && c.dist < 260 &&
+                     Math.abs(c.pitch) < 1.2), 'every camera preset is usable');
+  ok(new Set(RIGINFO.TOUR.map(t => t.cam)).size <= cams.length &&
+     RIGINFO.TOUR.every(t => cams.some(c => c.key === t.cam)),
+     'every tour stop names a camera that exists');
+
+  // ── the flow sheet ───────────────────────────────────────────────────
+  const d0 = RIG2D.build(null, 'material', null, null, true);
+  ok(d0.pipes.length > 10 && d0.out.length === 6,
+     'the flow sheet draws with no result at all');
+  ok(d0.out.every(o => o.rate === '—'),
+     'with no result every product rate is a dash, not a number');
+  ok(d0.temps.length === 0, 'with no result no temperature is claimed');
+
+  const d1 = RIG2D.build(r, 'material', null, null, true);
+  ok(d1.out.length === 6 && d1.out.every(o => /^[\d.]+$/.test(o.rate)),
+     'with a result every product carries its computed rate');
+  const shown = d1.out.map(o => parseFloat(o.rate)).reduce((a, b) => a + b, 0);
+  ok(Math.abs(shown - r.feed.mass) / r.feed.mass < 0.005,
+     'the rates on the flow sheet sum to the charge', shown.toFixed(1) + ' vs ' + r.feed.mass);
+  ok(d1.temps.length >= 5, 'the solved temperatures are annotated');
+  const ys = d1.out.map(o => o.y);
+  ok(new Set(ys).size === ys.length, 'no two product labels share a row');
+  for (let i = 1; i < ys.length; i++)
+    ok(ys[i] - ys[i-1] >= 40, 'product labels are far enough apart to read');
+  ok(d1.pipes.every(q => /^M[-\d.]/.test(q.d) && q.w > 0 && isFinite(q.w)),
+     'every pipe has a path and a weight');
+
+  // line weight and tracer pace must follow the flow, not the other way round
+  const big = RIG2D.gauge(600, 1200), small = RIG2D.gauge(30, 1200);
+  ok(big > small, 'a larger stream is drawn heavier');
+  ok(RIG2D.pace(600, 1200) < RIG2D.pace(30, 1200), 'a larger stream runs its tracers faster');
+  ok(RIG2D.pace(0, 1200) === 0, 'a stream carrying nothing has no tracer');
+  const hot = RIG2D.heat(370, 30, 380), cold = RIG2D.heat(40, 30, 380);
+  ok(hot !== cold && /^rgb\(/.test(hot), 'the thermal ramp is a colour and it varies');
+  ok(RIG2D.heat(-50, 30, 380) === RIG2D.heat(30, 30, 380), 'the ramp clamps below its range');
+  ok(RIG2D.heat(900, 30, 380) === RIG2D.heat(380, 30, 380), 'the ramp clamps above its range');
+
+  // the thermal view must not stretch its scale to the run, or two runs
+  // could not be compared
+  const hotRun = CDU.run(Object.assign(CDU.baseCase(), { furnaceT: 380 }));
+  const tA = RIG2D.build(r, 'thermal', null, null, false);
+  const tB = RIG2D.build(hotRun, 'thermal', null, null, false);
+  ok(tA.legend && tB.legend && tA.legend.lo === tB.legend.lo && tA.legend.hi === tB.legend.hi,
+     'the thermal scale is the same for every run');
+
+  // selection dims everything else, in both views, from the one key
+  const sel = RIG2D.build(r, 'material', 'furnace', null, false);
+  const fur = sel.blocks.filter(bq => bq.pick === 'furnace')[0];
+  ok(fur && fur.op === 1, 'the selected block is drawn at full strength');
+  ok(sel.pipes.filter(q => q.pick !== 'furnace').every(q => q.op < 0.5),
+     'everything else is dimmed when something is selected');
+
+  // ── the view model ───────────────────────────────────────────────────
+  const c = C();
+  c.state = Object.assign({}, c.state);
+  const vm0 = c.rigView(c.state);
+  ok(vm0.rigSt.label === 'READY', 'the page opens READY');
+  ok(vm0.rigProducts.every(q => q.rate === '—' && q.pct === '—'),
+     'no product rate is shown before a run');
+  ok(vm0.rigKeyFigs.every(q => q.v === '—'), 'no headline figure is invented');
+  ok(vm0.rigBal === null && vm0.rigConv === null, 'no balance or convergence before a run');
+  ok(vm0.rigSections.length === 5 && vm0.rigSections.every(sec => sec.fields.length > 0),
+     'the operator panel has all five sections');
+  const fieldKeys = [];
+  vm0.rigSections.forEach(sec => sec.fields.forEach(fl => fieldKeys.push(fl.k)));
+  ok(fieldKeys.every(k => CDU.LIMITS[k]), 'every panel field is a real engine input');
+  Object.keys(CDU.LIMITS).forEach(k => ok(fieldKeys.indexOf(k) >= 0,
+    'engine input "' + k + '" is reachable from the panel'));
+  ok(vm0.rigSections.every(sec => sec.fields.every(fl =>
+      fl.min === CDU.LIMITS[fl.k].min && fl.max === CDU.LIMITS[fl.k].max)),
+     'every slider offers exactly the range the engine accepts');
+
+  c.state.rig = Object.assign({}, c.state.rig, { r: r, status: 'complete', warns: [] });
+  const vm1 = c.rigView(c.state);
+  ok(vm1.rigSt.label === 'COMPLETE', 'a clean run reports COMPLETE');
+  ok(vm1.rigConv.converged === r.converged, 'convergence is reported, not asserted');
+  ok(vm1.rigConv.outer === String(r.outer), 'the sweep count is the solver’s own');
+  ok(vm1.rigConv.trace && vm1.rigConv.trace.n === r.trace.length,
+     'the residual plot has one point per sweep');
+  const rate = vm1.rigProducts.map(q => parseFloat(q.rate)).reduce((a, b) => a + b, 0);
+  ok(Math.abs(rate - r.feed.mass) / r.feed.mass < 0.005,
+     'the product strip sums to the charge');
+  ok(vm1.rigBal.ok === (Math.abs(r.balance.closure) <= 1e-6),
+     'the balance verdict follows the computed closure');
+  ok(vm1.rigStages.length < r.internals.Tprofile.length,
+     'the ordinary view lists the named stages, not every tray');
+  c.state.rig = Object.assign({}, c.state.rig, { expert: true });
+  const vm2 = c.rigView(c.state);
+  ok(vm2.rigStages.length === r.internals.Tprofile.length,
+     'expert view lists every stage the solver carries');
+  ok(vm2.rigFlows.length > 6 && vm2.rigCut && vm2.rigCut.bars.length === CDU.NBP_C.length,
+     'expert view exposes the internal flows and the pseudocomponent grid');
+
+  // a refused run must leave nothing behind that looks like a result
+  const c2 = C();
+  c2.state = Object.assign({}, c2.state);
+  c2.state.rig = Object.assign({}, c2.state.rig,
+    { status: 'error', errs: [{ msg: 'no' }], r: null });
+  const vmE = c2.rigView(c2.state);
+  ok(vmE.rigSt.tone === 'err' && vmE.rigHasErr, 'an error is reported as an error');
+  ok(!vmE.rigHasR && vmE.rigProducts.every(q => q.rate === '—'),
+     'a failed run shows no product rates');
+  ok(vmE.rigD2.out.every(q => q.rate === '—'),
+     'a failed run leaves the flow sheet without numbers');
+
+  // formatting must not manufacture precision
+  ok(c.rigFmt(NaN, 2) === '—' && c.rigFmt(undefined, 1) === '—',
+     'a missing number prints as a dash');
+  ok(c.rigRate(1234.5678) === '1235' && c.rigRate(9.87654) === '9.9',
+     'rates are quoted to about three significant figures');
+  ok(/^2\.6×10⁻⁸$/.test(c.rigExp(2.6e-8)), 'small numbers get an exponent, not zeros');
+
+  // the gateway preview is the same flow sheet, and honest before the run
+  const g0 = c2.rigGate(c2.state);
+  ok(g0.gateFigs.every(q => q.v === '—'), 'the gateway invents nothing before a run');
+  const g1 = c.rigGate(c.state);
+  ok(g1.gateFigs.every(q => q.v !== '—'), 'the gateway shows the prewarmed run');
+  ok(g1.gateD2.out.length === 6, 'the gateway draws the whole flow sheet');
+}
+
 const SUITES = {
   identity: suiteIdentity, analytic: suiteAnalytic, 'pure-component': suitePureComponent,
   thermo: suiteThermo, invariants: suiteInvariants, matrix: suiteMatrix,
   validation: suiteValidation, 'save-load': suiteSaveLoad,
   disclosures: suiteDisclosures, contrast: suiteContrast,
-  headers: suiteHeaders, build: suiteBuild, cdu: suiteCDU,
+  headers: suiteHeaders, build: suiteBuild, cdu: suiteCDU, rig: suiteRig,
 };
 
 function main() {

@@ -5,7 +5,7 @@ equilibrium, McCabe–Thiele stage construction, column operation, stage profile
 studies, theory and an exam mode. Everything is computed in the browser — no server, no build
 step, no account, no telemetry, no stored data.
 
-**Live entry point:** `index.html` (self-contained, ~724 KB, works offline by double-click).
+**Live entry point:** `index.html` (self-contained, ~920 KB, works offline by double-click).
 
 Alongside the binary simulator there is an **industrial crude unit** at
 `/industrial-distillation` — an interactive, educational visualisation of an atmospheric
@@ -23,7 +23,17 @@ so the offline copy still links.
 .
 ├── index.html      ← the deployable application (all CSS, fonts, runtime inlined)
 ├── src/            ← editable source
-│   ├── DISTILLEX.dc.html    the application source (markup + calculation engine)
+│   ├── DISTILLEX.dc.html    the application source (markup + binary engine + page)
+│   ├── rig/                 the industrial crude unit, as separate modules
+│   │   ├── engine.js          the crude-unit simulation — the only thing that computes
+│   │   ├── glmath.js          vectors, matrices and the camera spring
+│   │   ├── geometry.js        parametric meshes, built in unit frames
+│   │   ├── plant.js           the unit itself: geometry, streams, instruments
+│   │   ├── renderer.js        the WebGL scene — instancing, id-buffer picking, tracers
+│   │   ├── info.js            what each component is; camera presets; the guided tour
+│   │   ├── view2d.js          the process flow sheet, drawn from the same result
+│   │   ├── panel.js           the controller: run states, camera, selection, files
+│   │   └── vm.js              the view model — formats, never calculates
 │   ├── support.js           component runtime
 │   └── _ds/…                design-system tokens and stylesheet
 ├── tools/
@@ -43,6 +53,9 @@ so the offline copy still links.
 
 ## Features
 
+- **Industrial crude unit** — a separate page at `/industrial-distillation`: a working
+  atmospheric-distillation simulator with its own solver, its own operator panel and a WebGL
+  model of the plant. See *The industrial crude unit* below.
 - **Simulation dashboard** — feed and operating conditions, live column schematic with per-tray
   hover data, live results, material balance and convergence residual, "What happens if?" comparator,
   and Learning / Engineering / Advanced interface levels.
@@ -129,6 +142,104 @@ latent-heat-only duties. Column hydraulics — flooding, weeping, pressure drop,
 of scope. Activity-coefficient models (Wilson, NRTL, UNIQUAC) are **not** implemented; mixtures
 that need them are flagged rather than approximated.
 
+
+---
+
+## The industrial crude unit
+
+`/industrial-distillation` is a second simulator, not a second illustration. It has its own
+engine (`src/rig/engine.js`), which the binary solver shares nothing with, and every number the
+page shows — every yield, temperature, duty, line weight and tracer speed — comes out of a call
+to it. Before the first run the page shows dashes; if a run is refused or fails, it goes back to
+dashes and says why. Nothing on it is pre-computed and nothing is animated from a constant.
+
+### What it solves
+
+**Feed.** The crude is represented as 22 narrow-boiling pseudocomponents on a fixed
+normal-boiling-point grid running from −130 °C to 580 °C. Each cut is represented by the
+n-alkane of the same normal boiling point, which fixes its carbon number and therefore its molar
+mass (M = 14.027·n + 2.016). Three assays — light, medium and heavy — are given as true-boiling-point
+curves (cumulative mass % against temperature) and are converted to the grid by taking the mass
+between each cut's boundaries off the interpolated curve.
+
+**Vapour–liquid equilibrium.** The enthalpy of vaporisation of each cut comes from Kistiakowsky's
+rule, ΔS_vap = 36.6 + 8.31·ln(T_b) J/(mol·K), and its vapour pressure from the Clausius–Clapeyron
+equation integrated at constant ΔH_vap, anchored at one atmosphere at its own normal boiling
+point. The vapour is ideal and the liquid follows Raoult's law, so K = Pˢᵃᵗ/P. Because the raw
+sums span thirty orders of magnitude across this grid, every phase-boundary solve works on
+log K and log-sum-exp residuals rather than on K directly.
+
+**Flash.** The charge is heated to the furnace outlet temperature and flashed at the flash-zone
+pressure by Rachford–Rice, solved by Newton's method with a bisection guard.
+
+**The tower, above the flash zone.** A stagewise cascade solved by the bubble-point
+(Wang–Henke) method. The component balances on each sweep form a tridiagonal system,
+
+    ℓ_{j−1} − [(1 + φ_j) + S_j]·ℓ_j + S_{j+1}·ℓ_{j+1} = −f_j,    S_j = K_j·V_j/L_j,  φ_j = U_j/L_j
+
+solved exactly by the Thomas algorithm. Side draws enter as **ratios** φ of the liquid flowing
+past the tray rather than as fixed rates; the system then telescopes to an exact material balance
+on every sweep, so the balance closes whether or not the temperatures have converged. Constant
+molar overflow is imposed explicitly on the vapour and liquid traffic. Stage temperatures are
+then updated from the bubble-point condition and the sweep repeats, under relaxation that is
+reduced automatically when progress stalls.
+
+**The tower, below the flash zone.** An atmospheric crude tower has no reboiler — heating that
+bottoms would crack it — so the temperature in the stripping section is not free, and the
+stagewise formulation is genuinely singular there. That section is treated by the Kremser group
+method (absorption and stripping factors) instead. The two halves meet at the flash zone. The
+same group method handles each side stripper.
+
+**Steam.** Stripping steam is treated as an inert carrier: it is excluded from the equilibrium
+solve and enters through the total vapour, so the bubble-point condition becomes Σ K·x = 1 − y_steam.
+That is how the tower strips without a reboiler.
+
+**Energy.** Furnace and condenser duties are computed from the sensible and latent terms the
+model already carries. They are reported in MW to the nearest MW.
+
+### What it does not claim
+
+Tray efficiency is not modelled: every stage is a theoretical stage. Liquid non-ideality,
+tray pressure drop beyond the linear profile, heat losses, and any cracking in the heater are
+outside the model. The three assays are plausible shapes for light, medium and heavy crude, not
+transcriptions of a particular field's assay. **No result on the page has been validated against
+a real unit or against a commercial simulator,** and none should be read as a prediction of one.
+The page states its assumptions on screen, under *Model assumptions*.
+
+### Run states
+
+`READY` → `CALCULATING` (the charge is characterised and flashed) → `CONVERGING` (the cascade
+iterates) → `COMPLETE`, `WARNING` or `ERROR`. The three outcomes mean what they say:
+
+- `COMPLETE` — the solver reported convergence and the material balance closes inside 1×10⁻⁶.
+- `WARNING` — a result was produced with qualifications, each stated in full: the iteration limit
+  was reached with the profile still moving, a side draw asked for more liquid than flows past
+  its tray, the condenser cannot deliver the requested split, or the balance is outside tolerance.
+  The page never reports convergence the solver did not report.
+- `ERROR` — the inputs were refused or the solve failed. No product rate, temperature or duty is
+  shown, in either view, and the plant is drawn with no flow.
+
+The panel plots the residual against sweep number, so what the solver actually did is visible
+rather than asserted.
+
+### How the three views stay in step
+
+The engine produces one result. `plant.js` and `view2d.js` both read it, and both stamp the same
+`pick` identifiers onto what they draw, so a selection made in the 3D scene is already a selection
+in the flow sheet and in the information panel — there is no synchronisation code, because there
+is only one piece of state. Line weights and tracer densities follow the computed mass flows;
+the thermal ramp is anchored to a fixed 30–380 °C scale so that a colour means the same
+temperature from one run to the next.
+
+### Rendering
+
+WebGL 1 with `ANGLE_instanced_arrays`, ten instanced mesh groups and hardware multisampling; the
+geometry is parametric and built in unit frames, so one cylinder mesh becomes every pipe.
+Picking renders component ids to an offscreen buffer and reads one pixel. No library is loaded:
+the Content-Security-Policy forbids external scripts, and the shaders are inline strings.
+The renderer sheds tracer density if it cannot hold a usable frame rate, and says so on screen.
+Where WebGL is unavailable the page falls back to the flow sheet, which needs none.
+
 ---
 
 ## Local development
@@ -142,10 +253,16 @@ python3 -m http.server 8000     # or: npx serve .
 # open http://localhost:8000
 ```
 
-To edit the application, open `src/DISTILLEX.dc.html` — the markup and the calculation engine
-(`class Component`) live in that one file, with the engineering functions (`psat`, `bubbleT`,
+To edit the application, open `src/DISTILLEX.dc.html` — the markup and the binary calculation
+engine (`class Component`) live in that one file, and the industrial crude unit lives in
+`src/rig/` and is inlined at build time by an `// @include rig/x.js` directive on a line of its
+own. The directive is resolved depth-first, re-indented to its own column and refuses cycles, so
+the repository keeps real modules while the deployed artefact stays a single self-contained page;
+`tools/engine.js` resolves the same directives, so the regression suite runs against exactly the
+assembled source the page ships. The binary engine's functions (`psat`, `bubbleT`,
 `dewT`, `curve`, `yEq`, `xEq`, `qIntersect`, `minReflux`, `lines`, `stepStages`, `solve`,
-`variant`) kept separate from the UI. Serve `src/DISTILLEX.dc.html` directly while you work, then
+`variant`) are kept separate from the UI, and the crude unit keeps its simulation, its scene, its
+flow sheet, its controller and its view model in five separate files. Serve `src/DISTILLEX.dc.html` directly while you work, then
 regenerate the deployable bundle:
 
 ```bash
@@ -181,8 +298,9 @@ node tools/test.js --list     # list the suites
 node tools/test.js thermo     # run selected suites
 ```
 
-225 checks in twelve suites, standard library only, no dependencies. The suite loads the calculation
-engine straight out of `src/DISTILLEX.dc.html`, so it tests the same code the page ships.
+511 checks in fourteen suites, standard library only, no dependencies. The suite loads the
+application straight out of `src/DISTILLEX.dc.html` — resolving the same `@include` directives
+the build resolves — so it tests exactly the code the page ships.
 
 | Suite | What it anchors against |
 | --- | --- |
@@ -198,6 +316,8 @@ engine straight out of `src/DISTILLEX.dc.html`, so it tests the same code the pa
 | `contrast` | the palette the page ships must clear WCAG 1.4.3 (4.5:1) wherever the accent carries text, in both themes, and no text may fall back to the raw accent |
 | `headers` | the deployed security headers, and every CSP allowance still being one the shipped runtime demonstrably needs |
 | `build` | `index.html` must be reproducible from `src/` |
+| `cdu` | the crude-unit engine: vapour pressure at every cut's own normal boiling point, Rachford–Rice residuals, phase recombination, the Kremser closed forms, exact material closure, a monotone temperature profile, and every direction the physics must move in — furnace, reflux, pressure, assay, steam and scale — plus the operating points that must be refused |
+| `rig` | the presentation layers: every mesh well formed, every plant object naming a mesh the renderer builds, nothing modelled below the paving, every `pick` id carrying an information record, every tour stop naming a camera that exists, the flow sheet summing to the charge with no two labels colliding, the thermal scale fixed across runs, and the view model inventing nothing before a run or after a refusal |
 
 The `contrast` suite checks the palette and how the source uses it, which is what can be
 verified without a browser; it does not walk the rendered page. The per-view sweep that found

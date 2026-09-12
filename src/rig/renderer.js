@@ -57,6 +57,7 @@ var RIGGL = (function () {
     'varying vec3 vN; varying vec3 vW; varying vec4 vCol; varying vec4 vFx;',
     'uniform vec3 uEye; uniform vec3 uFog; uniform float uFogD;',
     'uniform vec3 uKey; uniform vec3 uKeyC; uniform vec3 uFill; uniform vec3 uRim;',
+    'uniform vec3 uBack; uniform vec3 uBackC; uniform vec3 uSkyT; uniform vec3 uSkyH;',
     'uniform float uExpo;',
     'void main(){',
     '  vec3 N = normalize(vN);',
@@ -64,25 +65,45 @@ var RIGGL = (function () {
     '  if (dot(N,V) < 0.0) N = -N;',                 // two-sided: gratings, annuli
     '  float rough = clamp(vCol.a, 0.05, 1.0);',
     '  float metal = clamp(vFx.x, 0.0, 1.0);',
+    '  float flag  = vFx.w;',
     '  vec3 base = vCol.rgb;',
+    // ── the paved plot. Drawn procedurally from world XZ so the disc has
+    //    joints, a stained apron under the plant, and an edge that dissolves
+    //    into the fog instead of ending in a hard circle.
+    '  if (flag > 0.5) {',
+    '    vec2 g = abs(fract(vW.xz / 7.0) - 0.5);',
+    '    float joint = 1.0 - smoothstep(0.0, 0.055, min(g.x, g.y));',
+    '    float rad = length(vW.xz);',
+    '    float apron = 1.0 - smoothstep(12.0, 52.0, rad);',
+    '    base = mix(base, base * 1.65, apron * 0.55);',
+    '    base = mix(base, base * 0.42, joint * 0.7);',
+    '  }',
     '  vec3 L = normalize(uKey);',
     '  float ndl = max(dot(N,L), 0.0);',
     // a wrapped diffuse term: bare Lambert makes a cylinder read as a cutout
     '  float wrap = max((dot(N,L) + 0.35) / 1.35, 0.0);',
-    '  vec3 diff = base * (uKeyC * wrap + uFill * (0.62 + 0.38 * N.y));',
+    // the sky is the fill: cool from above, warmer near the horizon, which is
+    // what actually distinguishes painted steel from insulation outdoors
+    '  vec3 sky = mix(uSkyH, uSkyT, clamp(N.y * 0.5 + 0.5, 0.0, 1.0));',
+    '  vec3 amb = uFill * (0.72 + 0.28 * N.y) + sky * 0.75;',
+    '  float bdl = max(dot(N, normalize(uBack)), 0.0);',
+    '  vec3 diff = base * (uKeyC * wrap + amb + uBackC * bdl * 0.42);',
     '  vec3 H = normalize(L + V);',
     '  float shin = mix(18.0, 220.0, 1.0 - rough);',
     '  float spec = pow(max(dot(N,H), 0.0), shin) * (1.0 - rough) * (0.25 + 0.75 * metal);',
-    '  vec3 specC = mix(vec3(1.0), base, metal) * spec * ndl * 1.6;',
-    '  float rim = pow(1.0 - max(dot(N,V), 0.0), 3.2);',
-    '  vec3 rimC = uRim * rim * (0.35 + 0.65 * metal);',
+    '  vec3 specC = mix(vec3(1.0), base, metal) * spec * ndl * 1.7;',
+    // a fresnel-weighted sky reflection, so metal picks the sky up at grazing
+    // angles and insulation barely does
+    '  float fres = pow(1.0 - max(dot(N,V), 0.0), 4.0);',
+    '  vec3 env = sky * fres * (0.10 + 0.90 * metal) * (1.0 - rough * 0.7) * 2.1;',
+    '  vec3 rimC = uRim * pow(1.0 - max(dot(N,V), 0.0), 3.2) * (0.22 + 0.50 * metal);',
     // contact darkening near the ground, standing in for occlusion
-    '  float ao = clamp(0.58 + 0.42 * smoothstep(0.0, 11.0, vW.y), 0.0, 1.0);',
-    '  vec3 col = (diff * ao + specC + rimC) * uExpo + base * vFx.y;',
+    '  float ao = clamp(0.56 + 0.44 * smoothstep(0.0, 11.0, vW.y), 0.0, 1.0);',
+    '  vec3 col = (diff * ao + specC + env + rimC) * uExpo + base * vFx.y;',
     '  col *= mix(1.0, 0.30, clamp(vFx.z, 0.0, 1.0));',   // de-emphasis
     '  float d = length(uEye - vW);',
     '  float f = 1.0 - exp(-pow(max(d - 46.0, 0.0) * uFogD, 1.30));',
-    '  col = mix(col, uFog, clamp(f, 0.0, 0.62));',
+    '  col = mix(col, uFog, clamp(f, 0.0, flag > 0.5 ? 0.94 : 0.62));',
     '  gl_FragColor = vec4(col, 1.0);',
     '}'
   ].join('\n');
@@ -181,6 +202,7 @@ var RIGGL = (function () {
       cyl:    GEO.cylinder(seg(40), false, false),
       cylCap: GEO.cylinder(seg(40), true, true),
       cone:   GEO.cone(seg(40), 0.62),
+      skirt:  GEO.cone(seg(40), 0.94),               // a support skirt barely tapers
       dish:   GEO.dish(seg(36), Math.max(4, Math.round(9 * LOD))),
       box:    GEO.box(),
       annulus:GEO.annulus(seg(40), 0.62, true),      // platform gratings
@@ -223,7 +245,8 @@ var RIGGL = (function () {
         mData.set(ob.m, i * 16);
         cData[i*4] = ob.col[0]; cData[i*4+1] = ob.col[1]; cData[i*4+2] = ob.col[2];
         cData[i*4+3] = ob.mat.rgh;
-        fData[i*4] = ob.mat.mtl; fData[i*4+1] = ob.mat.emi; fData[i*4+2] = 0; fData[i*4+3] = 0;
+        fData[i*4] = ob.mat.mtl; fData[i*4+1] = ob.mat.emi; fData[i*4+2] = 0;
+        fData[i*4+3] = ob.mat.flag || 0;
         var id = ob.pick ? pickMap[ob.pick] : 0;
         pData[i*3] = ((id >> 0) & 255) / 255;
         pData[i*3+1] = ((id >> 8) & 255) / 255;
@@ -459,8 +482,12 @@ var RIGGL = (function () {
         gl.uniform1f(gl.getUniformLocation(prog, 'uFogD'), 0.0030);
         gl.uniform3fv(gl.getUniformLocation(prog, 'uKey'), [0.46, 0.78, 0.44]);
         gl.uniform3fv(gl.getUniformLocation(prog, 'uKeyC'), [1.52, 1.44, 1.32]);
-        gl.uniform3fv(gl.getUniformLocation(prog, 'uFill'), [0.30, 0.38, 0.54]);
+        gl.uniform3fv(gl.getUniformLocation(prog, 'uFill'), [0.335, 0.415, 0.575]);
         gl.uniform3fv(gl.getUniformLocation(prog, 'uRim'), [0.30, 0.62, 0.92]);
+        gl.uniform3fv(gl.getUniformLocation(prog, 'uBack'), [-0.62, 0.30, -0.72]);
+        gl.uniform3fv(gl.getUniformLocation(prog, 'uBackC'), [0.20, 0.30, 0.52]);
+        gl.uniform3fv(gl.getUniformLocation(prog, 'uSkyT'), st.skyTop);
+        gl.uniform3fv(gl.getUniformLocation(prog, 'uSkyH'), st.skyHorizon);
         gl.uniform1f(gl.getUniformLocation(prog, 'uExpo'), st.expo);
       }
       var useInst = !!inst;
@@ -481,7 +508,7 @@ var RIGGL = (function () {
             gl.vertexAttrib4f(gl.getAttribLocation(prog, 'aCol'),
               grp.cData[q*4], grp.cData[q*4+1], grp.cData[q*4+2], grp.cData[q*4+3]);
             gl.vertexAttrib4f(gl.getAttribLocation(prog, 'aFx'),
-              grp.fData[q*4], grp.fData[q*4+1], grp.fData[q*4+2], 0);
+              grp.fData[q*4], grp.fData[q*4+1], grp.fData[q*4+2], grp.fData[q*4+3]);
             gl.drawElements(gl.TRIANGLES, grp.geo.count, type, 0);
           }
         }

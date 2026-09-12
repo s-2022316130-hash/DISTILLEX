@@ -480,9 +480,29 @@ var CDU = (function () {
     return { ok: errs.length === 0, errs: errs, warns: warns };
   }
 
+  /** The first half of a run: characterise the charge and flash it at the
+   *  furnace outlet. The page calls this before the cascade so that the feed
+   *  and flash figures it displays while the solver is working are the ones
+   *  actually computed, not a placeholder. run() repeats the work — it is a
+   *  few milliseconds — rather than depending on this having been called. */
+  function feedPhase(state) {
+    var v = validate(state);
+    if (!v.ok) return { ok: false, errs: v.errs, warns: v.warns };
+    var a = ASSAY[state.assay], z = assayZ(a, state.assaySkew);
+    var Mavg = 0, i;
+    for (i = 0; i < COMP.length; i++) Mavg += z[i] * COMP[i].M;
+    var F = (+state.feedRate * 1000) / Mavg;
+    var fl = flash(z, +state.furnaceT + T0, +state.colP);
+    return { ok: true, warns: v.warns, assay: a, z: z,
+             feed: { mass: +state.feedRate, molar: F, M: Mavg, api: a.api, T: +state.feedT },
+             flash: { psi: fl.psi, T: +state.furnaceT, P: +state.colP,
+                      vapour: F * fl.psi, liquid: F * (1 - fl.psi), it: fl.it } };
+  }
+
   /* ── the run ─────────────────────────────────────────────────────────
      INPUTS → VALIDATION → FLASH → CASCADE → BALANCES → RESULTS          */
-  function run(state) {
+  function run(state, opts) {
+    opts = opts || {};
     var t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     var s = {}, k;
     for (k in state) if (state.hasOwnProperty(k)) s[k] = state[k];
@@ -709,6 +729,9 @@ var CDU = (function () {
     var refluxMol = zeros(), gasMol = zeros(), napMol = zeros();
     var condShort = false, drawStarved = false;
     var converged = false, outer = 0, relax = 0.8, PHI_RELAX = 0.2, lastErr = Infinity, stall = 0;
+    // The residual trajectory, recorded so the page can plot what the solver
+    // actually did rather than assert that it converged.
+    var trace = [];
     var NC = COMP.length;
 
     for (outer = 0; outer < 420; outer++) {
@@ -916,6 +939,8 @@ var CDU = (function () {
       }
       else stall = 0;
       lastErr = err;
+      trace.push([outer, dT, dF]);
+      if (opts.onIter) opts.onIter(outer, dT, dF);
       if (typeof CDU_TRACE !== 'undefined' && CDU_TRACE) CDU_TRACE.push({o:outer,dT:dT,dF:dF,relax:relax,
         phi:drawSpec.map(function(d){return +phi[d.at].toFixed(4);}),
         got:drawSpec.map(function(d){return +(d.got||0).toFixed(1);}),
@@ -1040,6 +1065,7 @@ var CDU = (function () {
       ok: true,
       status: warns.length ? 'warning' : 'complete',
       converged: converged, outer: outer, iters: iters, residual: resid,
+      trace: trace,
       ms: t1 - t0,
       assay: assay, z: z, comps: COMP,
       feed: { mass: inMass, molar: F, M: Mavg, api: assay.api,
@@ -1109,7 +1135,7 @@ var CDU = (function () {
 
   return {
     COMP: COMP, NBP_C: NBP_C, ASSAY: ASSAY, CUTS: CUTS, LIMITS: LIMITS,
-    baseCase: baseCase, validate: validate, run: run,
+    baseCase: baseCase, validate: validate, run: run, feedPhase: feedPhase,
     psat: psat, kval: kval, flash: flash, bubbleT: bubbleT, dewT: dewT,
     rachfordRice: rachfordRice, kremserAbsorb: kremserAbsorb,
     assayZ: assayZ, carbonAt: carbonAt
