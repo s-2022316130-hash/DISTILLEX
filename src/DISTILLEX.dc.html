@@ -686,6 +686,53 @@
     color:var(--dx-ink-accent); font-weight:700;
   }
 
+  /* ═══ 2D elevation and the 2D/3D split ══════════════════════
+     Both column views draw the same sub-sample of r.stages and highlight by
+     the stage number the engine assigned, so pointing at a tray in one view
+     always lights the same stage in the other. */
+  .dx-colmode { display:grid; gap:12px }
+  .dx-cm-split { grid-template-columns: minmax(0,1fr) minmax(0,1.02fr) }
+  @media (max-width: 940px) { .dx-cm-split { grid-template-columns: 1fr } }
+
+  .dx-flat svg { display:block; width:100%; height:100%; overflow:visible }
+  .dx-flat svg text { font-variant-numeric:tabular-nums }
+  .dx-frow { cursor:pointer }
+  .dx-frow .hit  { fill:transparent; transition:fill var(--dx-t-base) var(--dx-ease) }
+  .dx-frow .tray { stroke:color-mix(in srgb, var(--dx-liquid) 76%, transparent); stroke-width:1.6;
+                   transition:stroke var(--dx-t-base) var(--dx-ease),
+                              stroke-width var(--dx-t-base) var(--dx-ease) }
+  .dx-frow .liq  { fill:color-mix(in srgb, var(--dx-liquid) 32%, transparent);
+                   transition:width var(--dx-t-slow) var(--dx-ease) }
+  .dx-frow .link { stroke:color-mix(in srgb, var(--color-text) 24%, transparent); stroke-width:1 }
+  .dx-frow .dxl  { fill:var(--dx-liquid) }
+  .dx-frow .dxv  { fill:var(--dx-vapour) }
+  .dx-frow .num  { fill:color-mix(in srgb, var(--color-text) 62%, transparent) }
+  .dx-frow.feed .tray { stroke:var(--dx-magenta); stroke-width:2.8 }
+  .dx-frow.feed .num  { fill:var(--dx-magenta); font-weight:700 }
+  .dx-frow.on  .hit   { fill:color-mix(in srgb, var(--dx-gold) 16%, transparent) }
+  .dx-frow.on  .tray  { stroke:var(--dx-gold); stroke-width:3 }
+  .dx-frow.on  .num   { fill:var(--dx-gold); font-weight:700 }
+  .dx-frow:hover .tray { stroke-width:2.6 }
+
+  /* flat planes that face the viewer, so a tray in the 3D column can be
+     pointed at whatever the viewpoint */
+  .dx-hit { position:absolute; cursor:pointer; background:transparent }
+  .dx-vp-top .dx-hit { pointer-events:none }
+  .dx-tray.hot {
+    border-color:var(--dx-gold) !important;
+    box-shadow:0 0 28px color-mix(in srgb, var(--dx-gold) 72%, transparent);
+  }
+  .dx-cm-split .dx-note { font-size:8.5px; letter-spacing:.04em }
+  .dx-cm-split .dx-note b { font-size:10px }
+  .dx-cm-split .dx-note::before { width:11px }
+  .dx-cm-split .dx-note.l::before { right:-13px }
+  .dx-cm-split .dx-note.r::before { left:-13px }
+  .dx-colkey { display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+               font-size:11px; letter-spacing:.04em;
+               color:color-mix(in srgb, var(--color-text) 72%, transparent) }
+  .dx-colkey i { display:inline-block; width:9px; height:9px; border-radius:50%;
+                 margin-right:5px; vertical-align:-1px }
+
   /* ═══ crude-oil tower ═════════════════════════════════════════════════
      Original artwork, drawn as SVG rather than photographed: it can be
      exploded, animated and highlighted per stream, and it carries no
@@ -1208,6 +1255,11 @@
                 </div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <div class="dx-vp-btns dx-noprint" role="group" aria-label="Column representation" onClick="{{ setMode }}">
+                  <sc-for list="{{ modeBtns }}" as="m" hint-placeholder-count="3">
+                    <button class="btn" data-cm="{{ m.k }}" data-on="{{ m.on }}" aria-pressed="{{ m.cur }}">{{ m.label }}</button>
+                  </sc-for>
+                </div>
                 <div class="dx-vp-btns dx-noprint" role="group" aria-label="Column viewpoint" onClick="{{ setVP }}">
                   <sc-for list="{{ vpBtns }}" as="b" hint-placeholder-count="5">
                     <button class="btn" data-vp="{{ b.k }}" data-on="{{ b.on }}" aria-pressed="{{ b.cur }}">{{ b.label }}</button>
@@ -1216,6 +1268,52 @@
                 <button class="btn btn-secondary dx-noprint" onClick="{{ explainToggle }}" style="min-height:30px">{{ explainLabel }}</button>
               </div>
             </div>
+            <div class="{{ colModeCls }}">
+            <sc-if value="{{ show2D }}">
+            <div class="dx-stage dx-flat dx-lit" style="height:462px;padding:6px 10px" role="img" aria-label="Two-dimensional elevation of the column. Each tray is drawn with the solved liquid and vapour compositions for that stage. {{ scene.caption }}.">
+              <i class="dx-stage-grid" aria-hidden="true"></i>
+              <sc-if value="{{ scene.empty }}">
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:24px">
+                  <span class="dx-dot warn" aria-hidden="true"></span>
+                  <div style="font-size:13.5px;font-weight:600">{{ scene.emptyMsg }}</div>
+                  <div style="font-size:12px;color:color-mix(in srgb,var(--color-text) 70%,transparent);max-width:34ch;line-height:1.5">{{ scene.emptyHint }}</div>
+                </div>
+              </sc-if>
+              <svg viewBox="0 0 320 470" preserveAspectRatio="xMidYMid meet" onMouseLeave="{{ trayOut }}">
+                <rect x="{{ flat.shell.x }}" y="{{ flat.shell.y }}" width="{{ flat.shell.w }}" height="{{ flat.shell.h }}" rx="11"
+                      fill="color-mix(in srgb,var(--color-accent) 7%,transparent)"
+                      stroke="color-mix(in srgb,var(--color-accent) 44%,transparent)" stroke-width="1.4"></rect>
+                <g stroke="var(--dx-hairline)" stroke-width="1">
+                  <sc-for list="{{ flat.ticks }}" as="tk" hint-placeholder-count="3">
+                    <line x1="{{ tk.x }}" y1="20" x2="{{ tk.x }}" y2="442"></line>
+                  </sc-for>
+                </g>
+                <sc-for list="{{ flat.ticks }}" as="tk" hint-placeholder-count="3">
+                  <text x="{{ tk.x }}" y="458" text-anchor="middle" font-size="9.5" fill="color-mix(in srgb,var(--color-text) 66%,transparent)">{{ tk.label }}</text>
+                </sc-for>
+                <text x="247" y="14" text-anchor="middle" font-size="9" letter-spacing=".09em" font-family="var(--font-heading)" fill="color-mix(in srgb,var(--color-text) 68%,transparent)">MOLE FRACTION</text>
+                <text x="{{ flat.nx }}" y="14" text-anchor="end" font-size="9" letter-spacing=".09em" font-family="var(--font-heading)" fill="color-mix(in srgb,var(--color-text) 68%,transparent)">STAGE</text>
+                <sc-if value="{{ flat.hasFeed }}">
+                  <g stroke="var(--dx-magenta)" stroke-width="1.7" fill="none">
+                    <path d="M{{ flat.feedX }} {{ flat.feedY }} H{{ flat.shell.x }}"></path>
+                    <path d="M{{ flat.shell.x }} {{ flat.feedY }} l-7 -4 v8 z" fill="var(--dx-magenta)" stroke="none"></path>
+                  </g>
+                </sc-if>
+                <sc-for list="{{ flat.rows }}" as="fq" hint-placeholder-count="12">
+                  <g class="{{ fq.cls }}" data-n="{{ fq.n }}" onMouseEnter="{{ trayIn }}" onClick="{{ trayPick }}">
+                    <rect class="hit" x="0" y="{{ fq.hy }}" width="320" height="{{ fq.hh }}"></rect>
+                    <rect class="liq" x="{{ fq.x1 }}" y="{{ fq.by }}" width="{{ fq.fw }}" height="5.2" rx="2"></rect>
+                    <line class="tray" x1="{{ fq.x1 }}" y1="{{ fq.y }}" x2="{{ fq.x2 }}" y2="{{ fq.y }}"></line>
+                    <text class="num" x="{{ flat.nx }}" y="{{ fq.ty }}" text-anchor="end" font-size="9">{{ fq.lab }}</text>
+                    <line class="link" x1="{{ fq.xc }}" y1="{{ fq.y }}" x2="{{ fq.yc }}" y2="{{ fq.y }}"></line>
+                    <circle class="dxl" cx="{{ fq.xc }}" cy="{{ fq.y }}" r="2.8"></circle>
+                    <circle class="dxv" cx="{{ fq.yc }}" cy="{{ fq.y }}" r="2.8"></circle>
+                  </g>
+                </sc-for>
+              </svg>
+            </div>
+            </sc-if>
+            <sc-if value="{{ show3D }}">
             <div class="dx-stage dx-lit" style="height:462px" role="img" aria-label="Three-dimensional schematic of the distillation column. {{ scene.caption }}. {{ scene.thermLabel }}.">
               <i class="dx-stage-grid" aria-hidden="true"></i>
               <sc-if value="{{ scene.empty }}">
@@ -1248,9 +1346,21 @@
                         <span class="{{ nt.cls }}" style="{{ nt.style }}">{{ nt.k }}<b>{{ nt.v }}</b></span>
                       </sc-for>
                     </div>
+                    <sc-for list="{{ scene.hits }}" as="ht" hint-placeholder-count="12">
+                      <i class="dx-hit" data-n="{{ ht.n }}" style="{{ ht.style }}" onMouseEnter="{{ trayIn }}" onMouseLeave="{{ trayOut }}" onClick="{{ trayPick }}"></i>
+                    </sc-for>
                   </div>
                 </div>
               </div>
+            </div>
+            </sc-if>
+            </div>
+            <div class="dx-colkey dx-noprint">
+              <span><i style="background:var(--dx-liquid)"></i>x liquid</span>
+              <span><i style="background:var(--dx-vapour)"></i>y vapour</span>
+              <span><i style="background:var(--dx-magenta)"></i>feed stage</span>
+              <span><i style="background:var(--dx-gold)"></i>selected stage</span>
+              <span style="margin-left:auto">{{ stageNote }}</span>
             </div>
             <p style="margin:0;font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Stage positions, feed stage and the end temperatures are read from the solved case. The rising and falling traffic depicts counter-current flow and scales with the internal vapour and liquid rates — it is a visual aid, not a hydraulic calculation.</p>
             <sc-if value="{{ hover }}">
@@ -2038,6 +2148,9 @@ class Component extends DCLogic {
    *  A rating solution whose |x_N − x_B| exceeds this is reported as NOT CONVERGED
    *  and is never presented as a valid result. */
   static RATING_TOL = 1e-4;
+  /** How many trays either column view draws. A 60-stage column cannot show
+   *  every tray legibly, so both views sub-sample the same way. */
+  static DRAW_CAP = 30;
   static MIX = {
     bt:{label:'Benzene / Toluene',a:'benzene',b:'toluene',alpha:2.45,ideal:true,az:null,note:'Close-boiling hydrocarbon pair and the classic teaching system. Raoult\u2019s law is an excellent approximation; \u03b1 \u2248 2.4\u20132.5 at 1 atm and no azeotrope exists at any pressure.'},
     ew:{label:'Ethanol / Water',a:'ethanol',b:'water',alpha:2.20,ideal:false,az:{x:0.894,T:78.2,txt:'95.6 wt% ethanol, boiling at 78.2 \u00b0C at 1 atm'},note:'Strongly non-ideal. A minimum-boiling azeotrope at 95.6 wt% ethanol (x \u2248 0.894 mole fraction), boiling at 78.2 \u00b0C at 1 atm, caps ordinary distillation \u2014 an ideal model cannot reproduce it. Anhydrous ethanol needs azeotropic, extractive or membrane separation.'},
@@ -2121,9 +2234,9 @@ class Component extends DCLogic {
     view:(this.props||{}).startView||'landing', mixKey:(this.props||{}).defaultMixture||'bt', model:'raoult', P:101.325, alphaC:2.45,
     F:100, zF:0.45, q:1.0, xD:0.96, xB:0.04, R:2.2, Nspec:12, DF:0.45,
     eff:0.70, reb:'partial', calcMode:'design',
-    mode:'learning', colView:'stages', equip:'column', colVP:'front',
+    mode:'learning', colView:'stages', equip:'column', colVP:'front', colMode:'3d',
     crudeView:'process', crudeHover:null,
-    anim:999, hoverStage:null, tip:null, tipXY:[0,0],
+    anim:999, hoverStage:null, pinStage:null, tip:null, tipXY:[0,0],
     explaining:false, explainI:0, wiVar:'R', wiTo:3.2, whatIf:null,
     sens:{ind:'R',dep:'N',min:1.2,max:6,n:24}, exam:{i:0,reveal:'',input:''},
     theoryOpen:'t1', toast:'', vleShow:'xy', mtDrag:null, vleHover:null,
@@ -2630,7 +2743,8 @@ class Component extends DCLogic {
       bubbles.push({cx:236-((i*11)%22),cy:180+i*32,r:2.2,fill:'var(--color-accent-700)',style:'animation:dxFall '+(2.6+i*0.16).toFixed(2)+'s linear infinite;animation-delay:'+(i*0.31).toFixed(2)+'s'});
     }
 
-    const hoverStg = hasR&&s.hoverStage? st.find(a=>a.n===s.hoverStage) : null;
+    const actN = this.activeStage(s);
+    const hoverStg = hasR&&actN!==null? st.find(a=>Math.round(a.n)===actN) : null;
 
     // what-if
     let whatIfRows=[], whatIfNote='';
@@ -2762,8 +2876,14 @@ class Component extends DCLogic {
       setStr:(e)=>{const t=e.target; this.setState({[t.dataset.k]:t.value, whatIf:null});},
       tipIn:(e)=>{const b=e.currentTarget.getBoundingClientRect(); this.setState({tip:e.currentTarget.dataset.tip,tipXY:[Math.min(b.left,window.innerWidth-300),b.bottom+6]});},
       tipOut:()=>this.setState({tip:null}),
-      trayIn:(e)=>this.setState({hoverStage:+e.currentTarget.dataset.n}),
-      trayOut:()=>this.setState({hoverStage:null}),
+      trayIn:(e)=>{const n=+e.currentTarget.dataset.n;
+        if(this.state.hoverStage!==n) this.setState({hoverStage:n});},
+      trayOut:()=>{ if(this.state.hoverStage!==null) this.setState({hoverStage:null}); },
+      // clicking pins a stage so the reading survives the pointer leaving;
+      // clicking the same stage again releases it
+      trayPick:(e)=>{const n=+e.currentTarget.dataset.n;
+        this.setState({pinStage:this.state.pinStage===n?null:n});},
+      trayClear:()=>this.setState({pinStage:null,hoverStage:null}),
       pickEquip:(e)=>this.setState({equip:e.currentTarget.dataset.k}),
       explainToggle:()=>this.setState({explaining:!s.explaining,explainI:0}),
       explainNext:()=>this.setState({explainI:(s.explainI+1)%S.EXPLAIN.length}),
@@ -2986,10 +3106,71 @@ class Component extends DCLogic {
    *  hydraulic simulation: particle counts and speeds are scaled from L and V
    *  so that more reflux visibly means more traffic, but they carry no
    *  quantitative meaning and the interface says so. */
+  /** The stages both column views actually draw.
+   *  A 60-stage column cannot show every tray legibly, so the drawing
+   *  sub-samples. Both the 2D elevation and the 3D column call this one
+   *  function, so every tray drawn in one view has an exact counterpart in
+   *  the other, and the two are linked by the stage number the engine
+   *  assigned — never by a screen position or an index guessed from it. */
+  stagePicks(st, cap){
+    const N = st.length, shown = Math.min(N, cap), out = [];
+    for (let i = 0; i < shown; i++)
+      out.push(st[Math.min(N - 1, Math.round(i * (N - 1) / Math.max(1, shown - 1)))]);
+    return out;
+  }
+  /** 2D elevation: the same trays as the 3D column, drawn flat, with the
+   *  solved liquid and vapour compositions plotted stage by stage beside
+   *  them. Every number here is read from r.stages — nothing is modelled
+   *  or interpolated for the drawing. */
+  columnFlat(s, r, ok){
+    const W = 320, TOP = 30, BOT = 430, SX = 66, SW = 96, AX = 188, AW = 118;
+    const flat = { W, H: 470, nx: 30, feedX: 36, rows: [], ticks: [], axis: { x: AX, w: AW },
+                   shell: { x: SX, y: TOP - 12, w: SW, h: (BOT - TOP) + 24 } };
+    if (!ok || !r.stages || !r.stages.length){ flat.empty = true; return flat; }
+
+    const st = r.stages, picks = this.stagePicks(st, Component.DRAW_CAP);
+    const n = picks.length, feed = Math.round(this.num(r.feedStage));
+    const gap = n > 1 ? (BOT - TOP) / (n - 1) : (BOT - TOP);
+    const hot = this.activeStage(s);
+    const cx = v => (AX + AW * Math.max(0, Math.min(1, this.num(v)))).toFixed(1);
+
+    picks.forEach((a, i) => {
+      const y = TOP + gap * i;
+      const isFeed = Math.round(a.n) === feed;
+      const isHot  = hot !== null && Math.round(a.n) === hot;
+      flat.rows.push({
+        n: String(a.n),
+        cls: 'dx-frow' + (isFeed ? ' feed' : '') + (isHot ? ' on' : ''),
+        y: y.toFixed(1), ty: (y + 3.4).toFixed(1), by: (y - 2.6).toFixed(1),
+        hy: (y - gap / 2).toFixed(1), hh: Math.max(8, gap).toFixed(1),
+        x1: (SX + 5).toFixed(1), x2: (SX + SW - 5).toFixed(1),
+        // the liquid on the tray, drawn as a bar across the tray itself
+        fw: (Math.max(1.5, (SW - 10) * Math.max(0, Math.min(1, this.num(a.x))))).toFixed(1),
+        xc: cx(a.x), yc: cx(a.y),
+        lab: (Math.round(a.n) === Math.round(this.num(r.N)) && s.reb === 'partial')
+               ? 'RB' : String(a.n)
+      });
+    });
+    [0, 0.5, 1].forEach(t => flat.ticks.push({
+      x: (AX + AW * t).toFixed(1), label: t.toFixed(1) }));
+    flat.feedY = (TOP + gap * Math.max(0, picks.findIndex(a => Math.round(a.n) === feed))).toFixed(1);
+    flat.hasFeed = picks.some(a => Math.round(a.n) === feed);
+    flat.xD = this.f(r.xD, 4); flat.xB = this.f(r.xB, 4);
+    flat.shownNote = picks.length < st.length
+      ? 'showing ' + picks.length + ' of ' + st.length + ' stages'
+      : picks.length + ' stages';
+    return flat;
+  }
+  /** The stage the detail panel and both column views are pointed at:
+   *  a clicked stage stays selected, a hovered one previews. */
+  activeStage(s){
+    const v = s.pinStage !== null && s.pinStage !== undefined ? s.pinStage : s.hoverStage;
+    return (v === null || v === undefined) ? null : Math.round(v);
+  }
   columnScene(s, r, ok){
     const H = 384, RAD = 46, SLATS = 16;
     const top = 18, bot = H - 16;                    // usable vessel span
-    const scene = { H, RAD, W: RAD * 2, slats: [], trays: [], parts: [], caps: [], notes: [] };
+    const scene = { H, RAD, W: RAD * 2, slats: [], trays: [], hits: [], parts: [], caps: [], notes: [] };
 
     // vessel wall — a ring of slats at a fixed radius
     const w = (2 * Math.PI * RAD) / SLATS + 1.5;
@@ -3029,20 +3210,30 @@ class Component extends DCLogic {
 
     const st = r.stages, N = st.length;
     const feed = Math.round(this.num(r.feedStage));
-    // draw at most 34 trays so a 60-stage column stays legible; the label
-    // always states the real count
-    const shown = Math.min(N, 34);
-    const pick = i => st[Math.min(N - 1, Math.round(i * (N - 1) / Math.max(1, shown - 1)))];
+    // the same sub-sample the 2D elevation draws, so the two views highlight
+    // the same stages; the caption always states the real count
+    const picks = this.stagePicks(st, Component.DRAW_CAP);
+    const shown = picks.length;
+    const hotN = this.activeStage(s);
+    const span = (bot - top - 28) / Math.max(1, shown - 1);
     for (let i = 0; i < shown; i++){
-      const a = pick(i);
+      const a = picks[i];
       const y = top + 14 + (bot - top - 28) * (i / Math.max(1, shown - 1));
       const d = RAD * 1.74;
       const isFeed = Math.round(a.n) === feed;
+      const isHot = hotN !== null && Math.round(a.n) === hotN;
       // tray tint follows the liquid composition on that stage: rich in the
       // light component near the top, lean at the sump
       const x = Math.max(0, Math.min(1, this.num(a.x)));
+      // a flat hit plane facing the viewer, so a tray can be pointed at in
+      // any viewpoint without the disc's own 90-degree rotation getting in
+      // the way
+      scene.hits.push({ n: String(a.n),
+        style:'width:' + (RAD * 2.1).toFixed(1) + 'px;height:' + Math.max(9, span).toFixed(1) +
+          'px;left:' + (-RAD * 1.05).toFixed(1) + 'px;top:' + (-Math.max(9, span) / 2).toFixed(1) +
+          'px;transform:translateY(' + y.toFixed(1) + 'px) translateZ(' + (RAD + 2) + 'px)' });
       scene.trays.push({
-        cls: 'dx-tray' + (isFeed ? ' feed' : ''),
+        cls: 'dx-tray' + (isFeed ? ' feed' : '') + (isHot ? ' hot' : ''),
         style:'width:' + d.toFixed(1) + 'px;height:' + d.toFixed(1) + 'px;left:' + (-d / 2).toFixed(1) +
           'px;top:' + (-d / 2).toFixed(1) + 'px;transform:translateY(' + y.toFixed(1) + 'px) rotateX(90deg);' +
           (isFeed ? '' : 'background:radial-gradient(circle at 50% 50%,' +
@@ -3073,18 +3264,29 @@ class Component extends DCLogic {
     }
 
     const f = (v, d) => this.f(v, d);
+    // the split puts the column in half the width, so the callouts come in
+    // closer and wrap rather than run off the panel
+    const tight = s.colMode === 'split';
+    const NOFF = tight ? 13 : 30;
+    // in the split the callouts have roughly a third of the room, so they
+    // carry the headline number only; the full set is still on the right-hand
+    // summary and in the results table
     scene.notes = [
-      { cls:'dx-note r', style:'left:' + (RAD + 30) + 'px;top:' + (top - 4) + 'px',
-        k:'Distillate', v:'x_D ' + f(r.xD, 4) + ' · ' + f(r.D, 1) + ' kmol/h' },
-      { cls:'dx-note r', style:'left:' + (RAD + 30) + 'px;top:' + (top + 44) + 'px',
-        k:'Reflux', v:'R ' + f(r.R, 2) + ' · L ' + f(r.L, 1) + ' kmol/h' },
-      { cls:'dx-note l', style:'right:' + (RAD + 30) + 'px;top:' + (top + 12 + (bot - top - 28) *
+      { cls:'dx-note r', style:'left:' + (RAD + NOFF) + 'px;top:' + (top - 4) + 'px',
+        k:'Distillate', v: tight ? 'x_D ' + f(r.xD, 4)
+          : 'x_D ' + f(r.xD, 4) + ' · ' + f(r.D, 1) + ' kmol/h' },
+      { cls:'dx-note r', style:'left:' + (RAD + NOFF) + 'px;top:' + (top + 44) + 'px',
+        k:'Reflux', v: tight ? 'R ' + f(r.R, 2)
+          : 'R ' + f(r.R, 2) + ' · L ' + f(r.L, 1) + ' kmol/h' },
+      { cls:'dx-note l', style:'right:' + (RAD + NOFF) + 'px;top:' + (top + 12 + (bot - top - 28) *
         Math.max(0, Math.min(1, (feed - 1) / Math.max(1, N - 1)))).toFixed(0) + 'px',
-        k:'Feed · stage ' + f(feed, 0), v:'z_F ' + f(r.zF, 3) + ' · q ' + f(r.q, 2) },
-      { cls:'dx-note l', style:'right:' + (RAD + 30) + 'px;top:' + (bot - 34) + 'px',
-        k:'Boil-up', v:'V̄ ' + f(r.Vb, 1) + ' kmol/h' },
-      { cls:'dx-note r', style:'left:' + (RAD + 30) + 'px;top:' + (bot - 10) + 'px',
-        k:'Bottoms', v:'x_B ' + f(r.xB, 4) + ' · ' + f(r.B, 1) + ' kmol/h' }
+        k: tight ? 'Feed · S' + f(feed, 0) : 'Feed · stage ' + f(feed, 0),
+        v: tight ? 'q ' + f(r.q, 2) : 'z_F ' + f(r.zF, 3) + ' · q ' + f(r.q, 2) },
+      { cls:'dx-note l', style:'right:' + (RAD + NOFF) + 'px;top:' + (bot - (tight ? 44 : 34)) + 'px',
+        k:'Boil-up', v: tight ? 'V̄ ' + f(r.Vb, 1) : 'V̄ ' + f(r.Vb, 1) + ' kmol/h' },
+      { cls:'dx-note r', style:'left:' + (RAD + NOFF) + 'px;top:' + (bot - (tight ? 26 : 10)) + 'px',
+        k:'Bottoms', v: tight ? 'x_B ' + f(r.xB, 4)
+          : 'x_B ' + f(r.xB, 4) + ' · ' + f(r.B, 1) + ' kmol/h' }
     ];
     scene.caption = f(r.N, 0) + ' theoretical stages · feed on ' + f(feed, 0) +
       (shown < N ? ' · showing ' + shown : '');
@@ -3294,7 +3496,23 @@ class Component extends DCLogic {
     out.crudeOut = ()=>{ if(this.state.crudeHover) this.setState({crudeHover:null}); };
     // 3D column scene — geometry derived from the solved result
     out.scene = this.columnScene(s, r, hasR);
+    // 2D elevation of the same trays, so a stage can be read flat as well
+    out.flat = this.columnFlat(s, r, hasR);
     out.vpCls = 'dx-stage-inner dx-vp-' + (s.colVP || 'front');
+    const cm = s.colMode || '3d';
+    out.is3D = cm === '3d'; out.is2D = cm === '2d'; out.isSplit = cm === 'split';
+    out.show3D = cm !== '2d'; out.show2D = cm !== '3d';
+    out.colModeCls = 'dx-colmode dx-cm-' + cm;
+    out.modeBtns = [['2d','2D'],['3d','3D'],['split','Split']]
+      .map(([k,label])=>({k,label,on:cm===k?'1':'0',cur:cm===k?'true':'false'}));
+    out.setMode = (e)=>{ const el=e.target.closest('[data-cm]');
+      if(el) this.setState({colMode:el.dataset.cm}); };
+    const act = this.activeStage(s);
+    out.stagePinned = s.pinStage !== null && s.pinStage !== undefined;
+    out.stageNote = act === null
+      ? 'Point at a tray to read that stage; click to keep it.'
+      : (out.stagePinned ? 'Stage ' + act + ' selected — click it again to release.'
+                         : 'Stage ' + act + ' — click to keep it selected.');
     out.colPaused = s.explaining ? '' : '';
     out.vpBtns = [['front','Front'],['iso','Isometric'],['sec','Section'],['top','Plan'],['xpl','Exploded']]
       .map(([k,label])=>({k,label,on:(s.colVP||'front')===k?'1':'0',
