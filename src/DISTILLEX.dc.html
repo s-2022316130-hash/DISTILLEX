@@ -737,6 +737,24 @@
             background:color-mix(in srgb, var(--color-accent) 22%, transparent);
             border-color:var(--color-accent); outline:none }
 
+  /* ═══ theory reference ══════════════════════════════════════ */
+  .dx-tfind { display:flex; gap:8px; align-items:center; margin-top:12px; max-width:520px }
+  .dx-tfind .input { flex:1; min-width:0 }
+  .dx-chap { display:flex; align-items:center; gap:12px; margin:18px 2px 4px }
+  .dx-chap-n { font-family:var(--font-heading); font-size:12px; letter-spacing:.16em;
+               text-transform:uppercase; color:var(--dx-ink-accent); white-space:nowrap }
+  .dx-chap-r { flex:1; height:1px; background:linear-gradient(90deg,
+                 color-mix(in srgb, var(--color-accent) 45%, transparent), transparent) }
+  .dx-chap-c { font-size:11px; font-variant-numeric:tabular-nums;
+               color:color-mix(in srgb, var(--color-text) 52%, transparent) }
+  .dx-tlive { margin:0 0 10px; padding:8px 11px; font-size:12.5px; line-height:1.55;
+              max-width:82ch; border-radius:var(--dx-r-sm);
+              background:color-mix(in srgb, var(--dx-gold) 10%, transparent);
+              box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--dx-gold) 30%, transparent);
+              display:flex; gap:9px; align-items:baseline;
+              animation:dxIn 340ms var(--dx-ease) both }
+  @media (prefers-reduced-motion: reduce) { .dx-tlive { animation:none } }
+
   /* ═══ McCabe–Thiele construction ═════════════════════════════ */
   .dx-mtseg { transition: stroke-width var(--dx-t-base) var(--dx-ease) }
   .dx-mtseg.fresh { filter: drop-shadow(0 0 5px currentColor) }
@@ -1995,18 +2013,42 @@
         <div style="padding:4px 0 12px">
           <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dx-ink-accent)">Reference</div>
           <h2 style="margin:4px 0 6px">Theory of fractional distillation</h2>
-          <p style="max-width:76ch;font-size:14px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Twenty topics, each written against the same equations the simulator solves. Numbers quoted in the simulator can be traced back to the relationships described here.</p>
-        </div>
-        <sc-for list="{{ theoryItems }}" as="t" hint-placeholder-count="20">
-          <div class="{{ t.cls }}" style="padding:2px 16px">
-            <button data-k="{{ t.k }}" onClick="{{ setTheory }}" aria-expanded="{{ t.open }}" style="{{ t.headStyle }}">
-              <span class="dx-num" style="font-size:12px;color:var(--dx-ink-accent);min-width:20px">{{ t.no }}</span>
-              <span style="flex:1">{{ t.title }}</span>
-              <i class="dx-chev" aria-hidden="true"></i>
-            </button>
-            <p style="{{ t.bodyStyle }}">{{ t.body }}</p>
+          <p style="max-width:76ch;font-size:14px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ theoryCount }}</p>
+          <div class="dx-tfind">
+            <input class="input" type="search" value="{{ theoryQ }}" onChange="{{ setTheoryQ }}" placeholder="Find a topic — reflux, q-line, azeotrope…" aria-label="Filter the theory topics">
+            <button class="btn btn-secondary" onClick="{{ clearTheoryQ }}">Clear</button>
           </div>
+        </div>
+        <sc-for list="{{ theoryChapters }}" as="ch" hint-placeholder-count="5">
+          <sc-if value="{{ ch.has }}">
+            <div class="dx-chap">
+              <span class="dx-chap-n">{{ ch.name }}</span>
+              <i class="dx-chap-r" aria-hidden="true"></i>
+              <span class="dx-chap-c">{{ ch.count }}</span>
+            </div>
+            <sc-for list="{{ ch.items }}" as="t" hint-placeholder-count="5">
+              <div class="{{ t.cls }}" style="padding:2px 16px">
+                <button data-k="{{ t.k }}" onClick="{{ setTheory }}" aria-expanded="{{ t.open }}" style="{{ t.headStyle }}">
+                  <span class="dx-num" style="font-size:12px;color:var(--dx-ink-accent);min-width:20px">{{ t.no }}</span>
+                  <span style="flex:1">{{ t.title }}</span>
+                  <i class="dx-chev" aria-hidden="true"></i>
+                </button>
+                <p style="{{ t.bodyStyle }}">{{ t.body }}</p>
+                <sc-if value="{{ t.hasLive }}">
+                  <p class="dx-tlive"><span class="dx-dot live" aria-hidden="true"></span>{{ t.live }}</p>
+                </sc-if>
+                <sc-if value="{{ t.hasGo }}">
+                  <div style="padding:0 0 12px">
+                    <button class="btn btn-secondary" data-v="{{ t.goV }}" onClick="{{ theoryGo }}" style="min-height:30px;font-size:12px">{{ t.goLabel }} &rarr;</button>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </sc-if>
         </sc-for>
+        <sc-if value="{{ theoryEmpty }}">
+          <div class="blueprint" style="padding:22px;text-align:center;font-size:13.5px;color:color-mix(in srgb,var(--color-text) 74%,transparent)">Nothing here matches that. Try a shorter word, or clear the filter.</div>
+        </sc-if>
       </div>
     </sc-if>
 
@@ -2282,6 +2324,27 @@ class Component extends DCLogic {
     ['t19','Flooding and weeping','Too much vapour and the liquid cannot descend \u2014 the column floods. Too little and liquid rains through the tray perforations \u2014 weeping. Both bound the operating window; hydraulics are outside the scope of this equilibrium model.'],
     ['t20','Industrial applications','Crude-oil fractionation, air separation, solvent recovery, ethanol dehydration (with entrainers, because of the azeotrope), petrochemical splitters. Distillation is responsible for a large share of industrial separation energy use \u2014 which is why reflux ratio matters commercially.']
   ];
+  /** The twenty topics grouped into chapters, and, for the topics a view of
+   *  this app genuinely covers, where to go and see it. A topic only gets a
+   *  link when the named view really shows the thing described. */
+  static THEORY_CH = [
+    ['Fundamentals',                 ['t1','t2','t3','t4']],
+    ['Phase behaviour',              ['t5','t6']],
+    ['How a column works',           ['t7','t8','t9','t10','t11']],
+    ['Counting the stages',          ['t12','t13','t14','t15','t16']],
+    ['Operating limits and practice',['t17','t18','t19','t20']]
+  ];
+  static THEORY_GO = {
+    t2 :['vle','Open the VLE explorer'],   t3 :['vle','See \u03b1 across the range'],
+    t4 :['vle','See the x\u2013y curve'],      t5 :['vle','See the T\u2013x\u2013y diagram'],
+    t6 :['vle','See the T\u2013x\u2013y diagram'],  t7 :['sim','Set the reflux ratio'],
+    t8 :['mt','See the rectifying line'],  t9 :['mt','See the stripping line'],
+    t10:['mt','Move the feed quality'],    t11:['mt','See the q-line'],
+    t12:['mt','Step the construction'],    t13:['column','See the stages in the column'],
+    t14:['column','Set the efficiency'],   t16:['column','See the reboiler'],
+    t17:['mt','See the pinch'],            t18:['sim','Read N_min'],
+    t20:['landing','See a crude-oil tower']
+  };
 
   state = {
     view:(this.props||{}).startView||'landing', mixKey:(this.props||{}).defaultMixture||'bt', model:'raoult', P:101.325, alphaC:2.45,
@@ -2292,7 +2355,7 @@ class Component extends DCLogic {
     anim:999, hoverStage:null, pinStage:null, mtHover:null, tip:null, tipXY:[0,0],
     explaining:false, explainI:0, wiVar:'R', wiTo:3.2, whatIf:null,
     sens:{ind:'R',dep:'N',min:1.2,max:6,n:24}, exam:{i:0,reveal:'',input:''},
-    theoryOpen:'t1', toast:'', vleShow:'xy', mtDrag:null, vleHover:null,
+    theoryOpen:'t1', theoryQ:'', toast:'', vleShow:'xy', mtDrag:null, vleHover:null,
     theme:(this.props||{}).defaultTheme||'dark',
     custom:{a:{name:'Component A',A:6.90565,B:1211.033,C:220.79,MW:78.11,Tb:80.1,lat:30.8},
             b:{name:'Component B',A:6.95464,B:1344.800,C:219.48,MW:92.14,Tb:110.6,lat:33.2}}
@@ -3345,6 +3408,38 @@ class Component extends DCLogic {
       (shown < N ? ' · showing ' + shown : '');
     return scene;
   }
+  /** For the topics whose quantity this app actually computes, the value for
+   *  the case currently loaded. Every line here is read straight out of the
+   *  solved result or the same helpers the simulator uses — nothing is
+   *  estimated for the sake of having something to show, and a topic with no
+   *  computed counterpart simply gets no line. */
+  theoryLive(k, s, r, hasR){
+    const f = (v, d) => this.f(v, d);
+    if (k === 't3'){
+      if (r && r.invalid) return '';
+      return 'α for this mixture at ' + f(s.P, 1) + ' kPa: ' +
+        f(this.alphaAt(0.05, s), 3) + ' at x = 0.05, ' + f(this.alphaAt(0.5, s), 3) +
+        ' at x = 0.5, ' + f(this.alphaAt(0.95, s), 3) + ' at x = 0.95.';
+    }
+    if (!hasR) return '';
+    switch (k){
+      case 't5':  return 'Bubble point of the current feed: ' + f(this.tempAt(this.num(s.zF), s), 1) +
+                         ' °C at z_F = ' + f(s.zF, 3) + '.';
+      case 't8':  return 'Current rectifying slope R/(R+1) = ' + f(r.mr, 4) + ' at R = ' + f(r.R, 2) + '.';
+      case 't9':  return 'Current stripping slope = ' + f(r.slopeS, 4) + '.';
+      case 't10': return 'Current feed quality q = ' + f(r.q, 2) + ' — ' + this.qPhase(this.num(r.q)) + '.';
+      case 't11': return 'The q-line meets the equilibrium curve at x = ' + f(r.pinch.x, 4) +
+                         ', y = ' + f(r.pinch.y, 4) + '.';
+      case 't13': return 'This case needs ' + f(r.N, 0) + ' theoretical stages, with the feed on stage ' +
+                         f(r.feedStage, 0) + '.';
+      case 't14': return 'At Eₒ = ' + f(s.eff, 2) + ', ' + f(r.N, 0) + ' theoretical stages become ' +
+                         f(r.Nact, 0) + ' actual trays.';
+      case 't17': return 'For this case R_min = ' + f(r.Rmin, 3) + ', and you are running at R/R_min = ' +
+                         f(r.R / r.Rmin, 2) + '.';
+      case 't18': return 'At total reflux this separation would need N_min = ' + f(r.Nmin, 2) + ' stages (Fenske).';
+      default:    return '';
+    }
+  }
   /** Live self-validation. Each row recomputes something the engine claims and
    *  checks it against a closed form, an identity, or the engine's own internal
    *  consistency — never against a value transcribed from a reference. Built
@@ -3835,14 +3930,39 @@ class Component extends DCLogic {
       this.setState({sens:Object.assign({},this.state.sens,{[k]:val})}); };
 
     // ---- theory ----
-    out.theoryItems=S.THEORY.map(t=>({k:t[0],title:t[1],body:t[2],open:s.theoryOpen===t[0],
-      open:(s.theoryOpen===t[0]?'true':'false'),
-      cls:'blueprint dx-topic'+(s.theoryOpen===t[0]?' open':''),
-      bodyStyle:'margin:0 0 4px;font-size:13.5px;line-height:1.65;max-width:82ch;display:'+(s.theoryOpen===t[0]?'block':'none')+
-        (s.theoryOpen===t[0]?';animation:dxIn 340ms var(--dx-ease) both':''),
-      headStyle:'display:flex;gap:12px;align-items:baseline;cursor:pointer;padding:11px 0;border:0;background:transparent;width:100%;text-align:left;font-family:var(--font-heading);font-size:19px;transition:color var(--dx-t-fast) var(--dx-ease);color:'+(s.theoryOpen===t[0]?'var(--dx-ink-accent)':'var(--color-text)'),
-      no:String(S.THEORY.indexOf(t)+1).padStart(2,'0')}));
+    const tq=(s.theoryQ||'').trim().toLowerCase();
+    const tItem=(t)=>{
+      const open=s.theoryOpen===t[0];
+      const go=S.THEORY_GO[t[0]];
+      const live=open? this.theoryLive(t[0],s,r,hasR) : '';
+      return {k:t[0],title:t[1],body:t[2],
+        open:(open?'true':'false'),
+        cls:'blueprint dx-topic'+(open?' open':''),
+        bodyStyle:'margin:0 0 4px;font-size:13.5px;line-height:1.65;max-width:82ch;display:'+(open?'block':'none')+
+          (open?';animation:dxIn 340ms var(--dx-ease) both':''),
+        headStyle:'display:flex;gap:12px;align-items:baseline;cursor:pointer;padding:11px 0;border:0;background:transparent;width:100%;text-align:left;font-family:var(--font-heading);font-size:19px;transition:color var(--dx-t-fast) var(--dx-ease);color:'+(open?'var(--dx-ink-accent)':'var(--color-text)'),
+        hasGo: open && !!go, goV: go?go[0]:'', goLabel: go?go[1]:'',
+        hasLive: !!live, live,
+        no:String(S.THEORY.indexOf(t)+1).padStart(2,'0')};
+    };
+    const match=(t)=> !tq || (t[1]+' '+t[2]).toLowerCase().indexOf(tq)>=0;
+    let tShown=0;
+    out.theoryChapters=S.THEORY_CH.map(([name,keys])=>{
+      const items=S.THEORY.filter(t=>keys.indexOf(t[0])>=0 && match(t));
+      tShown+=items.length;
+      return {name, has:items.length>0, count:String(items.length),
+              items:items.map(tItem)};
+    });
+    out.theoryQ=s.theoryQ||'';
+    out.theoryCount = tq
+      ? (tShown===0 ? 'No topic matches \u201c'+(s.theoryQ||'').trim()+'\u201d.'
+                    : tShown+' of '+S.THEORY.length+' topics match \u201c'+(s.theoryQ||'').trim()+'\u201d.')
+      : S.THEORY.length+' topics, each written against the same equations the simulator solves. Where this app computes the quantity, the open topic also reports it for the case you have loaded.';
+    out.theoryEmpty = tShown===0;
     out.setTheory=(e)=>this.setState({theoryOpen:e.currentTarget.dataset.k});
+    out.setTheoryQ=(e)=>this.setState({theoryQ:e.target.value});
+    out.clearTheoryQ=()=>this.setState({theoryQ:''});
+    out.theoryGo=(e)=>this.setState({view:e.currentTarget.dataset.v});
 
     // ---- exam ----
     const qs=[];
