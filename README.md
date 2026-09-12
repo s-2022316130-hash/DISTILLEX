@@ -7,6 +7,14 @@ step, no account, no telemetry, no stored data.
 
 **Live entry point:** `index.html` (self-contained, ~724 KB, works offline by double-click).
 
+Alongside the binary simulator there is an **industrial crude unit** at
+`/industrial-distillation` — an interactive, educational visualisation of an atmospheric
+distillation tower, reached from the landing page. It is a visualisation, not a second
+engine: no temperature, pressure, rate or yield is claimed for the unit, because this
+application computes none for a crude oil. The route is rewritten to `index.html` by
+`vercel.json`; opened from the filesystem it falls back to `#/industrial-distillation`,
+so the offline copy still links.
+
 ---
 
 ## Contents
