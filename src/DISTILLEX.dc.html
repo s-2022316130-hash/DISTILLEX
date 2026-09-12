@@ -245,6 +245,25 @@
     background: color-mix(in srgb, var(--dx-raised) 80%, transparent);
   }
 
+  /* ═══ stacked panels merge ════════════════════════════════════════════
+     A column of sections was a column of boxes — the dashboard look the
+     brief asks to lose. They now share one surface: a single border, one
+     shadow, one lit top edge, and hairlines where the sections meet. Three
+     cards become one instrument panel with three sections. */
+  .dx-stack {
+    border-radius: var(--dx-r-lg); overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--dx-hairline);
+    background: var(--dx-raised);
+  }
+  .dx-stack > .card {
+    border: 0; border-radius: 0; box-shadow: none; background: transparent;
+  }
+  .dx-stack > .card::before { display: none }
+  .dx-stack > .card:first-child::before { display: block }
+  .dx-stack > .card + .card { border-top: 1px solid var(--dx-hairline) }
+  .dx-stack > .card:hover { transform: none }
+
   /* an "open" section — content that sits on the page with no box at all */
   .dx-open { padding: 2px 0 }
   .dx-rule { height: 1px; border: 0; margin: 0;
@@ -848,7 +867,7 @@
 
     <sc-if value="{{ isSim }}">
       <div class="dx-grid3">
-        <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="dx-stack" style="display:flex;flex-direction:column">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <h6 style="margin:0;color:var(--dx-ink-accent)">Mixture &amp; model</h6>
@@ -947,7 +966,7 @@
           </section>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="dx-stack" style="display:flex;flex-direction:column">
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div class="dx-head" style="padding:0">
@@ -1026,7 +1045,7 @@
           </section>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="dx-stack" style="display:flex;flex-direction:column">
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div class="dx-kicker">Live results</div>
@@ -1141,7 +1160,7 @@
 
     <sc-if value="{{ isColumn }}">
       <div class="dx-side">
-        <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="dx-stack" style="display:flex;flex-direction:column">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <h6 style="margin:0;color:var(--dx-ink-accent)">Column configuration</h6>
@@ -1180,7 +1199,7 @@
           </section>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="dx-stack" style="display:flex;flex-direction:column">
           <sc-if value="{{ isStageView }}">
             <section class="card blueprint" style="padding:14px;gap:8px">
               <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -1233,7 +1252,7 @@
 
     <sc-if value="{{ isVLE }}">
       <div class="dx-side">
-        <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="dx-stack" style="display:flex;flex-direction:column">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <h6 style="margin:0;color:var(--dx-ink-accent)">Equilibrium parameters</h6>
@@ -1297,7 +1316,7 @@
           </section>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="dx-stack" style="display:flex;flex-direction:column">
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -1371,7 +1390,7 @@
 
     <sc-if value="{{ isMT }}">
       <div class="dx-side">
-        <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="dx-stack" style="display:flex;flex-direction:column">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <h6 style="margin:0;color:var(--dx-ink-accent)">Construction inputs</h6>
@@ -1469,7 +1488,7 @@
     </sc-if>
 
     <sc-if value="{{ isResults }}">
-      <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="dx-stack" style="display:flex;flex-direction:column">
         <section class="card blueprint dx-noprint" style="padding:14px;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
