@@ -201,13 +201,20 @@ var RIGGL = (function () {
     var MESHES = {
       cyl:    GEO.cylinder(seg(40), false, false),
       cylCap: GEO.cylinder(seg(40), true, true),
+      // Low-poly counterparts for anything slim enough that the facets cannot
+      // be seen: handrail posts, ladder rungs, bracing, small-bore pipe and
+      // the elbow knuckles. plant.js assigns them by radius, so no call site
+      // has to remember. Roughly half the scene's triangles live here.
+      rod:    GEO.cylinder(seg(10), false, false),
+      rodCap: GEO.cylinder(seg(10), true, true),
+      knuckle:GEO.sphere(seg(10), Math.max(4, Math.round(6 * LOD))),
       cone:   GEO.cone(seg(40), 0.62),
       skirt:  GEO.cone(seg(40), 0.94),               // a support skirt barely tapers
       dish:   GEO.dish(seg(36), Math.max(4, Math.round(9 * LOD))),
       box:    GEO.box(),
-      annulus:GEO.annulus(seg(40), 0.62, true),      // platform gratings
-      ringThin:GEO.annulus(seg(40), 0.90, true),     // banding straps, flanges
-      disc:   GEO.annulus(seg(40), 0.06, true),      // trays, blanking plates
+      annulus:GEO.annulus(seg(30), 0.62, true),      // platform gratings
+      ringThin:GEO.annulus(seg(22), 0.90, true),     // banding straps, flanges
+      disc:   GEO.annulus(seg(24), 0.06, true),      // trays, blanking plates
       cylArc: GEO.cylArc(seg(44), Math.PI * 1.44, 0.055),
       sphere: GEO.sphere(seg(22), Math.max(6, Math.round(14 * LOD)))
     };
@@ -322,8 +329,29 @@ var RIGGL = (function () {
     }
 
     /* ── attribute plumbing ──────────────────────────────────────────── */
+    // Attribute and uniform locations never change for a linked program, and
+    // querying them is a synchronous driver round trip. Ten groups times two
+    // passes times eight names is 160 of those a frame, for nothing.
+    var locCache = [];
+    function progLoc(prog) {
+      for (var q = 0; q < locCache.length; q++) if (locCache[q].p === prog) return locCache[q];
+      var e = { p: prog, a: {}, u: {} };
+      locCache.push(e);
+      return e;
+    }
+    function attrLoc(prog, n) {
+      var e = progLoc(prog);
+      if (e.a[n] === undefined) e.a[n] = gl.getAttribLocation(prog, n);
+      return e.a[n];
+    }
+    function uniLoc(prog, n) {
+      var e = progLoc(prog);
+      if (e.u[n] === undefined) e.u[n] = gl.getUniformLocation(prog, n);
+      return e.u[n];
+    }
+
     function bindGroup(prog, grp, useInst) {
-      var loc = function (n) { return gl.getAttribLocation(prog, n); };
+      var loc = function (n) { return attrLoc(prog, n); };
       var aPos = loc('aPos'), aNrm = loc('aNrm');
       gl.bindBuffer(gl.ARRAY_BUFFER, grp.vb);
       gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, 0, 0);
@@ -391,6 +419,10 @@ var RIGGL = (function () {
     var st = {
       sel: null, hov: null, product: null, mode: 'material',
       flow: true, tracers: 1, thermal: null, dpr: 1, time: 0,
+      // Resolution scale, driven by the page's frame-rate watchdog. Shading
+      // cost is the dominant term in this scene, so backing-store size is the
+      // one lever that actually buys frames.
+      scale: 1,
       fog: [0.055, 0.068, 0.115], expo: 1.18,
       skyTop: [0.026, 0.034, 0.068], skyHorizon: [0.085, 0.102, 0.158],
       skyGlow: [0.20, 0.10, 0.03]
@@ -475,20 +507,20 @@ var RIGGL = (function () {
       M.perspective(P, cam.fov, w / Math.max(1, h), 0.5, 520);
       M.lookAt(V, e, [cam.tx, cam.ty, cam.tz], [0,1,0]);
       M.mul(VP, P, V);
-      gl.uniformMatrix4fv(gl.getUniformLocation(prog, 'uVP'), false, VP);
-      gl.uniform3fv(gl.getUniformLocation(prog, 'uEye'), e);
+      gl.uniformMatrix4fv(uniLoc(prog, 'uVP'), false, VP);
+      gl.uniform3fv(uniLoc(prog, 'uEye'), e);
       if (!forPick) {
-        gl.uniform3fv(gl.getUniformLocation(prog, 'uFog'), st.fog);
-        gl.uniform1f(gl.getUniformLocation(prog, 'uFogD'), 0.0030);
-        gl.uniform3fv(gl.getUniformLocation(prog, 'uKey'), [0.46, 0.78, 0.44]);
-        gl.uniform3fv(gl.getUniformLocation(prog, 'uKeyC'), [1.52, 1.44, 1.32]);
-        gl.uniform3fv(gl.getUniformLocation(prog, 'uFill'), [0.335, 0.415, 0.575]);
-        gl.uniform3fv(gl.getUniformLocation(prog, 'uRim'), [0.30, 0.62, 0.92]);
-        gl.uniform3fv(gl.getUniformLocation(prog, 'uBack'), [-0.62, 0.30, -0.72]);
-        gl.uniform3fv(gl.getUniformLocation(prog, 'uBackC'), [0.20, 0.30, 0.52]);
-        gl.uniform3fv(gl.getUniformLocation(prog, 'uSkyT'), st.skyTop);
-        gl.uniform3fv(gl.getUniformLocation(prog, 'uSkyH'), st.skyHorizon);
-        gl.uniform1f(gl.getUniformLocation(prog, 'uExpo'), st.expo);
+        gl.uniform3fv(uniLoc(prog, 'uFog'), st.fog);
+        gl.uniform1f(uniLoc(prog, 'uFogD'), 0.0030);
+        gl.uniform3fv(uniLoc(prog, 'uKey'), [0.46, 0.78, 0.44]);
+        gl.uniform3fv(uniLoc(prog, 'uKeyC'), [1.52, 1.44, 1.32]);
+        gl.uniform3fv(uniLoc(prog, 'uFill'), [0.335, 0.415, 0.575]);
+        gl.uniform3fv(uniLoc(prog, 'uRim'), [0.30, 0.62, 0.92]);
+        gl.uniform3fv(uniLoc(prog, 'uBack'), [-0.62, 0.30, -0.72]);
+        gl.uniform3fv(uniLoc(prog, 'uBackC'), [0.20, 0.30, 0.52]);
+        gl.uniform3fv(uniLoc(prog, 'uSkyT'), st.skyTop);
+        gl.uniform3fv(uniLoc(prog, 'uSkyH'), st.skyHorizon);
+        gl.uniform1f(uniLoc(prog, 'uExpo'), st.expo);
       }
       var useInst = !!inst;
       for (var gi = 0; gi < G.length; gi++) {
@@ -501,13 +533,13 @@ var RIGGL = (function () {
           // fallback: per-object uniforms, correct but slower
           for (var q = 0; q < grp.n; q++) {
             var ob = grp.list[q];
-            gl.vertexAttrib4f(gl.getAttribLocation(prog, 'aM0'), ob.m[0], ob.m[1], ob.m[2], ob.m[3]);
-            gl.vertexAttrib4f(gl.getAttribLocation(prog, 'aM1'), ob.m[4], ob.m[5], ob.m[6], ob.m[7]);
-            gl.vertexAttrib4f(gl.getAttribLocation(prog, 'aM2'), ob.m[8], ob.m[9], ob.m[10], ob.m[11]);
-            gl.vertexAttrib4f(gl.getAttribLocation(prog, 'aM3'), ob.m[12], ob.m[13], ob.m[14], ob.m[15]);
-            gl.vertexAttrib4f(gl.getAttribLocation(prog, 'aCol'),
+            gl.vertexAttrib4f(attrLoc(prog, 'aM0'), ob.m[0], ob.m[1], ob.m[2], ob.m[3]);
+            gl.vertexAttrib4f(attrLoc(prog, 'aM1'), ob.m[4], ob.m[5], ob.m[6], ob.m[7]);
+            gl.vertexAttrib4f(attrLoc(prog, 'aM2'), ob.m[8], ob.m[9], ob.m[10], ob.m[11]);
+            gl.vertexAttrib4f(attrLoc(prog, 'aM3'), ob.m[12], ob.m[13], ob.m[14], ob.m[15]);
+            gl.vertexAttrib4f(attrLoc(prog, 'aCol'),
               grp.cData[q*4], grp.cData[q*4+1], grp.cData[q*4+2], grp.cData[q*4+3]);
-            gl.vertexAttrib4f(gl.getAttribLocation(prog, 'aFx'),
+            gl.vertexAttrib4f(attrLoc(prog, 'aFx'),
               grp.fData[q*4], grp.fData[q*4+1], grp.fData[q*4+2], grp.fData[q*4+3]);
             gl.drawElements(gl.TRIANGLES, grp.geo.count, type, 0);
           }
@@ -516,8 +548,12 @@ var RIGGL = (function () {
       }
     }
 
+    function pixelRatio() {
+      return Math.min(opts.maxDpr || 2, window.devicePixelRatio || 1) * st.scale;
+    }
+
     function render(dt) {
-      var dpr = Math.min(opts.maxDpr || 2, window.devicePixelRatio || 1);
+      var dpr = pixelRatio();
       var w = Math.max(1, Math.round(canvas.clientWidth * dpr));
       var h = Math.max(1, Math.round(canvas.clientHeight * dpr));
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
@@ -535,10 +571,10 @@ var RIGGL = (function () {
       // atmosphere rather than on a flat field
       gl.useProgram(progSky);
       gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
-      gl.uniform3fv(gl.getUniformLocation(progSky, 'uTop'), st.skyTop);
-      gl.uniform3fv(gl.getUniformLocation(progSky, 'uHorizon'), st.skyHorizon);
-      gl.uniform3fv(gl.getUniformLocation(progSky, 'uGlow'), st.skyGlow);
-      var aSky = gl.getAttribLocation(progSky, 'aP');
+      gl.uniform3fv(uniLoc(progSky, 'uTop'), st.skyTop);
+      gl.uniform3fv(uniLoc(progSky, 'uHorizon'), st.skyHorizon);
+      gl.uniform3fv(uniLoc(progSky, 'uGlow'), st.skyGlow);
+      var aSky = attrLoc(progSky, 'aP');
       gl.bindBuffer(gl.ARRAY_BUFFER, skyVb);
       gl.enableVertexAttribArray(aSky); gl.vertexAttribPointer(aSky, 2, gl.FLOAT, false, 0, 0);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -551,11 +587,11 @@ var RIGGL = (function () {
         buildTracers(st.time);
         if (trN) {
           gl.useProgram(progTrace);
-          gl.uniformMatrix4fv(gl.getUniformLocation(progTrace, 'uVP'), false, VP);
-          gl.uniform1f(gl.getUniformLocation(progTrace, 'uScale'), dpr * 26);
-          var ap = gl.getAttribLocation(progTrace, 'aPos');
-          var ac = gl.getAttribLocation(progTrace, 'aCol');
-          var as = gl.getAttribLocation(progTrace, 'aSize');
+          gl.uniformMatrix4fv(uniLoc(progTrace, 'uVP'), false, VP);
+          gl.uniform1f(uniLoc(progTrace, 'uScale'), dpr * 26);
+          var ap = attrLoc(progTrace, 'aPos');
+          var ac = attrLoc(progTrace, 'aCol');
+          var as = attrLoc(progTrace, 'aSize');
           gl.bindBuffer(gl.ARRAY_BUFFER, trPb);
           gl.enableVertexAttribArray(ap); gl.vertexAttribPointer(ap, 3, gl.FLOAT, false, 0, 0);
           gl.bindBuffer(gl.ARRAY_BUFFER, trCb);
@@ -573,7 +609,9 @@ var RIGGL = (function () {
 
     /** Which component is under this point, by reading the id buffer. */
     function pickAt(cssX, cssY) {
-      var dpr = Math.min(opts.maxDpr || 2, window.devicePixelRatio || 1);
+      // The id buffer is only ever read one pixel at a time, so it can be much
+      // coarser than the picture without changing which object is named.
+      var dpr = Math.min(0.75, pixelRatio());
       var w = Math.max(1, Math.round(canvas.clientWidth * dpr));
       var h = Math.max(1, Math.round(canvas.clientHeight * dpr));
       sizePick(w, h);

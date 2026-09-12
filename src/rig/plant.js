@@ -533,6 +533,22 @@ var PLANT = (function () {
       { key:'TI-200', kind:'T', at:[D.condX, D.condY + 2.0, D.condZ],     read:'drum'  }
     ];
 
+    /* ── level of detail ───────────────────────────────────────────────
+       A forty-sided cylinder is right for a four-metre tower and absurd for a
+       five-centimetre handrail post, and the scene has far more of the latter.
+       Rather than ask every call site to choose, swap the mesh for a coarse
+       one wherever the instance is too small for the facets to be visible.
+       Purely a substitution on the finished list: the geometry is identical in
+       shape, and nothing above this line has to know. */
+    var LOD_R = 0.30, SWAP = { cyl:'rod', cylCap:'rodCap', sphere:'knuckle' };
+    for (var li = 0; li < objs.length; li++) {
+      var ob = objs[li], sw = SWAP[ob.mesh];
+      if (!sw) continue;
+      var m2 = ob.m;
+      var rx = Math.hypot(m2[0], m2[1], m2[2]), rz = Math.hypot(m2[8], m2[9], m2[10]);
+      if (Math.max(rx, rz) < LOD_R) ob.mesh = sw;
+    }
+
     return { objects: objs, streams: streams, anchors: anchors, D: D,
              MAT: MAT, STREAM: STREAM, instruments: instruments,
              bounds: { min:[-56, 0, -30], max:[46, shellTop + 12, 30] },

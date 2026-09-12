@@ -87,18 +87,38 @@ _rigLoop() {
       const fps = Math.round(frames / acc);
       const el = document.getElementById('rig-fps');
       if (el) el.textContent = fps + ' fps';
-      // If the scene cannot hold a usable rate, shed the most expensive thing
-      // in it — the tracers — rather than letting the whole page stutter.
-      if (fps < 24 && gl.state.tracers > 0.35 && this.state.rig.flow) {
-        gl.state.tracers = 0.3;
-        const w = document.getElementById('rig-degrade');
-        if (w) w.hidden = false;
-      }
+      this._rigAdapt(gl, fps);
       acc = 0; frames = 0;
     }
     this._raf = requestAnimationFrame(step);
   };
   this._raf = requestAnimationFrame(step);
+}
+
+/** Hold the frame rate, and say so when holding it costs something.
+ *
+ *  Two levers, in the order that costs the viewer least: the tracers, which
+ *  are decoration, and then the backing-store resolution, which is the only
+ *  thing that materially changes shading cost. Both climb back when the
+ *  machine can afford them, so a momentary stall is not permanent.
+ */
+_rigAdapt(gl, fps) {
+  const st = gl.state;
+  let note = '';
+  if (fps < 26 && st.tracers > 0.35 && this.state.rig.flow) {
+    st.tracers = 0.3;
+  } else if (fps < 22 && st.scale > 0.62) {
+    st.scale = Math.max(0.6, st.scale - 0.2);
+  } else if (fps > 52 && st.scale < 1) {
+    st.scale = Math.min(1, st.scale + 0.2);
+  } else if (fps > 55 && st.tracers < 1) {
+    st.tracers = 1;
+  }
+  if (st.scale < 0.99 && st.tracers < 1) note = 'Tracers thinned and resolution reduced to hold the frame rate';
+  else if (st.scale < 0.99) note = 'Resolution reduced to hold the frame rate';
+  else if (st.tracers < 1) note = 'Tracers thinned to hold the frame rate';
+  const w = document.getElementById('rig-degrade');
+  if (w) { w.hidden = !note; if (note) w.textContent = note; }
 }
 
 /** Pin the instrument tags to the equipment they belong to. Transform only,

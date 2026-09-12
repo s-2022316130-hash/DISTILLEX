@@ -5,7 +5,7 @@ equilibrium, McCabe–Thiele stage construction, column operation, stage profile
 studies, theory and an exam mode. Everything is computed in the browser — no server, no build
 step, no account, no telemetry, no stored data.
 
-**Live entry point:** `index.html` (self-contained, ~920 KB, works offline by double-click).
+**Live entry point:** `index.html` (self-contained, ~924 KB, works offline by double-click).
 
 Alongside the binary simulator there is an **industrial crude unit** at
 `/industrial-distillation` — an interactive, educational visualisation of an atmospheric
@@ -298,7 +298,7 @@ node tools/test.js --list     # list the suites
 node tools/test.js thermo     # run selected suites
 ```
 
-511 checks in fourteen suites, standard library only, no dependencies. The suite loads the
+563 checks in fourteen suites, standard library only, no dependencies. The suite loads the
 application straight out of `src/DISTILLEX.dc.html` — resolving the same `@include` directives
 the build resolves — so it tests exactly the code the page ships.
 

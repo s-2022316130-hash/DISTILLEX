@@ -30,6 +30,9 @@ rigReduced() {
   return this._reduced;
 }
 
+/** Thin-space grouping, so a six-figure iteration count can be read. */
+rigGroup(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f'); }
+
 rigSup(n) {
   const map = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³',
                 '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
@@ -210,7 +213,7 @@ rigView(s) {
     label: r.converged ? 'Converged' : 'Iteration limit reached',
     tone: r.converged ? 'ok' : 'warn',
     outer: String(r.outer),
-    flashIt: String(r.iters),
+    flashIt: this.rigGroup(r.iters),
     flashItLabel: r.iters > 999 ? 'Equilibrium solves' : 'Flash iterations',
     ms: String(Math.round(r.ms)),
     note: r.converged

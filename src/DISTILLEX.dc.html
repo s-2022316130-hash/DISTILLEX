@@ -902,7 +902,10 @@
   .dx-rig {
     --r-ink:   #e8edf9;
     --r-dim:   #8b97b2;
-    --r-faint: #5d6883;
+    /* The quietest text tone still has to be readable: #5d6883 cleared only
+       3.0:1 on the control surface. This clears 4.7:1 on every one of the four
+       backgrounds below, which is what the `rig` suite now asserts. */
+    --r-faint: #7987aa;
     --r-l0:    #05070f;
     --r-l1:    #090d18;
     --r-l2:    #0e1424;
@@ -1000,10 +1003,12 @@
   .rig-stage { position: relative; min-width: 0; min-height: 0; display: grid;
                background: radial-gradient(120% 90% at 50% 0%, #0b1426, #04060d 70%) }
   .rig-stage.v-split { grid-template-rows: 1fr 1fr }
-  @media (min-width: 1500px) { .rig-stage.v-split { grid-template-rows: none; grid-template-columns: 1fr 1fr } }
+  /* Side by side only when each half is still wide enough to be worth
+     looking at; below that the two views stack. */
+  @media (min-width: 1800px) { .rig-stage.v-split { grid-template-rows: none; grid-template-columns: 1fr 1fr } }
   .rig-vp { position: relative; min-width: 0; min-height: 0; overflow: hidden }
   .rig-vp + .rig-vp { border-top: 1px solid var(--r-line) }
-  @media (min-width: 1500px) { .rig-stage.v-split .rig-vp + .rig-vp { border-top: 0; border-left: 1px solid var(--r-line) } }
+  @media (min-width: 1800px) { .rig-stage.v-split .rig-vp + .rig-vp { border-top: 0; border-left: 1px solid var(--r-line) } }
   #rig-gl { display: block; width: 100%; height: 100%; touch-action: none; outline: none }
   #rig-gl:focus-visible { box-shadow: inset 0 0 0 2px var(--r-cyan) }
 
@@ -1033,8 +1038,17 @@
 
   .rig-cams {
     position: absolute; left: 14px; bottom: 14px; display: flex; flex-wrap: wrap; gap: 5px;
-    max-width: min(64%, 460px);
+    max-width: min(58%, 430px);
   }
+  /* In the split view each half is short, so the shots become one scrolling
+     row rather than a block of buttons over the plant. */
+  .rig-stage.v-split .rig-cams {
+    left: 0; right: 0; bottom: 8px; max-width: none; flex-wrap: nowrap;
+    overflow-x: auto; scrollbar-width: none; padding: 0 12px 2px;
+  }
+  .rig-stage.v-split .rig-cams::-webkit-scrollbar { display: none }
+  .rig-stage.v-split .rig-cam { flex: 0 0 auto }
+  .rig-stage.v-split .rig-hud { bottom: 42px }
   .rig-cam {
     appearance: none; border: 1px solid var(--r-line); border-radius: 999px;
     background: color-mix(in srgb, #050912 72%, transparent); color: var(--r-dim);
@@ -1070,7 +1084,13 @@
     box-shadow: 0 20px 50px rgba(0,0,0,.55);
     padding: 14px 15px 13px; display: flex; flex-direction: column; gap: 9px;
     animation: rigCard 260ms var(--dx-spring) both;
+    /* never taller than the viewport it floats in — in the split view that is
+       half the stage, and a clipped card is worse than a scrolling one */
+    max-height: calc(100% - 28px); overflow: auto; overscroll-behavior: contain;
+    scrollbar-width: thin; scrollbar-color: var(--r-line2) transparent;
   }
+  .rig-stage.v-split .rig-info { width: min(300px, calc(100% - 24px)); font-size: 12px }
+  .rig-stage.v-split .rig-info dd { font-size: 12px; line-height: 1.5 }
   @keyframes rigCard { from { opacity: 0; transform: translateY(-8px) scale(.98) } to { opacity: 1; transform: none } }
   .rig-info .cat { font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--r-cyan) }
   .rig-info h3 { margin: 0; font-family: var(--font-heading); font-size: 17px; letter-spacing: .01em }

@@ -710,12 +710,16 @@ function suiteRig() {
   const r = CDU.run(CDU.baseCase());
 
   // ── meshes ───────────────────────────────────────────────────────────
+  // The same names the renderer builds, at the same shapes. Segment counts
+  // differ; the checks here are structural, not about tessellation.
   const meshes = {
     cyl: GEO.cylinder(24, false, false), cylCap: GEO.cylinder(24, true, true),
+    rod: GEO.cylinder(10, false, false), rodCap: GEO.cylinder(10, true, true),
     cone: GEO.cone(24, 0.62), skirt: GEO.cone(24, 0.94), dish: GEO.dish(20, 6),
     box: GEO.box(), annulus: GEO.annulus(24, 0.62, true),
-    ringThin: GEO.annulus(24, 0.90, true), disc: GEO.annulus(24, 0.06, true),
-    cylArc: GEO.cylArc(28, Math.PI * 1.44, 0.055), sphere: GEO.sphere(16, 10)
+    ringThin: GEO.annulus(22, 0.90, true), disc: GEO.annulus(24, 0.06, true),
+    cylArc: GEO.cylArc(28, Math.PI * 1.44, 0.055),
+    sphere: GEO.sphere(16, 10), knuckle: GEO.sphere(10, 6)
   };
   for (const k in meshes) {
     const m = meshes[k], nv = m.pos.length / 3;
@@ -733,6 +737,15 @@ function suiteRig() {
   // ── the plant ────────────────────────────────────────────────────────
   const P = PLANT.build();
   ok(P.objects.length > 400, 'plant builds a detailed model', P.objects.length + ' objects');
+  // level of detail must only ever coarsen something too small to show it
+  const coarse = { rod: 1, rodCap: 1, knuckle: 1 };
+  const wrong = P.objects.filter(o => {
+    const rx = Math.hypot(o.m[0], o.m[1], o.m[2]), rz = Math.hypot(o.m[8], o.m[9], o.m[10]);
+    return coarse[o.mesh] && Math.max(rx, rz) >= 0.30;
+  });
+  ok(wrong.length === 0, 'no large object was given a low-poly mesh', wrong.length + ' objects');
+  ok(P.objects.filter(o => coarse[o.mesh]).length > 200,
+     'the small parts of the plant do use the low-poly meshes');
   ok(P.objects.every(o => meshes[o.mesh] !== undefined),
      'every object names a mesh the renderer builds',
      P.objects.filter(o => meshes[o.mesh] === undefined).map(o => o.mesh).join(','));
@@ -816,6 +829,39 @@ function suiteRig() {
   ok(fur && fur.op === 1, 'the selected block is drawn at full strength');
   ok(sel.pipes.filter(q => q.pick !== 'furnace').every(q => q.op < 0.5),
      'everything else is dimmed when something is selected');
+
+  // ── the simulator's own palette ──────────────────────────────────────
+  // The rig page is a dark instrument surround whatever the app theme, so it
+  // carries its own tokens and the `contrast` suite's palette does not cover
+  // them. Every text tone must clear WCAG 1.4.3 (4.5:1) on every surface it
+  // can appear over.
+  {
+    const rigCss = source.slice(source.indexOf('.dx-rig {'), source.indexOf('.dx-rig {') + 1400);
+    const tok = n => {
+      const m = new RegExp('--r-' + n + ':\\s*(#[0-9a-fA-F]{6})').exec(rigCss);
+      return m && m[1];
+    };
+    const lum = h => {
+      const v = h.slice(1).match(/../g).map(x => parseInt(x, 16) / 255)
+                 .map(c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+      return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+    };
+    const ratio = (a, b) => {
+      const x = lum(a), y = lum(b);
+      return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+    };
+    const surfaces = ['l0', 'l1', 'l2', 'l3'].map(n => [n, tok(n)]);
+    const texts = ['ink', 'dim', 'faint', 'cyan', 'viol', 'mag', 'amber',
+                   'orange', 'red', 'green'].map(n => [n, tok(n)]);
+    ok(surfaces.every(q => q[1]) && texts.every(q => q[1]),
+       'every rig colour token is a hex literal the suite can read');
+    texts.forEach(([tn, tv]) => surfaces.forEach(([sn, sv]) => {
+      if (!tv || !sv) return;
+      ok(ratio(tv, sv) >= 4.5,
+         'rig --r-' + tn + ' on --r-' + sn + ' clears 4.5:1',
+         ratio(tv, sv).toFixed(2) + ':1');
+    }));
+  }
 
   // ── the view model ───────────────────────────────────────────────────
   const c = C();
