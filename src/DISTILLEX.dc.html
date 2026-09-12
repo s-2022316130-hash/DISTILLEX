@@ -755,6 +755,16 @@
               animation:dxIn 340ms var(--dx-ease) both }
   @media (prefers-reduced-motion: reduce) { .dx-tlive { animation:none } }
 
+  /* the gap between the equilibrium curve and the diagonal: what makes the
+     separation possible, filled so its size is read at a glance */
+  .dx-eqband { fill:color-mix(in srgb, var(--color-accent) 15%, transparent);
+               stroke:none; pointer-events:none }
+  .dx-sensnow line   { stroke:var(--dx-gold); stroke-width:1; stroke-dasharray:3 3 }
+  .dx-sensnow .halo  { fill:color-mix(in srgb, var(--dx-gold) 26%, transparent);
+                       stroke:var(--dx-gold); stroke-width:1 }
+  .dx-sensnow .core  { fill:var(--dx-gold) }
+  .dx-sensnow text   { fill:var(--dx-ink-accent); font-weight:700 }
+
   /* ═══ McCabe–Thiele construction ═════════════════════════════ */
   .dx-mtseg { transition: stroke-width var(--dx-t-base) var(--dx-ease) }
   .dx-mtseg.fresh { filter: drop-shadow(0 0 5px currentColor) }
@@ -1711,16 +1721,20 @@
                 <label class="seg-opt"><input type="radio" name="dxvle" value="txy" checked="{{ isTXY }}" onChange="{{ setVleShow }}"><span>T–x–y diagram</span></label>
               </div>
             </div>
-            <svg viewBox="0 0 500 480" style="width:100%;height:auto;touch-action:none" onPointerMove="{{ vleMove }}" onPointerLeave="{{ vleLeave }}" role="img" aria-label="Equilibrium diagram">
+            <svg viewBox="0 0 500 480" style="width:100%;max-width:760px;height:auto;margin:0 auto;touch-action:none" onPointerMove="{{ vleMove }}" onPointerLeave="{{ vleLeave }}" role="img" aria-label="Equilibrium diagram">
               <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1">
                 <path d="M60 340 H460 M60 260 H460 M60 180 H460 M60 100 H460 M140 20 V420 M220 20 V420 M300 20 V420 M380 20 V420"></path>
               </g>
               <path d="M60 20 V420 H460" fill="none" stroke="var(--color-divider)" stroke-width="1.4"></path>
               <sc-if value="{{ isXY }}">
+                <sc-if value="{{ eqBandOn }}">
+                  <polygon class="dx-eqband" points="{{ eqBand }}"></polygon>
+                </sc-if>
                 <line x1="60" y1="420" x2="460" y2="20" stroke="color-mix(in srgb,var(--color-text) 45%,transparent)" stroke-width="1.2"></line>
                 <polyline points="{{ eqPoints }}" fill="none" stroke="var(--color-accent)" stroke-width="2"></polyline>
                 <text x="70" y="36" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-accent)">EQUILIBRIUM y* = f(x)</text>
                 <text x="352" y="404" font-size="11" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">y = x</text>
+                <text x="70" y="52" font-size="10" letter-spacing=".06em" fill="color-mix(in srgb,var(--color-text) 78%,transparent)">shaded: y* − x, the driving force for the separation</text>
                 <sc-if value="{{ vleHoverOn }}">
                   <g>
                     <line x1="{{ vleHover.cx }}" y1="420" x2="{{ vleHover.cx }}" y2="{{ vleHover.cy }}" stroke="var(--color-accent)" stroke-dasharray="3 3" stroke-width="1"></line>
@@ -1989,6 +2003,14 @@
                 <sc-for list="{{ sensDots }}" as="d" hint-placeholder-count="8">
                   <circle cx="{{ d.cx }}" cy="{{ d.cy }}" r="2.6" fill="var(--color-accent)"></circle>
                 </sc-for>
+              </g>
+            </sc-if>
+            <sc-if value="{{ sensNow }}">
+              <g class="dx-sensnow">
+                <line x1="{{ sensNowPt.cx }}" y1="250" x2="{{ sensNowPt.cx }}" y2="{{ sensNowPt.cy }}"></line>
+                <circle class="halo" cx="{{ sensNowPt.cx }}" cy="{{ sensNowPt.cy }}" r="7.5"></circle>
+                <circle class="core" cx="{{ sensNowPt.cx }}" cy="{{ sensNowPt.cy }}" r="3.4"></circle>
+                <text x="{{ sensNowPt.lx }}" y="{{ sensNowPt.ly }}" text-anchor="{{ sensNowPt.anchor }}" font-size="10" font-variant-numeric="tabular-nums">{{ sensNowPt.label }}</text>
               </g>
             </sc-if>
             <sc-for list="{{ sensXTicks }}" as="t" hint-placeholder-count="5">
@@ -3690,6 +3712,11 @@ class Component extends DCLogic {
       bub.push([MX(C.xs[i]),TY(C.Ts[i])]); dew.push([MX(C.ys[i]),TY(C.Ts[i])]);
     }
     out.eqPoints=this.poly(eqPts); out.bubPoints=this.poly(bub); out.dewPoints=this.poly(dew);
+    // the same points drawn as a polygon close along the diagonal, so the
+    // filled region is exactly the gap between y*(x) and y = x — the driving
+    // force for the separation, not an approximation of it
+    out.eqBand=out.eqPoints;
+    out.eqBandOn=eqPts.length>2;
     out.axTicks=[0,0.2,0.4,0.6,0.8,1].map(t=>({x:MX(t).toFixed(0),y:MY(t).toFixed(0),label:t.toFixed(1)}));
     out.tTicks=[0,1,2,3,4].map(i=>({y:(420-100*i).toFixed(0),label:(tmin+(tmax-tmin)*i/4).toFixed(1)}));
     out.isXY=s.vleShow==='xy'; out.isTXY=s.vleShow==='txy';
@@ -3908,6 +3935,21 @@ class Component extends DCLogic {
       out.sensYLabel=(L.dep.find(a=>a[0]===dep)||['',''])[1];
       out.sensTitle=out.sensYLabel+' vs '+out.sensXLabel;
       out.sensHasData=pts.length>1;
+      // where the case currently loaded sits on this curve. Both coordinates
+      // are the live ones — the independent variable straight from state, the
+      // dependent one from the solved result — so the marker is a reading, not
+      // an interpolation of the sweep.
+      const curX=this.num(s[ind]);
+      const curY=hasR? {N:r.N,Nact:r.Nact,Rmin:r.Rmin,Qr:r.Qr,Qc:r.Qc,D:r.D,xD:r.xD,xB:r.xB,rec:r.rec}[dep] : NaN;
+      const inX=rangeOk&&isFinite(curX)&&curX>=Math.min(lo,hi)&&curX<=Math.max(lo,hi);
+      out.sensNow = pts.length>1 && inX && isFinite(curY) && curY>=Math.min(y0,y1) && curY<=Math.max(y0,y1);
+      out.sensNowPt = out.sensNow
+        ? {cx:SX(curX).toFixed(1), cy:SY(curY).toFixed(1),
+           lx:(SX(curX)+(SX(curX)>470?-9:9)).toFixed(1),
+           ly:(SY(curY)-11).toFixed(1),
+           anchor:SX(curX)>470?'end':'start',
+           label:'this case \u00b7 '+f(curX,3)+' \u2192 '+f(curY,(y1-y0)<5?3:1)}
+        : {cx:0,cy:0,lx:0,ly:0,anchor:'start',label:''};
       if(pts.length>1){
         const a=pts[0], b=pts[pts.length-1];
         let mono=true, dir=Math.sign(b[1]-a[1]);
