@@ -18,37 +18,361 @@
 <link rel="stylesheet" href="_ds/industry-08239616-ce52-45e5-980b-7f63f8d653fc/styles.css">
 <script src="_ds/industry-08239616-ce52-45e5-980b-7f63f8d653fc/_ds_bundle.js"></script>
 <style>
+  /* ═══════════════════════════════════════════════════════════════════════
+     DISTILLEX design system.
+
+     Loaded after the inlined design-system stylesheet, so everything here
+     overrides it. The palette is re-pitched from the original neutral
+     blue-grey to a deeper, more deliberate instrument look: an indigo
+     primary, a teal secondary reserved for vapour/fluid meaning, a violet
+     accent for interactive state, and restrained status hues. Every colour
+     below was checked for contrast before it was written — see the
+     `contrast` suite in tools/test.js, which recomputes the ratios.
+     ═══════════════════════════════════════════════════════════════════ */
+
+  :root {
+    /* ── foundation ───────────────────────────────────────────────────── */
+    --color-bg:      #f6f7fb;   /* page floor            */
+    --color-surface: #eceef6;   /* recessed / inset      */
+    --dx-raised:     #ffffff;   /* elevated panel        */
+    --color-text:    #101627;
+    --color-divider: color-mix(in srgb, #101627 13%, transparent);
+    --dx-hairline:   color-mix(in srgb, #101627 8%, transparent);
+
+    /* ── indigo primary ───────────────────────────────────────────────── */
+    --color-accent:     #5566d6;   /* non-text: strokes, thumbs, fills */
+    --color-accent-100: #eef0ff;
+    --color-accent-200: #dde1ff;
+    --color-accent-300: #bcc4fb;
+    --color-accent-400: #8e9bf0;
+    --color-accent-500: #5566d6;
+    --color-accent-600: #4453c4;
+    --color-accent-700: #3949ab;   /* text-safe */
+    --color-accent-800: #2a3680;
+    --color-accent-900: #1b2354;
+
+    /* ── teal secondary — vapour, gas, flow ───────────────────────────── */
+    --color-accent-2:     #0e7490;
+    --color-accent-2-100: #e6f6fa;
+    --color-accent-2-200: #c5eaf2;
+    --color-accent-2-300: #8fd6e5;
+    --color-accent-2-400: #46b3cc;
+    --color-accent-2-500: #1691b0;
+    --color-accent-2-600: #0e7490;
+    --color-accent-2-700: #0b5d73;
+    --color-accent-2-800: #094857;
+    --color-accent-2-900: #06303a;
+
+    /* ── violet accent — interactive emphasis ─────────────────────────── */
+    --dx-violet:     #6d28d9;
+    --dx-violet-soft: color-mix(in srgb, #6d28d9 12%, transparent);
+
+    /* ── liquid / vapour semantic pair (used by the column) ───────────── */
+    --dx-liquid: #3949ab;
+    --dx-vapour: #0e7490;
+
+    /* ── status ───────────────────────────────────────────────────────── */
+    --dx-ok:   #11692f;
+    --dx-warn: #804e06;
+    --dx-err:  #b91c1c;
+    --dx-info: #1d4ed8;
+
+    /* ── elevation. Tinted rather than neutral black, so shadows read as
+          part of the palette instead of grey smudges. ──────────────────── */
+    --shadow-sm: 0 1px 2px color-mix(in srgb, #1b2354 8%, transparent);
+    --shadow-md: 0 2px 4px color-mix(in srgb, #1b2354 6%, transparent),
+                 0 8px 20px -6px color-mix(in srgb, #1b2354 14%, transparent);
+    --shadow-lg: 0 4px 8px color-mix(in srgb, #1b2354 6%, transparent),
+                 0 20px 48px -12px color-mix(in srgb, #1b2354 20%, transparent);
+    --dx-glow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
+
+    /* ── shape ────────────────────────────────────────────────────────── */
+    --dx-r-sm: 6px; --dx-r-md: 10px; --dx-r-lg: 14px; --dx-r-xl: 20px;
+
+    /* ── motion. One vocabulary; every transition picks from it. ──────── */
+    --dx-t-fast: 120ms; --dx-t-base: 200ms; --dx-t-slow: 340ms;
+    --dx-ease: cubic-bezier(.32,.72,.28,1);
+    --dx-spring: cubic-bezier(.34,1.4,.44,1);
+  }
+
+  .dx-dark {
+    --color-bg:      #0a0e1a;
+    --color-surface: #111829;
+    --dx-raised:     #151d31;
+    --color-text:    #e7ecf7;
+    --color-divider: color-mix(in srgb, #e7ecf7 16%, transparent);
+    --dx-hairline:   color-mix(in srgb, #e7ecf7 9%, transparent);
+
+    --color-accent:     #7b8cf0;
+    --color-accent-100: #161d33;
+    --color-accent-200: #1e2747;
+    --color-accent-300: #93a5ff;
+    --color-accent-400: #8395f7;
+    --color-accent-500: #7b8cf0;
+    --color-accent-600: #93a5ff;
+    --color-accent-700: #93a5ff;
+    --color-accent-800: #c3cdff;
+    --color-accent-900: #e0e6ff;
+
+    --color-accent-2:     #4fd1c5;
+    --color-accent-2-100: #0c2a2e;
+    --color-accent-2-200: #123c42;
+    --color-accent-2-700: #4fd1c5;
+    --color-accent-2-800: #9beae1;
+
+    --dx-violet: #c4a6ff;
+    --dx-violet-soft: color-mix(in srgb, #c4a6ff 16%, transparent);
+
+    --dx-liquid: #93a5ff;
+    --dx-vapour: #4fd1c5;
+
+    --dx-ok:   #4ade80;
+    --dx-warn: #fbbf24;
+    --dx-err:  #f87171;
+    --dx-info: #7dd3fc;
+
+    --color-neutral-100: #131a2b;
+    --color-neutral-800: #c8d2e6;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.55);
+    --shadow-md: 0 2px 6px rgba(0,0,0,.5), 0 10px 26px -8px rgba(0,0,0,.66);
+    --shadow-lg: 0 6px 14px rgba(0,0,0,.5), 0 28px 60px -16px rgba(0,0,0,.74);
+  }
+
+  /* WCAG 1.4.3. The raw accent is reserved for borders, diagram strokes,
+     slider thumbs and fills, which are non-text and need only 3:1 (1.4.11).
+     One step down the same ramp carries text or sits behind it. Both themes
+     are checked by the `contrast` suite. */
+  :root { --dx-ink-accent: var(--color-accent-700); }
+  .dx-dark { --dx-ink-accent: var(--color-accent); }
+
+  /* ── motion policy ──────────────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important; animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important; scroll-behavior: auto !important;
+    }
+    .dx-stage-inner { transition: none !important }
+  }
+
+  /* ═══ ambient foundation ══════════════════════════════════════════════
+     A single soft field behind everything, so the page reads as a lit
+     surface rather than a flat fill. Two wide radial washes only — no
+     particles, no animation, nothing that competes with the data. */
+  body { background: var(--color-bg); }
+  .dx-app {
+    position: relative; min-height: 100vh;
+    background:
+      radial-gradient(1200px 680px at 12% -8%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 60%),
+      radial-gradient(980px 620px at 92% 4%, color-mix(in srgb, var(--color-accent-2) 10%, transparent), transparent 58%),
+      var(--color-bg);
+  }
+  .dx-dark .dx-app {
+    background:
+      radial-gradient(1200px 680px at 12% -8%, color-mix(in srgb, var(--color-accent) 17%, transparent), transparent 60%),
+      radial-gradient(980px 620px at 92% 4%, color-mix(in srgb, var(--color-accent-2) 12%, transparent), transparent 58%),
+      var(--color-bg);
+  }
+
+  /* ═══ surfaces ════════════════════════════════════════════════════════
+     Three distinct roles rather than one card style repeated: raised
+     panels hold content, inset wells hold readouts, and the stage holds
+     the column. */
+  .card {
+    background: var(--dx-raised);
+    border: 1px solid var(--dx-hairline);
+    border-radius: var(--dx-r-lg);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--dx-t-base) var(--dx-ease),
+                transform  var(--dx-t-base) var(--dx-ease),
+                border-color var(--dx-t-base) var(--dx-ease);
+  }
+  .dx-dark .card { background: var(--dx-raised); }
+  /* The blueprint corner ticks were the old visual signature. Kept, but
+     dialled back so they read as a registration mark, not a frame. */
+  .blueprint > .corner { opacity: .3; }
+  .card.blueprint:hover > .corner { opacity: .55; }
+
+  /* Hover elevation only where the card is genuinely interactive. */
+  .dx-lift { cursor: pointer; }
+  .dx-lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-md);
+                   border-color: color-mix(in srgb, var(--color-accent) 30%, var(--dx-hairline)); }
+  .dx-lift:active { transform: translateY(0); }
+
+  /* Inset well — recessed, for numeric readouts and tables. */
+  .dx-well {
+    background: var(--color-surface);
+    border: 1px solid var(--dx-hairline);
+    border-radius: var(--dx-r-md);
+    box-shadow: inset 0 1px 2px color-mix(in srgb, #1b2354 5%, transparent);
+  }
+  .dx-dark .dx-well { box-shadow: inset 0 1px 3px rgba(0,0,0,.4); }
+
+  /* ═══ typography ══════════════════════════════════════════════════════ */
+  h1,h2,h3 { letter-spacing: -.018em; }
+  .dx-title { font-family: var(--font-heading); font-size: clamp(22px,2.3vw,30px);
+              letter-spacing: -.02em; margin: 0; line-height: 1.12; }
+  .dx-sub { margin: 0; font-size: 13.5px; line-height: 1.6;
+            color: color-mix(in srgb, var(--color-text) 72%, transparent); max-width: 74ch; }
+  .card-kicker, .dx-kicker {
+    font-size: 10px; letter-spacing: .13em; text-transform: uppercase;
+    font-weight: 600; color: var(--dx-ink-accent);
+  }
+  .dx-num { font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+
+  /* ═══ page header ═════════════════════════════════════════════════════ */
+  .dx-head { display:flex; align-items:flex-end; justify-content:space-between;
+             gap:18px; flex-wrap:wrap; padding: 4px 0 2px; }
+  .dx-head-l { display:flex; flex-direction:column; gap:5px; min-width:0; }
+
+  /* ═══ metric readout ══════════════════════════════════════════════════ */
+  .dx-metric { display:flex; align-items:baseline; justify-content:space-between;
+               gap:12px; padding:7px 0; border-bottom:1px solid var(--dx-hairline); }
+  .dx-metric:last-child { border-bottom:0 }
+  .dx-metric-k { font-size:12.5px; color: color-mix(in srgb, var(--color-text) 74%, transparent); }
+  .dx-metric-v { font-size:14px; font-variant-numeric:tabular-nums; font-weight:600;
+                 transition: color var(--dx-t-slow) var(--dx-ease); }
+
+  /* ═══ status dot ══════════════════════════════════════════════════════ */
+  .dx-dot { width:7px; height:7px; border-radius:50%; flex:none; display:inline-block;
+            background: var(--dx-ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dx-ok) 20%, transparent); }
+  .dx-dot.live { animation: dxBreathe 2.6s var(--dx-ease) infinite }
+  .dx-dot.warn { background: var(--dx-warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dx-warn) 20%, transparent) }
+  .dx-dot.err  { background: var(--dx-err);  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dx-err) 20%, transparent) }
+
+  /* ═══ controls ════════════════════════════════════════════════════════ */
+  .btn {
+    border-radius: var(--dx-r-sm); font-weight: 500;
+    transition: background var(--dx-t-fast) var(--dx-ease),
+                border-color var(--dx-t-fast) var(--dx-ease),
+                transform var(--dx-t-fast) var(--dx-ease),
+                box-shadow var(--dx-t-fast) var(--dx-ease);
+  }
+  .btn:active { transform: translateY(1px) }
+  .btn:focus-visible { outline: none; box-shadow: var(--dx-glow) }
+  .btn-primary { background: var(--dx-ink-accent); border-color: var(--dx-ink-accent);
+                 box-shadow: var(--shadow-sm) }
+  .btn-primary:hover { background: var(--color-accent-800); border-color: var(--color-accent-800);
+                       box-shadow: var(--shadow-md) }
+  .dx-dark .btn-primary:hover { background: var(--color-accent-800); border-color: var(--color-accent-800) }
+  .btn-secondary { border-color: var(--color-divider); border-radius: var(--dx-r-sm) }
+  a, .btn-ghost, .tag-outline { color: var(--dx-ink-accent) }
+  .nav a:hover, .nav a[aria-current='page'] { color: var(--dx-ink-accent) }
+
+  .input, select.input {
+    border-radius: var(--dx-r-sm);
+    background: var(--dx-raised);
+    transition: border-color var(--dx-t-fast) var(--dx-ease), box-shadow var(--dx-t-fast) var(--dx-ease);
+  }
+  .input:focus-visible, select.input:focus-visible { outline: none; border-color: var(--color-accent);
+                                                     box-shadow: var(--dx-glow) }
+
+  .seg { border-radius: var(--dx-r-sm); overflow: hidden; background: var(--color-surface) }
+  .seg-opt { transition: background var(--dx-t-fast) var(--dx-ease), color var(--dx-t-fast) var(--dx-ease) }
+  .seg-opt:has(input:checked) { background: var(--dx-ink-accent); box-shadow: var(--shadow-sm) }
+
+  input[type=range] { accent-color: var(--color-accent); }
+
+  /* ═══ nav ═════════════════════════════════════════════════════════════ */
+  .dx-nav {
+    position: sticky; top: 0; z-index: 40;
+    background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+    backdrop-filter: saturate(150%) blur(14px);
+    -webkit-backdrop-filter: saturate(150%) blur(14px);
+    border-bottom: 1px solid var(--dx-hairline);
+  }
+  .dx-navbtn { position: relative; border-radius: var(--dx-r-sm); }
+  .dx-navbtn::after {
+    content: ''; position: absolute; left: 10px; right: 10px; bottom: 3px; height: 2px;
+    border-radius: 2px; background: var(--dx-ink-accent);
+    transform: scaleX(0); transform-origin: center;
+    transition: transform var(--dx-t-base) var(--dx-spring);
+  }
+  .dx-navbtn[data-on='1']::after { transform: scaleX(1) }
+
+  /* ═══ tables ══════════════════════════════════════════════════════════ */
+  .table thead th {
+    position: sticky; top: 0; z-index: 1;
+    background: var(--color-surface);
+    font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase;
+  }
+  .table tbody tr { transition: background var(--dx-t-fast) linear }
+  .table tbody tr:hover { background: color-mix(in srgb, var(--color-accent) 7%, transparent) }
+
+  /* ═══ 3D column stage ═════════════════════════════════════════════════
+     CSS 3D, not WebGL. The project ships as one self-contained file with a
+     Content-Security-Policy that allows no external script origin, so a
+     WebGL library cannot be loaded — and for a schematic column it would
+     buy nothing. Perspective plus transformed layers gives real depth at
+     effectively zero cost. */
+  .dx-stage {
+    position: relative; border-radius: var(--dx-r-lg); overflow: hidden;
+    background:
+      radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--color-accent) 9%, transparent), transparent 62%),
+      linear-gradient(180deg, var(--dx-raised), var(--color-surface));
+    border: 1px solid var(--dx-hairline);
+    box-shadow: var(--shadow-md);
+    perspective: 1400px; perspective-origin: 50% 42%;
+  }
+  .dx-stage-inner {
+    transform-style: preserve-3d;
+    transition: transform var(--dx-t-slow) var(--dx-ease);
+    will-change: transform;
+  }
+  /* Viewpoints. Each is a single transform so switching interpolates. */
+  .dx-vp-front { transform: none }
+  .dx-vp-iso   { transform: rotateX(16deg) rotateY(-22deg) rotateZ(1deg) scale(.92) }
+  .dx-vp-side  { transform: rotateY(-58deg) scale(.9) }
+  .dx-vp-top   { transform: rotateX(62deg) scale(.86) }
+  .dx-vp-xpl   { transform: rotateX(20deg) rotateY(-18deg) scale(.88) }
+  /* Exploded pulls the annotation plane away from the vessel plane. */
+  .dx-vp-xpl .dx-layer-notes { transform: translateZ(120px) }
+  .dx-vp-xpl .dx-layer-flow  { transform: translateZ(56px) }
+  .dx-layer-notes, .dx-layer-flow { transition: transform var(--dx-t-slow) var(--dx-ease) }
+  .dx-stage-grid {
+    position:absolute; inset:0; pointer-events:none; opacity:.5;
+    background-image:
+      linear-gradient(var(--dx-hairline) 1px, transparent 1px),
+      linear-gradient(90deg, var(--dx-hairline) 1px, transparent 1px);
+    background-size: 34px 34px;
+    mask-image: radial-gradient(120% 90% at 50% 40%, #000 35%, transparent 78%);
+    -webkit-mask-image: radial-gradient(120% 90% at 50% 40%, #000 35%, transparent 78%);
+  }
+
+  /* ═══ footer ══════════════════════════════════════════════════════════ */
+  .dx-sig {
+    margin-top: 26px; padding: 14px 0 20px;
+    border-top: 1px solid var(--dx-hairline);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-size: 11px; letter-spacing: .04em;
+    color: color-mix(in srgb, var(--color-text) 62%, transparent);
+  }
+  .dx-sig b { font-weight: 600; letter-spacing: .07em;
+              color: color-mix(in srgb, var(--color-text) 82%, transparent) }
+
+  /* ═══ entrance motion ═════════════════════════════════════════════════ */
+  @keyframes dxIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+  @keyframes dxBreathe { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
+  .dx-in { animation: dxIn var(--dx-t-slow) var(--dx-ease) both }
+  .dx-in-1 { animation-delay: 40ms } .dx-in-2 { animation-delay: 90ms }
+  .dx-in-3 { animation-delay: 140ms } .dx-in-4 { animation-delay: 190ms }
+
+  /* ═══ existing motion, retained ═══════════════════════════════════════ */
   @keyframes dxRise { from { transform: translateY(10px); opacity: 0 } 25% { opacity: 1 } 75% { opacity: 1 } to { transform: translateY(-26px); opacity: 0 } }
   @keyframes dxFall { from { transform: translateY(-10px); opacity: 0 } 25% { opacity: 1 } 75% { opacity: 1 } to { transform: translateY(26px); opacity: 0 } }
   @keyframes dxFlowR { from { stroke-dashoffset: 24 } to { stroke-dashoffset: 0 } }
   @keyframes dxFlowL { from { stroke-dashoffset: 0 } to { stroke-dashoffset: 24 } }
   @keyframes dxPulse { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
-  .dx-dark { --color-bg:#101418; --color-surface:#181d23; --color-text:#e4e9ee; --color-accent:#7fa8d1; --color-divider: color-mix(in srgb, #e4e9ee 20%, transparent);
-    --color-accent-100:#1b2836; --color-accent-200:#22344a; --color-accent-800:#bfd6ee; --color-accent-700:#a8c6e4; --color-neutral-100:#1b2026; --color-neutral-800:#cdd4db;
-    --shadow-sm:0 1px 2px rgba(0,0,0,.5); --shadow-md:0 3px 10px rgba(0,0,0,.55); --shadow-lg:0 12px 32px rgba(0,0,0,.6); }
-  /* WCAG 1.4.3. The light accent #5980a6 is 3.71:1 on the page background and
-     3.42:1 on a card — below the 4.5:1 required of body-size text, and it also
-     sat behind button labels at the same ratio. It is unchanged for borders,
-     diagram strokes, slider thumbs and fills, which are non-text and need only
-     3:1 (1.4.11), and one step further down the same ramp is used wherever the
-     accent carries text or sits behind it. The dark palette already clears
-     4.5:1, so --dx-ink-accent is the dark accent itself and nothing shifts. */
-  :root { --dx-ink-accent: var(--color-accent-700); }
-  .dx-dark { --dx-ink-accent: var(--color-accent); }
-  a, .btn-ghost, .card-kicker, .tag-outline { color: var(--dx-ink-accent); }
-  .nav a:hover, .nav a[aria-current='page'] { color: var(--dx-ink-accent); }
-  .btn-primary { background: var(--dx-ink-accent); border-color: var(--dx-ink-accent); }
-  .seg-opt:has(input:checked) { background: var(--dx-ink-accent); }
-  .dx-grid3 { display:grid; grid-template-columns:minmax(0,320px) minmax(0,1fr) minmax(0,300px); gap:14px; align-items:start }
-  .dx-grid2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; align-items:start }
-  .dx-grid3b { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; align-items:start }
-  .dx-side { display:grid; grid-template-columns:minmax(0,300px) minmax(0,1fr); gap:14px; align-items:start }
-  .dx-hero { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:48px; align-items:center; padding:64px 0 56px }
+
+  /* ═══ layout ══════════════════════════════════════════════════════════ */
+  .dx-grid3 { display:grid; grid-template-columns:minmax(0,330px) minmax(0,1fr) minmax(0,310px); gap:18px; align-items:start }
+  .dx-grid2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:18px; align-items:start }
+  .dx-grid3b { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; align-items:start }
+  .dx-side { display:grid; grid-template-columns:minmax(0,310px) minmax(0,1fr); gap:18px; align-items:start }
+  .dx-hero { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:56px; align-items:center; padding:72px 0 60px }
   @media (max-width:1180px){ .dx-grid3 { grid-template-columns:minmax(0,1fr) } .dx-grid3b { grid-template-columns:minmax(0,1fr) } }
   @media (max-width:900px){
-    /* The hero was a fixed two-column grid at every width, which forced the
-       landing page wider than a phone viewport. */
-    .dx-hero { grid-template-columns:minmax(0,1fr); gap:26px; padding:32px 0 28px }
+    .dx-hero { grid-template-columns:minmax(0,1fr); gap:28px; padding:34px 0 28px }
     /* Touch target size (WCAG 2.5.8). The markup sets 30-36px heights inline
        for the desktop density, so these are scoped to narrow viewports and
        need !important to override the inline values. Desktop is unchanged. */
@@ -56,8 +380,8 @@
     .dx .input, .dx select.input { min-height:44px !important }
     .dx .seg-opt { min-height:44px }
     .dx input[type=range] { height:44px }
+    .dx-grid2 { grid-template-columns:minmax(0,1fr) } .dx-side { grid-template-columns:minmax(0,1fr) }
   }
-  @media (max-width:900px){ .dx-grid2 { grid-template-columns:minmax(0,1fr) } .dx-side { grid-template-columns:minmax(0,1fr) } }
   @media print { .dx-noprint { display:none !important } }
 </style>
 <template id="__bundler_thumbnail">
@@ -80,7 +404,8 @@
 <div class="dx {{ themeClass }}" style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:15px">
 
 <sc-if value="{{ isLanding }}" hint-placeholder-val="{{ true }}">
-<div style="max-width:1180px;margin:0 auto;padding:0 24px 60px">
+<div class="dx-app" style="padding:0 24px 44px">
+<div style="max-width:1180px;margin:0 auto">
   <div style="display:flex;align-items:center;gap:12px;padding:22px 0 0;flex-wrap:wrap">
     <div style="width:22px;height:22px;border:1px solid var(--color-accent);position:relative">
       <div style="position:absolute;inset:4px 4px auto 4px;height:1px;background:var(--color-accent)"></div>
@@ -162,20 +487,22 @@
   </div>
 
   <p style="margin-top:40px;font-size:11px;line-height:1.6;color:color-mix(in srgb,var(--color-text) 72%,transparent);max-width:88ch">This simulator is intended for education and conceptual engineering analysis. Results depend on the selected thermodynamic model and assumptions and should not be used as the sole basis for industrial process design.</p>
+  <div class="dx-sig"><b>Shafin Ahamed Neon</b></div>
+</div>
 </div>
 </sc-if>
 
 <sc-if value="{{ isApp }}">
-<div style="display:flex;flex-direction:column;min-height:100vh">
+<div class="dx-app" style="display:flex;flex-direction:column;min-height:100vh">
 
-  <header class="nav dx-noprint" style="border-bottom:1px solid var(--color-divider);padding:8px 16px;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:40;background:var(--color-bg)">
-    <button class="btn btn-ghost" onClick="{{ home }}" style="gap:9px;padding:2px 6px;margin-right:2px;color:var(--color-text)">
-      <span style="display:inline-block;width:16px;height:16px;border:1px solid var(--color-accent);position:relative"></span>
-      <span style="font-family:var(--font-heading);font-size:16px;letter-spacing:.14em">DISTILLEX</span>
+  <header class="nav dx-nav dx-noprint" style="padding:9px 18px;gap:14px;flex-wrap:wrap">
+    <button class="btn btn-ghost" onClick="{{ home }}" style="gap:9px;padding:2px 6px;margin-right:2px;color:var(--color-text)" aria-label="DISTILLEX home">
+      <span style="display:inline-block;width:15px;height:15px;border:1.5px solid var(--color-accent);border-radius:3px;position:relative"></span>
+      <span style="font-family:var(--font-heading);font-size:16px;letter-spacing:.15em">DISTILLEX</span>
     </button>
-    <nav style="display:flex;flex-wrap:wrap;gap:2px;margin-right:auto">
+    <nav style="display:flex;flex-wrap:wrap;gap:1px;margin-right:auto">
       <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="9">
-        <button class="btn" data-v="{{ it.k }}" onClick="{{ go }}" style="{{ it.style }}">{{ it.label }}</button>
+        <button class="btn dx-navbtn" data-v="{{ it.k }}" data-on="{{ it.on }}" aria-current="{{ it.cur }}" onClick="{{ go }}" style="{{ it.style }}">{{ it.label }}</button>
       </sc-for>
     </nav>
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -1094,10 +1421,13 @@
     </sc-if>
   </main>
 
-  <footer style="border-top:1px solid var(--color-divider);padding:12px 16px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">
-    <span style="font-family:var(--font-heading);letter-spacing:.12em">DISTILLEX</span>
-    <span style="max-width:96ch;line-height:1.5">This simulator is intended for education and conceptual engineering analysis. Results depend on the selected thermodynamic model and assumptions and should not be used as the sole basis for industrial process design.</span>
-    <span style="margin-left:auto">{{ modelBadge }}</span>
+  <footer class="dx-noprint" style="border-top:1px solid var(--dx-hairline);padding:14px 18px 0;font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+      <span style="font-family:var(--font-heading);letter-spacing:.13em">DISTILLEX</span>
+      <span style="max-width:96ch;line-height:1.5">This simulator is intended for education and conceptual engineering analysis. Results depend on the selected thermodynamic model and assumptions and should not be used as the sole basis for industrial process design.</span>
+      <span style="margin-left:auto">{{ modelBadge }}</span>
+    </div>
+    <div class="dx-sig"><b>Shafin Ahamed Neon</b></div>
   </footer>
 </div>
 </sc-if>
@@ -1539,7 +1869,8 @@ class Component extends DCLogic {
     }
 
     const navItems=S.NAV.map(([k,label])=>({k,label,
-      style:'min-height:30px;font-size:13px;padding:4px 10px;border-color:'+(s.view===k?'var(--dx-ink-accent)':'transparent')+';background:'+(s.view===k?'var(--dx-ink-accent)':'transparent')+';color:'+(s.view===k?'var(--color-bg)':'var(--color-text)')}));
+      on:s.view===k?'1':'0', cur:s.view===k?'page':'false',
+      style:'min-height:32px;font-size:13px;padding:5px 11px 7px;border-color:transparent;background:transparent;font-weight:'+(s.view===k?'600':'450')+';color:'+(s.view===k?'var(--dx-ink-accent)':'color-mix(in srgb,var(--color-text) 80%,transparent)')}));
 
     const KINDLABEL={input:'INVALID INPUT',spec:'INFEASIBLE SPECIFICATION',domain:'MODEL DOMAIN'};
     const errStyle='font-size:12.5px;padding:6px 10px;border:1px solid var(--color-accent-700);background:color-mix(in srgb,var(--color-accent) 12%,transparent);color:var(--color-accent-800)';

@@ -458,8 +458,18 @@ function suiteContrast() {
   const dsCss = /<style>\/\* Industry[\s\S]*?<\/style>/.exec(tpl)[0];
   const darkRule = /\.dx-dark \{([\s\S]*?)\}/.exec(source)[1];
 
-  const tok = (css, name) => {
-    const m = new RegExp('--' + name + ':\\s*(#[0-9a-fA-F]{6})').exec(css);
+  // The component stylesheet is loaded after the inlined design system and
+  // re-pitches the palette, so a token has to be read from the override first
+  // and only then from the design system it replaces — otherwise this suite
+  // would happily validate colours the page no longer uses.
+  const rootBlock = /:root \{([\s\S]*?)\n  \}/.exec(source);
+  const overrideLight = rootBlock ? rootBlock[1] : '';
+  const tok = (css, name, override) => {
+    const re = () => new RegExp('--' + name + ':\\s*(#[0-9a-fA-F]{6})');
+    const o = override !== undefined ? override : '';
+    const m0 = re().exec(o);
+    if (m0) return m0[1];
+    const m = re().exec(css);
     return m ? m[1] : null;
   };
   const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
@@ -478,14 +488,19 @@ function suiteContrast() {
   ok(!!inkLight && !!inkDark, 'the text-safe accent is defined for both themes');
   if (!inkLight || !inkDark) return;
 
+  // the raised panel is where most text actually sits, so it is checked too
   const themes = [
-    ['light', tok(dsCss, inkLight[1]), tok(dsCss, 'color-bg'), tok(dsCss, 'color-surface')],
-    ['dark', tok(darkRule, inkDark[1]), tok(darkRule, 'color-bg'), tok(darkRule, 'color-surface')],
+    ['light', tok(dsCss, inkLight[1], overrideLight), tok(dsCss, 'color-bg', overrideLight),
+     tok(dsCss, 'color-surface', overrideLight), tok(dsCss, 'dx-raised', overrideLight)],
+    ['dark', tok(darkRule, inkDark[1]), tok(darkRule, 'color-bg'),
+     tok(darkRule, 'color-surface'), tok(darkRule, 'dx-raised')],
   ];
-  for (const [name, ink, bg, surf] of themes) {
-    ok(!!ink && !!bg && !!surf, name + ': palette resolved', ink + ' / ' + bg + ' / ' + surf);
-    if (!ink || !bg || !surf) continue;
-    for (const [what, ground] of [['page background', bg], ['card surface', surf]]) {
+  for (const [name, ink, bg, surf, raised] of themes) {
+    ok(!!ink && !!bg && !!surf && !!raised, name + ': palette resolved',
+       ink + ' / ' + bg + ' / ' + surf + ' / ' + raised);
+    if (!ink || !bg || !surf || !raised) continue;
+    for (const [what, ground] of [['page background', bg], ['inset surface', surf],
+                                  ['raised panel', raised]]) {
       const r = ratio(ink, ground);
       ok(r >= 4.5, name + ': accent text on the ' + what + ' meets 4.5:1',
          ink + ' on ' + ground + ' = ' + r.toFixed(2) + ':1');
@@ -495,10 +510,28 @@ function suiteContrast() {
        ratio(bg, ink).toFixed(2) + ':1');
   }
   // the raw accent stays available for non-text use, where 3:1 (1.4.11) applies
-  const rawLight = tok(dsCss, 'color-accent');
-  ok(ratio(rawLight, tok(dsCss, 'color-bg')) >= 3,
-     'the unchanged accent still meets the 3:1 non-text bound',
-     ratio(rawLight, tok(dsCss, 'color-bg')).toFixed(2) + ':1');
+  const rawLight = tok(dsCss, 'color-accent', overrideLight);
+  const bgLight = tok(dsCss, 'color-bg', overrideLight);
+  ok(ratio(rawLight, bgLight) >= 3,
+     'the raw accent meets the 3:1 non-text bound',
+     ratio(rawLight, bgLight).toFixed(2) + ':1');
+  // the semantic and status hues are text in the interface, so they are held
+  // to the text bound on every ground they are painted on
+  for (const [theme, block, grounds] of [
+    ['light', overrideLight, ['color-bg', 'color-surface', 'dx-raised']],
+    ['dark', darkRule, ['color-bg', 'color-surface', 'dx-raised']]]) {
+    for (const role of ['dx-ok', 'dx-warn', 'dx-err', 'dx-info', 'dx-liquid', 'dx-vapour']) {
+      const c = tok(block, role, block);
+      if (!c) { ok(false, theme + ': ' + role + ' is defined'); continue; }
+      let worst = 99, on = '';
+      for (const g of grounds) {
+        const gv = tok(dsCss, g, block); if (!gv) continue;
+        const r = ratio(c, gv); if (r < worst) { worst = r; on = gv; }
+      }
+      ok(worst >= 4.5, theme + ': ' + role + ' meets 4.5:1 on every ground it is used on',
+         c + ' worst ' + worst.toFixed(2) + ':1 on ' + on);
+    }
+  }
   // no text may go back to the raw accent, but controls legitimately keep it
   const textUses = (source.match(/(?:^|[^-a-z])color:var\(--color-accent\)/g) || []).length;
   ok(textUses === 0, 'no text is painted with the raw accent', String(textUses));
