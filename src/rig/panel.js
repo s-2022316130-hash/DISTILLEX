@@ -342,6 +342,38 @@ rigSelect(key) {
   this.rigTourStop();
 }
 
+/** Look at one stage. The cascade index is mapped onto the shell by the same
+ *  fractions the solver uses — the condenser sits above the head, the flash
+ *  zone at the feed elevation, the sump in the skirt — so the camera lands on
+ *  the tray the row names rather than on a tray-shaped guess. */
+rigStage(j) {
+  const rg = this.state.rig, r = rg.r, P = this._plant;
+  if (!r || !P) return;
+  const n = r.internals.Tprofile.length;
+  const iFeed = r.internals.feedStage;
+  let y;
+  if (j === 0) y = P.shellTop + 2;                       // the condenser
+  else if (j >= iFeed) {
+    const f = (j - iFeed) / Math.max(1, n - 1 - iFeed);
+    y = P.feedY - (P.feedY - P.skirtTop + 1) * f;        // flash zone down to the sump
+  } else {
+    const f = (j - 1) / Math.max(1, iFeed - 1);
+    y = P.shellTop - 3 - (P.shellTop - 3 - P.feedY) * f; // top tray down to the flash zone
+  }
+  const same = rg.stage === j;
+  if (this._gl) {
+    this._gl.state.sel = same ? null : 'trays';
+    this._gl.state.product = null;
+    this._gl.refresh();
+    const cam = this._gl.cam;
+    cam.tYaw = 0.62; cam.tPitch = 0.02;                  // the cutaway azimuth
+    cam.tDist = 34; cam.ttx = 0; cam.tty = y; cam.ttz = 0;
+    this._camPreset = '';
+  }
+  this.rigTourStop();
+  this.setRig({ stage: same ? -1 : j, sel: same ? null : 'trays', prod: null, tour: -1 });
+}
+
 rigProduct(key) {
   const rg = this.state.rig;
   const next = key === rg.prod ? null : key;

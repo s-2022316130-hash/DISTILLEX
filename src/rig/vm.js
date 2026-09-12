@@ -311,7 +311,7 @@ rigView(s) {
     rigFlowLabel: rg.flow ? 'Pause flow' : 'Resume flow',
     rigGl: rg.gl3d !== false,
     rigGlNote: this._glFail || '',
-    rigStages: has ? this.rigStages(r, rg.expert) : [],
+    rigStages: has ? this.rigStages(r, rg.expert, rg.stage) : [],
     rigFlows: has ? this.rigFlows(r) : [],
     rigCut: has ? this.rigCutChart(r, rg.prod) : null,
     rigPre: rg.pre ? {
@@ -347,6 +347,7 @@ rigView(s) {
     rigPick2d: (e) => this.rigSelect(e.currentTarget.dataset.k || null),
     rigProdPick: (e) => this.rigProduct(e.currentTarget.dataset.k),
     rigHistLoad: (e) => this.rigLoadCase(this.state.rig.hist[+e.currentTarget.dataset.i].snap),
+    rigStagePick: (e) => this.rigStage(+e.currentTarget.dataset.j),
     rigFile: (e) => this.rigLoad(e),
     rigFileRef: (el) => { this._rigFile = el; },
     rigOpenFile: () => { if (this._rigFile) this._rigFile.click(); }
@@ -438,7 +439,7 @@ rigTrace(tr) {
 /** The stages, with what the solver computed on each. The ordinary view lists
  *  the ones an operator names — the condenser, the draws, the flash zone, the
  *  sump — and expert view lists every one of them with its internal traffic. */
-rigStages(r, expert) {
+rigStages(r, expert, active) {
   const I = r.internals, out = [];
   const keep = { cond: 1, draw: 1, feed: 1, sump: 1 };
   for (let j = 0; j < I.Tprofile.length; j++) {
@@ -452,7 +453,7 @@ rigStages(r, expert) {
       V: this.rigRate(I.Vprofile[j]),
       steam: this.rigRate(I.steamProfile[j] || 0),
       col: RIG2D.heat(I.Tprofile[j], 30, 380),
-      cls: 'rig-stg k-' + kind
+      cls: 'rig-stg k-' + kind + (j === active ? ' on' : '')
     });
   }
   return out;

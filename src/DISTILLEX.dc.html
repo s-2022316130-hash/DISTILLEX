@@ -1328,8 +1328,12 @@
 
   .rig-stgs { display: flex; flex-direction: column; gap: 1px; max-height: 246px; overflow: auto }
   .rig-stg { display: grid; grid-template-columns: 12px 1fr auto auto; gap: 9px; align-items: baseline;
-             padding: 5px 7px; font-size: 11px; border-radius: 5px; font-variant-numeric: tabular-nums }
+             padding: 5px 7px; font-size: 11px; border-radius: 5px; font-variant-numeric: tabular-nums;
+             width: 100%; text-align: left; appearance: none; border: 0; background: transparent;
+             color: var(--r-ink); font-family: inherit; cursor: pointer; min-height: 28px;
+             transition: background var(--dx-t-fast) }
   .rig-stg:hover { background: var(--r-l2) }
+  .rig-stg.on { background: var(--r-l3); box-shadow: inset 2px 0 0 var(--r-cyan) }
   .rig-stg i { width: 7px; height: 7px; border-radius: 50%; align-self: center }
   .rig-stg .l { color: var(--r-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
   .rig-stg .t { font-weight: 650 }
@@ -3161,7 +3165,8 @@
           <div class="rig-note">{{ rigStageNote }}</div>
           <div class="rig-stgs">
             <sc-for list="{{ rigStages }}" as="sg" hint-placeholder-count="12">
-              <div class="{{ sg.cls }}">
+              <button class="{{ sg.cls }}" data-j="{{ sg.j }}" onClick="{{ rigStagePick }}"
+                      title="Look at this stage in the cutaway">
                 <i style="background:{{ sg.col }}"></i>
                 <span class="l">{{ sg.label }}</span>
                 <span class="t">{{ sg.T }} °C</span>
@@ -3169,7 +3174,7 @@
                 <sc-if value="{{ rigExpert }}">
                   <span class="p x">L {{ sg.L }}</span><span class="p x">V {{ sg.V }}</span>
                 </sc-if>
-              </div>
+              </button>
             </sc-for>
           </div>
         </div>
@@ -3420,7 +3425,7 @@ class Component extends DCLogic {
     explaining:false, explainI:0, wiVar:'R', wiTo:3.2, whatIf:null,
     sens:{ind:'R',dep:'N',min:1.2,max:6,n:24}, exam:{i:0,reveal:'',input:''},
     theoryOpen:'t1', theoryQ:'', toast:'', vleShow:'xy', mtDrag:null, vleHover:null,
-    rig:{ in:CDU.baseCase(), r:null, pre:null, status:'ready', errs:[], warns:[],
+    rig:{ in:CDU.baseCase(), r:null, pre:null, status:'ready', errs:[], warns:[], stage:-1,
           sel:null, prod:null, mode:'material', view:'3d', flow:true,
           open:{ feed:true, furnace:true, column:false, products:false, adv:false },
           expert:false, tour:-1, hist:[], dirty:false, gl3d:true },
