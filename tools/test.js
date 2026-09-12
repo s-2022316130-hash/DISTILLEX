@@ -491,16 +491,17 @@ function suiteContrast() {
   // the raised panel is where most text actually sits, so it is checked too
   const themes = [
     ['light', tok(dsCss, inkLight[1], overrideLight), tok(dsCss, 'color-bg', overrideLight),
-     tok(dsCss, 'color-surface', overrideLight), tok(dsCss, 'dx-raised', overrideLight)],
+     tok(dsCss, 'color-surface', overrideLight), tok(dsCss, 'dx-raised', overrideLight),
+     tok(dsCss, 'dx-ctrl', overrideLight)],
     ['dark', tok(darkRule, inkDark[1]), tok(darkRule, 'color-bg'),
-     tok(darkRule, 'color-surface'), tok(darkRule, 'dx-raised')],
+     tok(darkRule, 'color-surface'), tok(darkRule, 'dx-raised'), tok(darkRule, 'dx-ctrl')],
   ];
-  for (const [name, ink, bg, surf, raised] of themes) {
-    ok(!!ink && !!bg && !!surf && !!raised, name + ': palette resolved',
-       ink + ' / ' + bg + ' / ' + surf + ' / ' + raised);
-    if (!ink || !bg || !surf || !raised) continue;
+  for (const [name, ink, bg, surf, raised, ctrl] of themes) {
+    ok(!!ink && !!bg && !!surf && !!raised && !!ctrl, name + ': palette resolved',
+       ink + ' / ' + bg + ' / ' + surf + ' / ' + raised + ' / ' + ctrl);
+    if (!ink || !bg || !surf || !raised || !ctrl) continue;
     for (const [what, ground] of [['page background', bg], ['inset surface', surf],
-                                  ['raised panel', raised]]) {
+                                  ['raised panel', raised], ['control surface', ctrl]]) {
       const r = ratio(ink, ground);
       ok(r >= 4.5, name + ': accent text on the ' + what + ' meets 4.5:1',
          ink + ' on ' + ground + ' = ' + r.toFixed(2) + ':1');
@@ -518,9 +519,10 @@ function suiteContrast() {
   // the semantic and status hues are text in the interface, so they are held
   // to the text bound on every ground they are painted on
   for (const [theme, block, grounds] of [
-    ['light', overrideLight, ['color-bg', 'color-surface', 'dx-raised']],
-    ['dark', darkRule, ['color-bg', 'color-surface', 'dx-raised']]]) {
-    for (const role of ['dx-ok', 'dx-warn', 'dx-err', 'dx-info', 'dx-liquid', 'dx-vapour']) {
+    ['light', overrideLight, ['color-bg', 'color-surface', 'dx-raised', 'dx-ctrl']],
+    ['dark', darkRule, ['color-bg', 'color-surface', 'dx-raised', 'dx-ctrl']]]) {
+    for (const role of ['dx-ok', 'dx-warn', 'dx-err', 'dx-info', 'dx-liquid', 'dx-vapour',
+                        'dx-violet', 'dx-magenta', 'dx-heat']) {
       const c = tok(block, role, block);
       if (!c) { ok(false, theme + ': ' + role + ' is defined'); continue; }
       let worst = 99, on = '';

@@ -19,345 +19,572 @@
 <script src="_ds/industry-08239616-ce52-45e5-980b-7f63f8d653fc/_ds_bundle.js"></script>
 <style>
   /* ═══════════════════════════════════════════════════════════════════════
-     DISTILLEX design system.
+     DISTILLEX — design system.
 
      Loaded after the inlined design-system stylesheet, so everything here
-     overrides it. The palette is re-pitched from the original neutral
-     blue-grey to a deeper, more deliberate instrument look: an indigo
-     primary, a teal secondary reserved for vapour/fluid meaning, a violet
-     accent for interactive state, and restrained status hues. Every colour
-     below was checked for contrast before it was written — see the
-     `contrast` suite in tools/test.js, which recomputes the ratios.
+     overrides it. Three ideas run through the whole file:
+
+       colour carries meaning   vapour is cyan, liquid is indigo, the feed
+                                is magenta, heat is amber, a healthy solve
+                                is emerald. Nothing is coloured decoratively.
+
+       colour behaves as light  accents appear as glows, radial washes and
+                                illuminated tracks rather than flat fills,
+                                which is what gives the surfaces depth.
+
+       five depth levels        floor, page, surface, control, active. Each
+                                has its own treatment; they are not five
+                                shades of the same card.
+
+     Every colour was checked for contrast before it was written — the
+     `contrast` suite in tools/test.js recomputes the ratios and fails the
+     build if any role drops below its bound.
      ═══════════════════════════════════════════════════════════════════ */
 
+  /* ── light palette ────────────────────────────────────────────────────
+     The application ships dark; this is the daylight counterpart. */
   :root {
-    /* ── foundation ───────────────────────────────────────────────────── */
-    --color-bg:      #f6f7fb;   /* page floor            */
-    --color-surface: #eceef6;   /* recessed / inset      */
-    --dx-raised:     #ffffff;   /* elevated panel        */
-    --color-text:    #101627;
-    --color-divider: color-mix(in srgb, #101627 13%, transparent);
-    --dx-hairline:   color-mix(in srgb, #101627 8%, transparent);
+    --dx-l0: #eef1fa;   /* floor, behind everything */
+    --color-bg:      #f4f6fc;
+    --color-surface: #e9edf8;   /* inset well */
+    --dx-raised:     #ffffff;   /* panel  */
+    --dx-ctrl:       #ffffff;   /* control */
+    --color-text:    #0d1424;
+    --color-divider: color-mix(in srgb, #0d1424 12%, transparent);
+    --dx-hairline:   color-mix(in srgb, #0d1424 8%, transparent);
 
-    /* ── indigo primary ───────────────────────────────────────────────── */
-    --color-accent:     #5566d6;   /* non-text: strokes, thumbs, fills */
+    --color-accent:     #6366f1;
     --color-accent-100: #eef0ff;
-    --color-accent-200: #dde1ff;
-    --color-accent-300: #bcc4fb;
-    --color-accent-400: #8e9bf0;
-    --color-accent-500: #5566d6;
-    --color-accent-600: #4453c4;
-    --color-accent-700: #3949ab;   /* text-safe */
-    --color-accent-800: #2a3680;
-    --color-accent-900: #1b2354;
+    --color-accent-200: #e0e3ff;
+    --color-accent-300: #c3c8fb;
+    --color-accent-400: #9aa2f4;
+    --color-accent-500: #6366f1;
+    --color-accent-600: #5254e0;
+    --color-accent-700: #4338ca;
+    --color-accent-800: #312a8f;
+    --color-accent-900: #1f1b5c;
 
-    /* ── teal secondary — vapour, gas, flow ───────────────────────────── */
-    --color-accent-2:     #0e7490;
-    --color-accent-2-100: #e6f6fa;
-    --color-accent-2-200: #c5eaf2;
-    --color-accent-2-300: #8fd6e5;
-    --color-accent-2-400: #46b3cc;
-    --color-accent-2-500: #1691b0;
-    --color-accent-2-600: #0e7490;
-    --color-accent-2-700: #0b5d73;
-    --color-accent-2-800: #094857;
-    --color-accent-2-900: #06303a;
+    --color-accent-2:     #0c6880;
+    --color-accent-2-100: #e4f5fa;
+    --color-accent-2-200: #c2e8f1;
+    --color-accent-2-700: #0c6880;
+    --color-accent-2-800: #08485a;
 
-    /* ── violet accent — interactive emphasis ─────────────────────────── */
-    --dx-violet:     #6d28d9;
-    --dx-violet-soft: color-mix(in srgb, #6d28d9 12%, transparent);
+    /* semantic roles */
+    --dx-vapour:  #0c6880;   /* rising vapour, gas, flow      */
+    --dx-liquid:  #4338ca;   /* descending liquid, stages     */
+    --dx-violet:  #6d28d9;   /* interactive emphasis          */
+    --dx-magenta: #a21b62;   /* selected state, feed          */
+    --dx-heat:    #8a4c04;   /* temperature, reboiler duty    */
+    --dx-ok:      #046c4a;
+    --dx-warn:    #8a4c04;
+    --dx-err:     #b3123c;
+    --dx-info:    #1d4ed8;
 
-    /* ── liquid / vapour semantic pair (used by the column) ───────────── */
-    --dx-liquid: #3949ab;
-    --dx-vapour: #0e7490;
+    --dx-glow-a: color-mix(in srgb, var(--color-accent) 34%, transparent);
+    --dx-glow-v: color-mix(in srgb, var(--dx-vapour)  30%, transparent);
+    --dx-glow-m: color-mix(in srgb, var(--dx-magenta) 28%, transparent);
 
-    /* ── status ───────────────────────────────────────────────────────── */
-    --dx-ok:   #11692f;
-    --dx-warn: #804e06;
-    --dx-err:  #b91c1c;
-    --dx-info: #1d4ed8;
+    /* elevation — tinted toward the palette, never neutral grey */
+    --shadow-sm: 0 1px 2px color-mix(in srgb, #1f1b5c 9%, transparent);
+    --shadow-md: 0 2px 4px color-mix(in srgb, #1f1b5c 7%, transparent),
+                 0 10px 24px -8px color-mix(in srgb, #1f1b5c 16%, transparent);
+    --shadow-lg: 0 6px 12px color-mix(in srgb, #1f1b5c 8%, transparent),
+                 0 26px 56px -14px color-mix(in srgb, #1f1b5c 22%, transparent);
+    --dx-inset: inset 0 1px 2px color-mix(in srgb, #1f1b5c 8%, transparent);
+    --dx-ring: 0 0 0 3px var(--dx-glow-a);
 
-    /* ── elevation. Tinted rather than neutral black, so shadows read as
-          part of the palette instead of grey smudges. ──────────────────── */
-    --shadow-sm: 0 1px 2px color-mix(in srgb, #1b2354 8%, transparent);
-    --shadow-md: 0 2px 4px color-mix(in srgb, #1b2354 6%, transparent),
-                 0 8px 20px -6px color-mix(in srgb, #1b2354 14%, transparent);
-    --shadow-lg: 0 4px 8px color-mix(in srgb, #1b2354 6%, transparent),
-                 0 20px 48px -12px color-mix(in srgb, #1b2354 20%, transparent);
-    --dx-glow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
-
-    /* ── shape ────────────────────────────────────────────────────────── */
-    --dx-r-sm: 6px; --dx-r-md: 10px; --dx-r-lg: 14px; --dx-r-xl: 20px;
-
-    /* ── motion. One vocabulary; every transition picks from it. ──────── */
-    --dx-t-fast: 120ms; --dx-t-base: 200ms; --dx-t-slow: 340ms;
+    --dx-r-sm: 7px; --dx-r-md: 11px; --dx-r-lg: 16px; --dx-r-xl: 22px;
+    --dx-t-fast: 130ms; --dx-t-base: 220ms; --dx-t-slow: 360ms; --dx-t-view: 300ms;
     --dx-ease: cubic-bezier(.32,.72,.28,1);
-    --dx-spring: cubic-bezier(.34,1.4,.44,1);
+    --dx-spring: cubic-bezier(.34,1.42,.44,1);
   }
 
+  /* ── midnight palette — the application's primary atmosphere ────────── */
   .dx-dark {
-    --color-bg:      #0a0e1a;
-    --color-surface: #111829;
-    --dx-raised:     #151d31;
-    --color-text:    #e7ecf7;
-    --color-divider: color-mix(in srgb, #e7ecf7 16%, transparent);
-    --dx-hairline:   color-mix(in srgb, #e7ecf7 9%, transparent);
+    --dx-l0: #03060e;
+    --color-bg:      #060a14;
+    --color-surface: #0b1222;
+    --dx-raised:     #111a30;
+    --dx-ctrl:       #182342;
+    --color-text:    #e9eefb;
+    --color-divider: color-mix(in srgb, #e9eefb 15%, transparent);
+    --dx-hairline:   color-mix(in srgb, #e9eefb 9%, transparent);
 
-    --color-accent:     #7b8cf0;
-    --color-accent-100: #161d33;
-    --color-accent-200: #1e2747;
-    --color-accent-300: #93a5ff;
-    --color-accent-400: #8395f7;
-    --color-accent-500: #7b8cf0;
-    --color-accent-600: #93a5ff;
-    --color-accent-700: #93a5ff;
+    --color-accent:     #6272e8;
+    --color-accent-100: #131c36;
+    --color-accent-200: #1b2649;
+    --color-accent-300: #8b9cff;
+    --color-accent-400: #7b8cf5;
+    --color-accent-500: #6272e8;
+    --color-accent-600: #8b9cff;
+    --color-accent-700: #8b9cff;
     --color-accent-800: #c3cdff;
-    --color-accent-900: #e0e6ff;
+    --color-accent-900: #e2e7ff;
 
-    --color-accent-2:     #4fd1c5;
-    --color-accent-2-100: #0c2a2e;
-    --color-accent-2-200: #123c42;
-    --color-accent-2-700: #4fd1c5;
-    --color-accent-2-800: #9beae1;
+    --color-accent-2:     #22d3ee;
+    --color-accent-2-100: #08222c;
+    --color-accent-2-200: #0d3541;
+    --color-accent-2-700: #22d3ee;
+    --color-accent-2-800: #9beaf6;
 
-    --dx-violet: #c4a6ff;
-    --dx-violet-soft: color-mix(in srgb, #c4a6ff 16%, transparent);
+    --dx-vapour:  #22d3ee;
+    --dx-liquid:  #8b9cff;
+    --dx-violet:  #b39bff;
+    --dx-magenta: #f472d0;
+    --dx-heat:    #fbbf24;
+    --dx-ok:      #34d399;
+    --dx-warn:    #fbbf24;
+    --dx-err:     #fb7185;
+    --dx-info:    #7dd3fc;
 
-    --dx-liquid: #93a5ff;
-    --dx-vapour: #4fd1c5;
+    --dx-glow-a: color-mix(in srgb, var(--color-accent) 55%, transparent);
+    --dx-glow-v: color-mix(in srgb, var(--dx-vapour)  45%, transparent);
+    --dx-glow-m: color-mix(in srgb, var(--dx-magenta) 42%, transparent);
 
-    --dx-ok:   #4ade80;
-    --dx-warn: #fbbf24;
-    --dx-err:  #f87171;
-    --dx-info: #7dd3fc;
-
-    --color-neutral-100: #131a2b;
-    --color-neutral-800: #c8d2e6;
-
-    --shadow-sm: 0 1px 2px rgba(0,0,0,.55);
-    --shadow-md: 0 2px 6px rgba(0,0,0,.5), 0 10px 26px -8px rgba(0,0,0,.66);
-    --shadow-lg: 0 6px 14px rgba(0,0,0,.5), 0 28px 60px -16px rgba(0,0,0,.74);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.6);
+    --shadow-md: 0 2px 6px rgba(0,0,0,.55), 0 12px 30px -10px rgba(0,0,0,.7);
+    --shadow-lg: 0 8px 18px rgba(0,0,0,.55), 0 34px 70px -18px rgba(0,0,0,.8);
+    --dx-inset: inset 0 1px 2px rgba(0,0,0,.5);
+    --dx-ring: 0 0 0 3px var(--dx-glow-a);
   }
 
-  /* WCAG 1.4.3. The raw accent is reserved for borders, diagram strokes,
-     slider thumbs and fills, which are non-text and need only 3:1 (1.4.11).
-     One step down the same ramp carries text or sits behind it. Both themes
-     are checked by the `contrast` suite. */
+  /* WCAG 1.4.3. The raw accent is reserved for strokes, thumbs and fills —
+     non-text, which needs 3:1 (1.4.11). One step along the ramp carries text
+     or sits behind it. Both themes are checked by the `contrast` suite. */
   :root { --dx-ink-accent: var(--color-accent-700); }
-  .dx-dark { --dx-ink-accent: var(--color-accent); }
+  .dx-dark { --dx-ink-accent: var(--color-accent-600); }
 
-  /* ── motion policy ──────────────────────────────────────────────────── */
+  /* ═══ motion policy ═══════════════════════════════════════════════════
+     Everything decorative is switched off; the interface stays fully
+     usable, and every state that motion communicated is still communicated
+     by colour, weight or position. */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: .001ms !important; animation-iteration-count: 1 !important;
       transition-duration: .001ms !important; scroll-behavior: auto !important;
     }
-    .dx-stage-inner { transition: none !important }
+    .dx-aurora, .dx-drift, .dx-spark { display: none !important }
+    .dx-reveal { opacity: 1 !important; transform: none !important; filter: none !important }
   }
 
-  /* ═══ ambient foundation ══════════════════════════════════════════════
-     A single soft field behind everything, so the page reads as a lit
-     surface rather than a flat fill. Two wide radial washes only — no
-     particles, no animation, nothing that competes with the data. */
-  body { background: var(--color-bg); }
-  .dx-app {
-    position: relative; min-height: 100vh;
-    background:
-      radial-gradient(1200px 680px at 12% -8%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 60%),
-      radial-gradient(980px 620px at 92% 4%, color-mix(in srgb, var(--color-accent-2) 10%, transparent), transparent 58%),
-      var(--color-bg);
+  /* ═══ L0 — the atmosphere ═════════════════════════════════════════════
+     Two slow-drifting light fields and a fine technical grid. The drift is
+     40 s and 56 s: long enough that it is never watched, short enough that
+     the page is never quite still. */
+  body { background: var(--dx-l0); color: var(--color-text); }
+  .dx-app { position: relative; min-height: 100vh; isolation: isolate;
+            background: var(--color-bg); overflow: clip; }
+  .dx-aurora { position: fixed; inset: -20% -10%; z-index: -2; pointer-events: none; }
+  .dx-aurora::before, .dx-aurora::after {
+    content: ''; position: absolute; inset: 0; will-change: transform;
   }
-  .dx-dark .dx-app {
+  .dx-aurora::before {
     background:
-      radial-gradient(1200px 680px at 12% -8%, color-mix(in srgb, var(--color-accent) 17%, transparent), transparent 60%),
-      radial-gradient(980px 620px at 92% 4%, color-mix(in srgb, var(--color-accent-2) 12%, transparent), transparent 58%),
-      var(--color-bg);
+      radial-gradient(46% 38% at 18% 16%, color-mix(in srgb, var(--color-accent) 30%, transparent), transparent 70%),
+      radial-gradient(40% 34% at 82% 8%,  color-mix(in srgb, var(--dx-vapour)  26%, transparent), transparent 70%);
+    animation: dxDriftA 40s var(--dx-ease) infinite alternate;
+  }
+  .dx-aurora::after {
+    background:
+      radial-gradient(42% 36% at 72% 82%, color-mix(in srgb, var(--dx-violet)  24%, transparent), transparent 70%),
+      radial-gradient(34% 30% at 26% 94%, color-mix(in srgb, var(--dx-magenta) 16%, transparent), transparent 70%);
+    animation: dxDriftB 56s var(--dx-ease) infinite alternate;
+  }
+  @keyframes dxDriftA { from { transform: translate3d(-3%,-2%,0) scale(1) }
+                          to { transform: translate3d(4%,3%,0) scale(1.1) } }
+  @keyframes dxDriftB { from { transform: translate3d(3%,2%,0) scale(1.08) }
+                          to { transform: translate3d(-4%,-3%,0) scale(1) } }
+  /* the grid that says "instrument" rather than "web page" */
+  .dx-app::before {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .5;
+    background-image:
+      linear-gradient(var(--dx-hairline) 1px, transparent 1px),
+      linear-gradient(90deg, var(--dx-hairline) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(100% 80% at 50% 0%, #000 10%, transparent 70%);
+    -webkit-mask-image: radial-gradient(100% 80% at 50% 0%, #000 10%, transparent 70%);
   }
 
-  /* ═══ surfaces ════════════════════════════════════════════════════════
-     Three distinct roles rather than one card style repeated: raised
-     panels hold content, inset wells hold readouts, and the stage holds
-     the column. */
+  /* ═══ depth levels ════════════════════════════════════════════════════
+     L1 page  · L2 surface · L3 control · L4 active. Each is treated
+     differently so the hierarchy is spatial, not just tonal. */
+
+  /* L2 — panel. A hairline, a tinted shadow and a single top highlight
+     that reads as a light source above the surface. */
   .card {
+    position: relative;
     background: var(--dx-raised);
     border: 1px solid var(--dx-hairline);
     border-radius: var(--dx-r-lg);
     box-shadow: var(--shadow-sm);
     transition: box-shadow var(--dx-t-base) var(--dx-ease),
-                transform  var(--dx-t-base) var(--dx-ease),
+                transform var(--dx-t-base) var(--dx-ease),
                 border-color var(--dx-t-base) var(--dx-ease);
   }
-  .dx-dark .card { background: var(--dx-raised); }
-  /* The blueprint corner ticks were the old visual signature. Kept, but
-     dialled back so they read as a registration mark, not a frame. */
-  .blueprint > .corner { opacity: .3; }
-  .card.blueprint:hover > .corner { opacity: .55; }
-
-  /* The blueprint corner ticks were the flat design's signature: each one
-     draws a full-width and full-height hairline, which read as registration
-     marks on an isolated card but as doubled rules once cards are stacked in
-     a list — visible as ghost dividers between every theory topic. With real
-     borders, radii and elevation they are redundant decoration, so they are
-     retired in one place rather than removed from 184 call sites. */
+  .card::before {
+    content: ''; position: absolute; inset: 0 0 auto; height: 1px; border-radius: inherit;
+    background: linear-gradient(90deg, transparent,
+                color-mix(in srgb, var(--color-accent) 42%, transparent) 30%,
+                color-mix(in srgb, var(--dx-vapour) 34%, transparent) 70%, transparent);
+    opacity: .5; pointer-events: none;
+    transition: opacity var(--dx-t-base) var(--dx-ease);
+  }
+  .card:hover::before { opacity: .95 }
+  /* the ticks from the old flat identity; redundant now there is real depth */
   .blueprint > .corner { display: none }
-  /* Bare .blueprint containers (no .card) lose their only boundary with the
-     ticks gone, so they get a quiet one of their own. */
   .blueprint:not(.card) {
     border: 1px solid var(--dx-hairline); border-radius: var(--dx-r-md);
-    background: color-mix(in srgb, var(--dx-raised) 60%, transparent);
+    background: color-mix(in srgb, var(--dx-raised) 55%, transparent);
     transition: border-color var(--dx-t-base) var(--dx-ease),
-                background var(--dx-t-base) var(--dx-ease);
+                background var(--dx-t-base) var(--dx-ease),
+                box-shadow var(--dx-t-base) var(--dx-ease);
   }
-  .blueprint:not(.card):hover { border-color: color-mix(in srgb, var(--color-accent) 26%, var(--dx-hairline)) }
+  .blueprint:not(.card):hover {
+    border-color: color-mix(in srgb, var(--color-accent) 34%, var(--dx-hairline));
+    background: color-mix(in srgb, var(--dx-raised) 80%, transparent);
+  }
 
-  /* Hover elevation only where the card is genuinely interactive. */
-  .dx-lift { cursor: pointer; }
-  .dx-lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-md);
-                   border-color: color-mix(in srgb, var(--color-accent) 30%, var(--dx-hairline)); }
-  .dx-lift:active { transform: translateY(0); }
+  /* an "open" section — content that sits on the page with no box at all */
+  .dx-open { padding: 2px 0 }
+  .dx-rule { height: 1px; border: 0; margin: 0;
+    background: linear-gradient(90deg,
+      color-mix(in srgb, var(--color-accent) 40%, transparent), var(--dx-hairline) 42%, transparent); }
 
-  /* Inset well — recessed, for numeric readouts and tables. */
+  /* cards that actually navigate get a real lift and a colour wash */
+  .dx-lift { cursor: pointer }
+  .dx-lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-md);
+                   border-color: color-mix(in srgb, var(--color-accent) 38%, var(--dx-hairline)) }
+  .dx-lift:active { transform: translateY(-1px) }
+
+  /* L2 inset — recessed well for readouts and tables */
   .dx-well {
-    background: var(--color-surface);
+    background: color-mix(in srgb, var(--color-surface) 82%, transparent);
     border: 1px solid var(--dx-hairline);
     border-radius: var(--dx-r-md);
-    box-shadow: inset 0 1px 2px color-mix(in srgb, #1b2354 5%, transparent);
+    box-shadow: var(--dx-inset);
   }
-  .dx-dark .dx-well { box-shadow: inset 0 1px 3px rgba(0,0,0,.4); }
+
+  /* ═══ pointer light ═══════════════════════════════════════════════════
+     A faint radial source that follows the cursor across large panels.
+     --mx/--my are written by the component on pointermove; when no pointer
+     has moved the gradient simply sits in the middle. */
+  .dx-lit { position: relative; overflow: hidden }
+  .dx-lit::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background: radial-gradient(320px circle at var(--mx,50%) var(--my,30%),
+                color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 70%);
+    opacity: 0; transition: opacity var(--dx-t-slow) var(--dx-ease);
+  }
+  .dx-lit:hover::after { opacity: 1 }
+  .dx-lit > * { position: relative; z-index: 1 }
 
   /* ═══ typography ══════════════════════════════════════════════════════ */
-  h1,h2,h3 { letter-spacing: -.018em; }
+  h1,h2,h3 { letter-spacing: -.02em }
   .dx-title { font-family: var(--font-heading); font-size: clamp(22px,2.3vw,30px);
-              letter-spacing: -.02em; margin: 0; line-height: 1.12; }
-  .dx-sub { margin: 0; font-size: 13.5px; line-height: 1.6;
-            color: color-mix(in srgb, var(--color-text) 72%, transparent); max-width: 74ch; }
+              letter-spacing: -.022em; margin: 0; line-height: 1.12 }
+  .dx-sub { margin: 0; font-size: 13.5px; line-height: 1.6; max-width: 74ch;
+            color: color-mix(in srgb, var(--color-text) 74%, transparent) }
   .card-kicker, .dx-kicker {
-    font-size: 10px; letter-spacing: .13em; text-transform: uppercase;
-    font-weight: 600; color: var(--dx-ink-accent);
+    font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+    font-weight: 700; color: var(--dx-ink-accent);
   }
-  .dx-num { font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .dx-num { font-variant-numeric: tabular-nums; letter-spacing: -.012em }
 
-  /* ═══ page header ═════════════════════════════════════════════════════ */
   .dx-head { display:flex; align-items:flex-end; justify-content:space-between;
-             gap:18px; flex-wrap:wrap; padding: 4px 0 2px; }
-  .dx-head-l { display:flex; flex-direction:column; gap:5px; min-width:0; }
+             gap:18px; flex-wrap:wrap; padding: 4px 0 2px }
+  .dx-head-l { display:flex; flex-direction:column; gap:5px; min-width:0 }
 
-  /* ═══ metric readout ══════════════════════════════════════════════════ */
+  /* ═══ metrics ═════════════════════════════════════════════════════════ */
   .dx-metric { display:flex; align-items:baseline; justify-content:space-between;
-               gap:12px; padding:7px 0; border-bottom:1px solid var(--dx-hairline); }
+               gap:12px; padding:7px 0; border-bottom:1px solid var(--dx-hairline) }
   .dx-metric:last-child { border-bottom:0 }
-  .dx-metric-k { font-size:12.5px; color: color-mix(in srgb, var(--color-text) 74%, transparent); }
-  .dx-metric-v { font-size:14px; font-variant-numeric:tabular-nums; font-weight:600;
-                 transition: color var(--dx-t-slow) var(--dx-ease); }
+  .dx-metric-k { font-size:12.5px; color: color-mix(in srgb, var(--color-text) 74%, transparent) }
+  .dx-metric-v { font-size:14px; font-variant-numeric:tabular-nums; font-weight:600 }
 
-  /* ═══ status dot ══════════════════════════════════════════════════════ */
+  /* a value that has just changed flashes its own colour and settles */
+  @keyframes dxBump {
+    0%   { color: var(--dx-vapour); transform: translateY(-2px) }
+    100% { color: inherit;          transform: none }
+  }
+  .dx-bump { animation: dxBump 620ms var(--dx-ease) }
+
+  /* ═══ status ══════════════════════════════════════════════════════════ */
   .dx-dot { width:7px; height:7px; border-radius:50%; flex:none; display:inline-block;
-            background: var(--dx-ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dx-ok) 20%, transparent); }
-  .dx-dot.live { animation: dxBreathe 2.6s var(--dx-ease) infinite }
-  .dx-dot.warn { background: var(--dx-warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dx-warn) 20%, transparent) }
-  .dx-dot.err  { background: var(--dx-err);  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dx-err) 20%, transparent) }
+            background: var(--dx-ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dx-ok) 22%, transparent),
+            0 0 12px color-mix(in srgb, var(--dx-ok) 55%, transparent) }
+  .dx-dot.live { animation: dxBreathe 2.8s var(--dx-ease) infinite }
+  .dx-dot.warn { background: var(--dx-warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dx-warn) 22%, transparent),
+                 0 0 12px color-mix(in srgb, var(--dx-warn) 55%, transparent) }
+  .dx-dot.err  { background: var(--dx-err);  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dx-err) 22%, transparent),
+                 0 0 12px color-mix(in srgb, var(--dx-err) 55%, transparent) }
+  @keyframes dxBreathe { 0%,100% { opacity: 1; transform: scale(1) } 50% { opacity: .5; transform: scale(.86) } }
 
-  /* ═══ controls ════════════════════════════════════════════════════════ */
+  /* ═══ L3 — controls ═══════════════════════════════════════════════════ */
   .btn {
-    border-radius: var(--dx-r-sm); font-weight: 500;
+    position: relative; overflow: hidden; border-radius: var(--dx-r-sm); font-weight: 550;
     transition: background var(--dx-t-fast) var(--dx-ease),
                 border-color var(--dx-t-fast) var(--dx-ease),
-                transform var(--dx-t-fast) var(--dx-ease),
+                color var(--dx-t-fast) var(--dx-ease),
+                transform 90ms var(--dx-ease),
                 box-shadow var(--dx-t-fast) var(--dx-ease);
   }
-  .btn:active { transform: translateY(1px) }
-  .btn:focus-visible { outline: none; box-shadow: var(--dx-glow) }
-  .btn-primary { background: var(--dx-ink-accent); border-color: var(--dx-ink-accent);
-                 box-shadow: var(--shadow-sm) }
-  .btn-primary:hover { background: var(--color-accent-800); border-color: var(--color-accent-800);
-                       box-shadow: var(--shadow-md) }
-  .dx-dark .btn-primary:hover { background: var(--color-accent-800); border-color: var(--color-accent-800) }
-  .btn-secondary { border-color: var(--color-divider); border-radius: var(--dx-r-sm) }
+  /* the sweep: a band of light crossing the face on hover */
+  .btn::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(105deg, transparent 32%,
+                color-mix(in srgb, #fff 32%, transparent) 50%, transparent 68%);
+    transform: translateX(-120%); opacity: 0;
+  }
+  .btn:hover::after { opacity: 1; transform: translateX(120%);
+                      transition: transform 620ms var(--dx-ease), opacity 120ms linear }
+  .btn:active { transform: translateY(1.5px) scale(.985) }
+  .btn:focus-visible { outline: none; box-shadow: var(--dx-ring) }
+
+  .btn-primary {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--dx-ink-accent) 88%, #fff 12%), var(--dx-ink-accent));
+    border-color: color-mix(in srgb, var(--dx-ink-accent) 70%, #000);
+    box-shadow: var(--shadow-sm), 0 0 0 0 var(--dx-glow-a);
+  }
+  .btn-primary:hover { box-shadow: var(--shadow-md), 0 0 22px -2px var(--dx-glow-a) }
+  .btn-secondary { border-color: var(--color-divider); background: color-mix(in srgb, var(--dx-ctrl) 55%, transparent) }
+  .btn-secondary:hover { background: color-mix(in srgb, var(--color-accent) 12%, var(--dx-ctrl));
+                         border-color: color-mix(in srgb, var(--color-accent) 34%, var(--color-divider));
+                         transform: translateY(-1px) }
   a, .btn-ghost, .tag-outline { color: var(--dx-ink-accent) }
-  .nav a:hover, .nav a[aria-current='page'] { color: var(--dx-ink-accent) }
+  .btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 14%, transparent) }
 
   .input, select.input {
     border-radius: var(--dx-r-sm);
-    background: var(--dx-raised);
-    transition: border-color var(--dx-t-fast) var(--dx-ease), box-shadow var(--dx-t-fast) var(--dx-ease);
+    background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+    box-shadow: var(--dx-inset);
+    transition: border-color var(--dx-t-fast) var(--dx-ease),
+                box-shadow var(--dx-t-fast) var(--dx-ease),
+                background var(--dx-t-fast) var(--dx-ease);
   }
-  .input:focus-visible, select.input:focus-visible { outline: none; border-color: var(--color-accent);
-                                                     box-shadow: var(--dx-glow) }
+  .input:hover, select.input:hover { border-color: color-mix(in srgb, var(--color-accent) 42%, var(--color-divider)) }
+  .input:focus-visible, select.input:focus-visible {
+    outline: none; border-color: var(--color-accent);
+    background: var(--dx-ctrl);
+    box-shadow: var(--dx-ring), var(--dx-inset);
+  }
 
-  .seg { border-radius: var(--dx-r-sm); overflow: hidden; background: var(--color-surface) }
-  .seg-opt { transition: background var(--dx-t-fast) var(--dx-ease), color var(--dx-t-fast) var(--dx-ease) }
-  .seg-opt:has(input:checked) { background: var(--dx-ink-accent); box-shadow: var(--shadow-sm) }
+  /* segmented control — the selected option is L4: raised and illuminated */
+  .seg { border-radius: var(--dx-r-sm); overflow: hidden;
+         background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+         box-shadow: var(--dx-inset) }
+  .seg-opt { transition: background var(--dx-t-fast) var(--dx-ease),
+                         color var(--dx-t-fast) var(--dx-ease) }
+  .seg-opt:has(input:checked) {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--dx-ink-accent) 88%, #fff 12%), var(--dx-ink-accent));
+    box-shadow: var(--shadow-sm), 0 0 16px -4px var(--dx-glow-a);
+  }
 
-  input[type=range] { accent-color: var(--color-accent); }
+  /* sliders: an illuminated active track, a raised thumb */
+  input[type=range] {
+    accent-color: var(--color-accent);
+    -webkit-appearance: none; appearance: none; background: transparent;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 5px; border-radius: 99px;
+    background: linear-gradient(90deg, var(--color-accent) 0 var(--dx-fill,45%),
+                color-mix(in srgb, var(--color-text) 14%, transparent) var(--dx-fill,45%) 100%);
+    box-shadow: inset 0 0 0 1px var(--dx-hairline);
+  }
+  input[type=range]::-moz-range-track { height:5px; border-radius:99px;
+    background: color-mix(in srgb, var(--color-text) 14%, transparent) }
+  input[type=range]::-moz-range-progress { height:5px; border-radius:99px; background: var(--color-accent) }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 17px; height: 17px; margin-top: -6px; border-radius: 50%;
+    background: linear-gradient(180deg, #fff 0%, color-mix(in srgb,#fff 70%, var(--color-accent)) 100%);
+    border: 1.5px solid var(--color-accent);
+    box-shadow: 0 1px 3px rgba(0,0,0,.35), 0 0 0 0 var(--dx-glow-a);
+    transition: box-shadow var(--dx-t-fast) var(--dx-ease), transform var(--dx-t-fast) var(--dx-spring);
+  }
+  input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.12); box-shadow: 0 1px 3px rgba(0,0,0,.35), 0 0 16px 1px var(--dx-glow-a) }
+  input[type=range]:active::-webkit-slider-thumb { transform: scale(1.04) }
+  input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: var(--dx-ring) }
+  input[type=range]::-moz-range-thumb {
+    width:15px;height:15px;border-radius:50%;background:#fff;border:1.5px solid var(--color-accent);
+  }
 
-  /* ═══ nav ═════════════════════════════════════════════════════════════ */
+  /* ═══ navigation ══════════════════════════════════════════════════════
+     A translucent rail with a sliding pill behind the active destination,
+     not an underline. The pill is one element that moves, so the movement
+     between pages is continuous. */
   .dx-nav {
     position: sticky; top: 0; z-index: 40;
-    background: color-mix(in srgb, var(--color-bg) 82%, transparent);
-    backdrop-filter: saturate(150%) blur(14px);
-    -webkit-backdrop-filter: saturate(150%) blur(14px);
+    background: color-mix(in srgb, var(--color-bg) 72%, transparent);
+    backdrop-filter: saturate(165%) blur(16px);
+    -webkit-backdrop-filter: saturate(165%) blur(16px);
     border-bottom: 1px solid var(--dx-hairline);
   }
-  .dx-navbtn { position: relative; border-radius: var(--dx-r-sm); }
-  .dx-navbtn::after {
-    content: ''; position: absolute; left: 10px; right: 10px; bottom: 3px; height: 2px;
-    border-radius: 2px; background: var(--dx-ink-accent);
-    transform: scaleX(0); transform-origin: center;
-    transition: transform var(--dx-t-base) var(--dx-spring);
+  .dx-navwrap { position: relative; display: flex; flex-wrap: wrap; gap: 1px; margin-right: auto }
+  .dx-navpill {
+    position: absolute; top: 0; left: 0; height: 100%; border-radius: var(--dx-r-sm);
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--color-accent) 26%, transparent),
+      color-mix(in srgb, var(--color-accent) 15%, transparent));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 36%, transparent),
+                0 0 20px -6px var(--dx-glow-a);
+    transition: transform var(--dx-t-base) var(--dx-spring), width var(--dx-t-base) var(--dx-spring),
+                opacity var(--dx-t-base) var(--dx-ease);
+    pointer-events: none; opacity: 0; z-index: 0;
   }
-  .dx-navbtn[data-on='1']::after { transform: scaleX(1) }
+  .dx-navpill.on { opacity: 1 }
+  .dx-navbtn { position: relative; z-index: 1; border-radius: var(--dx-r-sm) }
+  .dx-navbtn:hover { color: var(--dx-ink-accent) }
+
+  /* ═══ view transition ═════════════════════════════════════════════════ */
+  @keyframes dxViewIn {
+    from { opacity: 0; transform: translateY(10px); filter: blur(4px) }
+    to   { opacity: 1; transform: none;             filter: none }
+  }
+  .dx-viewin { animation: dxViewIn var(--dx-t-view) var(--dx-ease) both }
+
+  /* ═══ scroll reveal ═══════════════════════════════════════════════════ */
+  .dx-reveal { opacity: 0; transform: translateY(16px); filter: blur(3px);
+    transition: opacity 520ms var(--dx-ease), transform 520ms var(--dx-ease), filter 520ms var(--dx-ease) }
+  .dx-reveal.seen { opacity: 1; transform: none; filter: none }
+
+  /* ═══ entrance ════════════════════════════════════════════════════════ */
+  @keyframes dxIn { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
+  .dx-in { animation: dxIn 620ms var(--dx-ease) both }
+  .dx-in-1 { animation-delay: 60ms }  .dx-in-2 { animation-delay: 150ms }
+  .dx-in-3 { animation-delay: 240ms } .dx-in-4 { animation-delay: 330ms }
+  .dx-in-5 { animation-delay: 430ms }
+
+  /* ═══ toast ═══════════════════════════════════════════════════════════ */
+  @keyframes dxToast { from { opacity:0; transform: translate(-50%, 16px) scale(.96) }
+                         to { opacity:1; transform: translate(-50%, 0) scale(1) } }
+  .dx-toast { animation: dxToast 320ms var(--dx-spring) both }
+
+  /* ═══ progressive disclosure ══════════════════════════════════════════ */
+  .dx-dis { border-top:1px solid var(--dx-hairline); margin-top:2px }
+  .dx-dis > summary {
+    list-style:none; cursor:pointer; padding:8px 0 7px;
+    display:flex; align-items:center; gap:7px;
+    font-size:11.5px; font-weight:650; letter-spacing:.02em;
+    color:var(--dx-ink-accent);
+    transition: color var(--dx-t-fast) var(--dx-ease), padding-left var(--dx-t-fast) var(--dx-ease);
+  }
+  .dx-dis > summary:hover { padding-left:3px }
+  .dx-dis > summary::-webkit-details-marker { display:none }
+  .dx-dis > summary::before {
+    content:''; width:7px; height:7px; flex:none;
+    border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
+    transform:rotate(-45deg) translate(-1px,-1px);
+    transition:transform var(--dx-t-base) var(--dx-spring);
+  }
+  .dx-dis[open] > summary::before { transform:rotate(45deg) translate(-2px,-2px) }
+  .dx-dis > summary:focus-visible { outline:none; box-shadow:var(--dx-ring); border-radius:var(--dx-r-sm) }
+  .dx-dis > .dx-dis-b {
+    font-size:11.5px; line-height:1.55; padding:0 0 9px;
+    color:color-mix(in srgb, var(--color-text) 76%, transparent);
+    animation: dxIn 280ms var(--dx-ease) both;
+  }
 
   /* ═══ tables ══════════════════════════════════════════════════════════ */
   .table thead th {
     position: sticky; top: 0; z-index: 1;
-    background: var(--color-surface);
-    font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase;
+    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+    backdrop-filter: blur(6px);
+    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
   }
   .table tbody tr { transition: background var(--dx-t-fast) linear }
-  .table tbody tr:hover { background: color-mix(in srgb, var(--color-accent) 7%, transparent) }
+  .table tbody tr:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent) }
 
-  /* ═══ 3D column stage ═════════════════════════════════════════════════
-     CSS 3D, not WebGL. The project ships as one self-contained file with a
-     Content-Security-Policy that allows no external script origin, so a
-     WebGL library cannot be loaded — and for a schematic column it would
-     buy nothing. Perspective plus transformed layers gives real depth at
-     effectively zero cost. */
+  /* ═══ the column ══════════════════════════════════════════════════════
+     Unchanged in construction — a ring of slats and horizontal tray planes,
+     so perspective does the work. Only the lighting is richer. */
+  .dx-col { position:relative; transform-style:preserve-3d; margin:0 auto }
+  .dx-col-mid { position:absolute; left:50%; top:0; transform-style:preserve-3d }
+
+  .dx-slat {
+    position:absolute; left:0; top:0; transform-origin:50% 50%;
+    background:linear-gradient(90deg,
+      color-mix(in srgb, var(--color-accent) 26%, transparent),
+      color-mix(in srgb, var(--color-accent) 5%, transparent) 45%,
+      color-mix(in srgb, var(--color-accent) 26%, transparent));
+    border-top:1px solid color-mix(in srgb, var(--color-accent) 46%, transparent);
+    border-bottom:1px solid color-mix(in srgb, var(--color-accent) 46%, transparent);
+    backface-visibility:visible;
+  }
+  /* the shell reads the solved temperature profile: cool overhead, warm sump */
+  .dx-therm { position:absolute; left:0; top:0; pointer-events:none; border-radius:3px;
+              opacity:.42; transform:translateZ(-1px) }
+  .dx-dark .dx-therm { opacity:.34 }
+
+  .dx-tray {
+    position:absolute; border-radius:50%; transform-style:preserve-3d;
+    border:1.5px solid color-mix(in srgb, var(--dx-liquid) 85%, transparent);
+    box-shadow:0 0 12px color-mix(in srgb, var(--dx-liquid) 30%, transparent);
+    transition:background var(--dx-t-slow) var(--dx-ease), border-color var(--dx-t-base) var(--dx-ease);
+  }
+  .dx-tray.feed {
+    border-color:var(--dx-magenta);
+    background:radial-gradient(circle at 50% 50%,
+      color-mix(in srgb, var(--dx-magenta) 46%, transparent),
+      color-mix(in srgb, var(--dx-magenta) 15%, transparent) 72%, transparent) !important;
+    box-shadow:0 0 20px color-mix(in srgb, var(--dx-magenta) 55%, transparent);
+  }
+
+  .dx-p { position:absolute; transform-style:preserve-3d; pointer-events:none }
+  .dx-p i { display:block; border-radius:50%;
+            animation-timing-function:linear; animation-iteration-count:infinite }
+  .dx-p.up i   { background:var(--dx-vapour); animation-name:dxUp;
+                 box-shadow:0 0 8px color-mix(in srgb, var(--dx-vapour) 85%, transparent) }
+  .dx-p.down i { background:var(--dx-liquid); animation-name:dxDown;
+                 box-shadow:0 0 6px color-mix(in srgb, var(--dx-liquid) 60%, transparent) }
+  @keyframes dxUp   { 0% { transform:translateY(0); opacity:0 } 12%,80% { opacity:.98 } 100% { transform:translateY(-56px); opacity:0 } }
+  @keyframes dxDown { 0% { transform:translateY(0); opacity:0 } 12%,80% { opacity:.85 } 100% { transform:translateY(56px); opacity:0 } }
+  .dx-col.paused .dx-p i { animation-play-state:paused; opacity:.55 }
+
+  .dx-note {
+    position:absolute; font-size:10.5px; letter-spacing:.07em; line-height:1.35;
+    text-transform:uppercase; font-weight:700; white-space:nowrap;
+    color:color-mix(in srgb, var(--color-text) 72%, transparent);
+  }
+  .dx-note b { display:block; font-size:12px; letter-spacing:-.01em; text-transform:none;
+               font-variant-numeric:tabular-nums; color:var(--color-text) }
+  .dx-note::before { content:''; position:absolute; top:6px; width:22px; height:1px;
+                     background:color-mix(in srgb, var(--color-accent) 60%, transparent) }
+  .dx-note.l { text-align:right } .dx-note.l::before { right:-26px }
+  .dx-note.r::before { left:-26px }
+
+  .dx-cap { position:absolute; border-radius:50%;
+            border:1px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
+            background:color-mix(in srgb, var(--color-accent) 18%, transparent) }
+
   .dx-stage {
     position: relative; border-radius: var(--dx-r-lg); overflow: hidden;
     background:
-      radial-gradient(120% 85% at 50% -6%, color-mix(in srgb, var(--color-accent) 20%, transparent), transparent 60%),
-      linear-gradient(180deg, color-mix(in srgb, var(--color-accent) 6%, var(--dx-raised)), var(--color-surface));
-    border: 1px solid color-mix(in srgb, var(--color-accent) 16%, var(--dx-hairline));
-    box-shadow: var(--shadow-md);
+      radial-gradient(120% 85% at 50% -6%, color-mix(in srgb, var(--color-accent) 26%, transparent), transparent 62%),
+      radial-gradient(90% 60% at 90% 100%, color-mix(in srgb, var(--dx-vapour) 16%, transparent), transparent 66%),
+      linear-gradient(180deg, color-mix(in srgb, var(--color-accent) 7%, var(--dx-raised)), var(--color-surface));
+    border: 1px solid color-mix(in srgb, var(--color-accent) 20%, var(--dx-hairline));
+    box-shadow: var(--shadow-md), inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent);
     perspective: 1400px; perspective-origin: 50% 42%;
   }
-  .dx-stage-inner {
-    transform-style: preserve-3d;
-    transition: transform var(--dx-t-slow) var(--dx-ease);
-    will-change: transform;
-  }
-  /* Viewpoints. Each is a single transform so switching interpolates. */
+  .dx-stage-inner { transform-style: preserve-3d; will-change: transform;
+                    transition: transform var(--dx-t-slow) var(--dx-ease) }
   .dx-vp-front { transform: none }
   .dx-vp-iso   { transform: rotateX(16deg) rotateY(-22deg) rotateZ(1deg) scale(.92) }
-  /* the hero has more room than the simulator panel, so the column fills it */
   .dx-stage-hero .dx-vp-iso { transform: rotateX(15deg) rotateY(-24deg) rotateZ(1deg) scale(1.0) }
-  /* A cylinder is rotationally symmetric, so rotating it sideways shows the
-     same silhouette as the front and the view earns nothing. The useful
-     fourth view is a section: the near half of the shell is taken away and
-     you look straight in at the trays and the traffic. */
   .dx-vp-sec   { transform: rotateX(9deg) rotateY(-7deg) scale(1.04) }
   .dx-vp-sec .dx-slat.near { opacity:.05 }
   .dx-vp-sec .dx-tray { border-width:2px }
   .dx-vp-top   { transform: rotateX(82deg) scale(.74) }
   .dx-vp-xpl   { transform: rotateX(20deg) rotateY(-18deg) scale(.88) }
-  /* Exploded pulls the annotation plane away from the vessel plane. */
   .dx-vp-xpl .dx-layer-notes { transform: translateZ(120px) }
-  /* callouts are unreadable edge-on, so they step aside in those two views */
-  .dx-vp-top .dx-layer-notes { opacity:0 }
   .dx-vp-xpl .dx-layer-flow  { transform: translateZ(56px) }
+  .dx-vp-top .dx-layer-notes { opacity:0 }
   .dx-layer-notes, .dx-layer-flow { transition: transform var(--dx-t-slow) var(--dx-ease) }
   .dx-stage-grid {
-    position:absolute; inset:0; pointer-events:none; opacity:.5;
+    position:absolute; inset:0; pointer-events:none; opacity:.45;
     background-image:
       linear-gradient(var(--dx-hairline) 1px, transparent 1px),
       linear-gradient(90deg, var(--dx-hairline) 1px, transparent 1px);
@@ -365,143 +592,32 @@
     mask-image: radial-gradient(120% 90% at 50% 40%, #000 35%, transparent 78%);
     -webkit-mask-image: radial-gradient(120% 90% at 50% 40%, #000 35%, transparent 78%);
   }
-
-  /* ═══ progressive disclosure ══════════════════════════════════════════
-     Native <details>, so it is keyboard-reachable and announced without any
-     script. Used to move the standing explanations off the first screen
-     while keeping every word of them one click away. */
-  .dx-dis { border-top:1px solid var(--dx-hairline); margin-top:2px }
-  .dx-dis > summary {
-    list-style:none; cursor:pointer; padding:7px 0 6px;
-    display:flex; align-items:center; gap:7px;
-    font-size:11.5px; font-weight:600; letter-spacing:.02em;
-    color:var(--dx-ink-accent);
-  }
-  .dx-dis > summary::-webkit-details-marker { display:none }
-  .dx-dis > summary::before {
-    content:''; width:7px; height:7px; flex:none;
-    border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
-    transform:rotate(-45deg) translate(-1px,-1px);
-    transition:transform var(--dx-t-base) var(--dx-ease);
-  }
-  .dx-dis[open] > summary::before { transform:rotate(45deg) translate(-2px,-2px) }
-  .dx-dis > summary:focus-visible { outline:none; box-shadow:var(--dx-glow); border-radius:var(--dx-r-sm) }
-  .dx-dis > .dx-dis-b {
-    font-size:11.5px; line-height:1.55; padding:0 0 9px;
-    color:color-mix(in srgb, var(--color-text) 74%, transparent);
-    animation:dxIn var(--dx-t-base) var(--dx-ease) both;
+  .dx-vp-btns { display:flex; gap:2px; padding:2px; border-radius:var(--dx-r-sm);
+                background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+                box-shadow: var(--dx-inset) }
+  .dx-vp-btns .btn { min-height:28px; font-size:11.5px; padding:3px 9px; border-color:transparent;
+                     background:transparent; letter-spacing:.02em }
+  .dx-vp-btns .btn[data-on='1'] {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--color-accent) 26%, transparent),
+      color-mix(in srgb, var(--color-accent) 14%, transparent));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 40%, transparent),
+                0 0 16px -5px var(--dx-glow-a);
+    color:var(--dx-ink-accent); font-weight:700;
   }
 
-  /* ═══ footer ══════════════════════════════════════════════════════════ */
+  /* ═══ signature ═══════════════════════════════════════════════════════ */
   .dx-sig {
     margin-top: 26px; padding: 14px 0 20px;
     border-top: 1px solid var(--dx-hairline);
     display: flex; align-items: center; justify-content: center; gap: 10px;
-    font-size: 11px; letter-spacing: .04em;
+    font-size: 11px; letter-spacing: .05em;
     color: color-mix(in srgb, var(--color-text) 62%, transparent);
   }
-  .dx-sig b { font-weight: 600; letter-spacing: .07em;
-              color: color-mix(in srgb, var(--color-text) 82%, transparent) }
+  .dx-sig b { font-weight: 650; letter-spacing: .08em;
+              color: color-mix(in srgb, var(--color-text) 84%, transparent) }
 
-  /* ═══ entrance motion ═════════════════════════════════════════════════ */
-  @keyframes dxIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
-  @keyframes dxBreathe { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
-  .dx-in { animation: dxIn var(--dx-t-slow) var(--dx-ease) both }
-  .dx-in-1 { animation-delay: 40ms } .dx-in-2 { animation-delay: 90ms }
-  .dx-in-3 { animation-delay: 140ms } .dx-in-4 { animation-delay: 190ms }
-
-  /* ═══ the column itself ═══════════════════════════════════════════════
-     A real 3D assembly, not a picture of one: the vessel is a ring of
-     vertical slats at a fixed radius, and every tray is a horizontal plane
-     rotated flat. That means perspective does the work — trays read as thin
-     ellipses head-on and open into full discs as the view rotates, which is
-     exactly how a cutaway of a real column behaves. */
-  .dx-col { position:relative; transform-style:preserve-3d; margin:0 auto; }
-  .dx-col-mid { position:absolute; left:50%; top:0; transform-style:preserve-3d; }
-
-  .dx-slat {
-    position:absolute; left:0; top:0; transform-origin:50% 50%;
-    background:linear-gradient(90deg,
-      color-mix(in srgb, var(--color-accent) 24%, transparent),
-      color-mix(in srgb, var(--color-accent) 5%, transparent) 45%,
-      color-mix(in srgb, var(--color-accent) 24%, transparent));
-    border-top:1px solid color-mix(in srgb, var(--color-accent) 42%, transparent);
-    border-bottom:1px solid color-mix(in srgb, var(--color-accent) 42%, transparent);
-    backface-visibility:visible;
-  }
-  /* The shell carries the temperature profile: cool overhead, warm sump.
-     It is a reading of Ttop/Tbot, not decoration — the gradient stops are
-     set from the solved values. */
-  .dx-therm {
-    position:absolute; left:0; top:0; pointer-events:none; border-radius:3px;
-    opacity:.34; transform:translateZ(-1px);
-  }
-  .dx-dark .dx-therm { opacity:.24 }
-
-  .dx-tray {
-    position:absolute; border-radius:50%; transform-style:preserve-3d;
-    border:1.5px solid color-mix(in srgb, var(--dx-liquid) 85%, transparent);
-    background:radial-gradient(circle at 50% 50%,
-      color-mix(in srgb, var(--dx-liquid) 55%, transparent),
-      color-mix(in srgb, var(--dx-liquid) 26%, transparent) 72%, transparent);
-    box-shadow:0 0 10px color-mix(in srgb, var(--dx-liquid) 22%, transparent);
-    transition:background var(--dx-t-slow) var(--dx-ease), border-color var(--dx-t-base) var(--dx-ease);
-  }
-  .dx-tray.feed {
-    border-color:var(--dx-violet);
-    background:radial-gradient(circle at 50% 50%,
-      color-mix(in srgb, var(--dx-violet) 42%, transparent),
-      color-mix(in srgb, var(--dx-violet) 14%, transparent) 72%, transparent);
-    box-shadow:0 0 14px color-mix(in srgb, var(--dx-violet) 40%, transparent);
-  }
-  .dx-tray.hot { border-color:color-mix(in srgb, var(--dx-warn) 70%, transparent) }
-
-  /* Traffic. Two populations moving in opposite directions: vapour up,
-     liquid down. The outer node places the particle in space, the inner
-     node animates, so the animation never clobbers the depth transform. */
-  .dx-p { position:absolute; transform-style:preserve-3d; pointer-events:none }
-  .dx-p i {
-    display:block; border-radius:50%;
-    animation-timing-function:linear; animation-iteration-count:infinite;
-  }
-  .dx-p.up i   { background:var(--dx-vapour); animation-name:dxUp;
-                 box-shadow:0 0 6px color-mix(in srgb, var(--dx-vapour) 70%, transparent) }
-  .dx-p.down i { background:var(--dx-liquid); animation-name:dxDown }
-  @keyframes dxUp   { 0% { transform:translateY(0); opacity:0 } 12%,80% { opacity:.95 } 100% { transform:translateY(-56px); opacity:0 } }
-  @keyframes dxDown { 0% { transform:translateY(0); opacity:0 } 12%,80% { opacity:.8 }  100% { transform:translateY(56px); opacity:0 } }
-  /* paused state: traffic holds still rather than vanishing */
-  .dx-col.paused .dx-p i { animation-play-state:paused; opacity:.55 }
-
-  /* Annotation plane — callouts sit in front of the vessel and pull away
-     in the exploded view. */
-  .dx-note {
-    position:absolute; font-size:10.5px; letter-spacing:.06em; line-height:1.35;
-    text-transform:uppercase; font-weight:600; white-space:nowrap;
-    color:color-mix(in srgb, var(--color-text) 74%, transparent);
-  }
-  .dx-note b { display:block; font-size:12px; letter-spacing:-.01em; text-transform:none;
-               font-variant-numeric:tabular-nums; color:var(--color-text) }
-  .dx-note::before {
-    content:''; position:absolute; top:6px; width:22px; height:1px;
-    background:color-mix(in srgb, var(--color-text) 34%, transparent);
-  }
-  .dx-note.l { text-align:right } .dx-note.l::before { right:-26px }
-  .dx-note.r::before { left:-26px }
-
-  /* Vessel heads and the two drums, drawn as flat plates on the mid plane. */
-  .dx-cap {
-    position:absolute; border-radius:50%;
-    border:1px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
-    background:color-mix(in srgb, var(--color-accent) 16%, transparent);
-  }
-  .dx-vp-btns { display:flex; gap:2px; background:var(--color-surface);
-                border-radius:var(--dx-r-sm); padding:2px }
-  .dx-vp-btns .btn { min-height:28px; font-size:11.5px; padding:3px 9px; border-color:transparent;
-                     background:transparent; letter-spacing:.02em }
-  .dx-vp-btns .btn[data-on='1'] { background:var(--dx-raised); box-shadow:var(--shadow-sm);
-                                  color:var(--dx-ink-accent); font-weight:600 }
-
-  /* ═══ existing motion, retained ═══════════════════════════════════════ */
+  /* ═══ retained motion used by the legacy SVG diagrams ═════════════════ */
   @keyframes dxRise { from { transform: translateY(10px); opacity: 0 } 25% { opacity: 1 } 75% { opacity: 1 } to { transform: translateY(-26px); opacity: 0 } }
   @keyframes dxFall { from { transform: translateY(-10px); opacity: 0 } 25% { opacity: 1 } 75% { opacity: 1 } to { transform: translateY(26px); opacity: 0 } }
   @keyframes dxFlowR { from { stroke-dashoffset: 24 } to { stroke-dashoffset: 0 } }
@@ -509,34 +625,33 @@
   @keyframes dxPulse { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
 
   /* ═══ layout ══════════════════════════════════════════════════════════ */
-  .dx-grid3 { display:grid; grid-template-columns:minmax(0,330px) minmax(0,1fr) minmax(0,310px); gap:18px; align-items:start }
-  .dx-grid2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:18px; align-items:start }
-  .dx-grid3b { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; align-items:start }
-  .dx-side { display:grid; grid-template-columns:minmax(0,310px) minmax(0,1fr); gap:18px; align-items:start }
-  .dx-hero { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:48px; align-items:center; padding:40px 0 52px }
+  .dx-grid3 { display:grid; grid-template-columns:minmax(0,340px) minmax(0,1fr) minmax(0,320px); gap:20px; align-items:start }
+  .dx-grid2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; align-items:start }
+  .dx-grid3b { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; align-items:start }
+  .dx-side { display:grid; grid-template-columns:minmax(0,320px) minmax(0,1fr); gap:20px; align-items:start }
+  .dx-hero { display:grid; grid-template-columns:minmax(0,1.02fr) minmax(0,1fr); gap:48px; align-items:center; padding:40px 0 52px }
   @media (max-width:1180px){ .dx-grid3 { grid-template-columns:minmax(0,1fr) } .dx-grid3b { grid-template-columns:minmax(0,1fr) } }
   @media (max-width:900px){
-    .dx-hero { grid-template-columns:minmax(0,1fr); gap:28px; padding:34px 0 28px }
+    .dx-hero { grid-template-columns:minmax(0,1fr); gap:28px; padding:28px 0 26px }
     /* Touch target size (WCAG 2.5.8). The markup sets 30-36px heights inline
        for the desktop density, so these are scoped to narrow viewports and
-       need !important to override the inline values. Desktop is unchanged. */
+       need !important to override the inline values. */
     .dx .btn, .dx button.btn { min-height:44px !important; min-width:44px }
     .dx .input, .dx select.input { min-height:44px !important }
     .dx .seg-opt { min-height:44px }
     .dx input[type=range] { height:44px }
     .dx-grid2 { grid-template-columns:minmax(0,1fr) } .dx-side { grid-template-columns:minmax(0,1fr) }
     /* Ten destinations wrapped to three rows on a phone and swallowed the
-       first screen. One swipeable rail instead: every item stays reachable,
-       the active one is scrolled into view, and the page itself never
-       scrolls sideways because the overflow is on this element. */
-    .dx-nav nav { flex-wrap:nowrap; overflow-x:auto; scroll-snap-type:x proximity;
+       first screen. One swipeable rail instead. */
+    .dx-navwrap { flex-wrap:nowrap; overflow-x:auto; scroll-snap-type:x proximity;
                   -webkit-overflow-scrolling:touch; scrollbar-width:none;
                   margin-inline:-4px; padding-inline:4px }
-    .dx-nav nav::-webkit-scrollbar { display:none }
-    .dx-nav nav .btn { flex:none; scroll-snap-align:center }
-    /* The simulator stage is tall on a small screen. The hero stage is
-       square by aspect-ratio, so it must keep its own sizing — forcing a
-       height on it makes it wider than the viewport. */
+    .dx-navwrap::-webkit-scrollbar { display:none }
+    .dx-navwrap .btn { flex:none; scroll-snap-align:center }
+    .dx-navpill { display:none }
+    .dx-navbtn[data-on='1'] { background: color-mix(in srgb, var(--color-accent) 20%, transparent) }
+    /* The hero stage is sized by aspect-ratio, so it must keep its own
+       sizing — forcing a height on it makes it wider than the viewport. */
     .dx-stage:not(.dx-stage-hero) { height:340px !important }
   }
   @media print { .dx-noprint { display:none !important } }
@@ -562,6 +677,7 @@
 
 <sc-if value="{{ isLanding }}" hint-placeholder-val="{{ true }}">
 <div class="dx-app" style="padding:0 24px 44px">
+<div class="dx-aurora" aria-hidden="true"></div>
 <div style="max-width:1180px;margin:0 auto">
   <div style="display:flex;align-items:center;gap:12px;padding:22px 0 0;flex-wrap:wrap">
     <div style="width:22px;height:22px;border:1px solid var(--color-accent);position:relative">
@@ -582,18 +698,18 @@
 
   <div class="dx-hero">
     <div>
-      <div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dx-ink-accent);margin-bottom:18px">Separation processes · Unit operations laboratory</div>
-      <h1 style="font-size:clamp(40px,11vw,76px);letter-spacing:.02em;margin:0 0 8px;line-height:.98">DISTILLEX</h1>
-      <h3 style="font-weight:400;font-size:26px;margin:0 0 18px;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Interactive Fractional Distillation Laboratory</h3>
-      <p style="max-width:52ch;font-size:16px;color:color-mix(in srgb,var(--color-text) 72%,transparent);text-wrap:pretty">Understand separation by controlling the column yourself. Explore vapour–liquid equilibrium, column operation, stagewise separation and process design — every number on screen is computed in your browser from the thermodynamic model you select.</p>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:26px">
+      <div class="dx-in dx-in-1" style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dx-ink-accent);margin-bottom:18px">Separation processes · Unit operations laboratory</div>
+      <h1 class="dx-in dx-in-2" style="font-size:clamp(40px,11vw,76px);letter-spacing:.02em;margin:0 0 8px;line-height:.98">DISTILLEX</h1>
+      <h3 class="dx-in dx-in-3" style="font-weight:400;font-size:26px;margin:0 0 18px;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Interactive Fractional Distillation Laboratory</h3>
+      <p class="dx-in dx-in-3" style="max-width:52ch;font-size:16px;color:color-mix(in srgb,var(--color-text) 72%,transparent);text-wrap:pretty">Understand separation by controlling the column yourself. Explore vapour–liquid equilibrium, column operation, stagewise separation and process design — every number on screen is computed in your browser from the thermodynamic model you select.</p>
+      <div class="dx-in dx-in-4" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:26px">
         <button class="btn btn-primary" data-v="sim" onClick="{{ go }}" style="padding:10px 20px;font-size:15px">Launch simulator</button>
         <button class="btn btn-secondary" data-v="theory" onClick="{{ go }}" style="padding:10px 20px;font-size:15px">Explore theory</button>
         <button class="btn btn-secondary" onClick="{{ tryExample }}" style="padding:10px 20px;font-size:15px">Try example</button>
       </div>
-      <div style="margin-top:22px;font-size:12px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Runs entirely client-side · Ideal VLE (Raoult) and constant-volatility models · No account, no server</div>
+      <div class="dx-in dx-in-5" style="margin-top:22px;font-size:12px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Runs entirely client-side · Ideal VLE (Raoult) and constant-volatility models · No account, no server</div>
     </div>
-    <div class="dx-stage dx-stage-hero" style="aspect-ratio:6/5;display:grid;place-items:center" role="img" aria-label="Three-dimensional cutaway of a fractionating column showing its trays, the feed stage and counter-current vapour and liquid traffic.">
+    <div class="dx-stage dx-stage-hero dx-lit dx-in dx-in-4" style="aspect-ratio:6/5;display:grid;place-items:center" role="img" aria-label="Three-dimensional cutaway of a fractionating column showing its trays, the feed stage and counter-current vapour and liquid traffic.">
       <i class="dx-stage-grid" aria-hidden="true"></i>
       <div class="dx-stage-inner dx-vp-iso" style="position:absolute;inset:0;display:grid;place-items:center">
         <div class="dx-col" style="width:{{ scene.W }}px;height:{{ scene.H }}px">
@@ -623,22 +739,22 @@
     </div>
   </div>
 
-  <div class="dx-grid3b">
-    <div class="card blueprint" style="padding:18px;min-height:170px">
+  <div class="dx-grid3b dx-reveal">
+    <div class="card blueprint dx-lift dx-lit" style="padding:18px;min-height:170px">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <div class="card-kicker">01</div>
       <div class="card-title" style="font-size:22px">VLE</div>
       <p class="card-body">Explore vapour–liquid equilibrium. Change pressure, volatility and mixture and watch the x–y curve and boiling envelope respond.</p>
       <button class="btn btn-ghost" data-v="vle" onClick="{{ go }}" style="align-self:flex-start">Open VLE explorer →</button>
     </div>
-    <div class="card blueprint" style="padding:18px;min-height:170px">
+    <div class="card blueprint dx-lift dx-lit" style="padding:18px;min-height:170px">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <div class="card-kicker">02</div>
       <div class="card-title" style="font-size:22px">McCabe–Thiele</div>
       <p class="card-body">Build and analyse theoretical stages. Drag the specifications, set the q-line and step the stages one at a time.</p>
       <button class="btn btn-ghost" data-v="mt" onClick="{{ go }}" style="align-self:flex-start">Open diagram →</button>
     </div>
-    <div class="card blueprint" style="padding:18px;min-height:170px">
+    <div class="card blueprint dx-lift dx-lit" style="padding:18px;min-height:170px">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <div class="card-kicker">03</div>
       <div class="card-title" style="font-size:22px">Column</div>
@@ -655,13 +771,15 @@
 
 <sc-if value="{{ isApp }}">
 <div class="dx-app" style="display:flex;flex-direction:column;min-height:100vh">
+  <div class="dx-aurora" aria-hidden="true"></div>
 
   <header class="nav dx-nav dx-noprint" style="padding:9px 18px;gap:14px;flex-wrap:wrap">
     <button class="btn btn-ghost" onClick="{{ home }}" style="gap:9px;padding:2px 6px;margin-right:2px;color:var(--color-text)" aria-label="DISTILLEX home">
       <span style="display:inline-block;width:15px;height:15px;border:1.5px solid var(--color-accent);border-radius:3px;position:relative"></span>
       <span style="font-family:var(--font-heading);font-size:16px;letter-spacing:.15em">DISTILLEX</span>
     </button>
-    <nav style="display:flex;flex-wrap:wrap;gap:1px;margin-right:auto">
+    <nav class="dx-navwrap" aria-label="Sections">
+      <i class="dx-navpill" aria-hidden="true"></i>
       <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="9">
         <button class="btn dx-navbtn" data-v="{{ it.k }}" data-on="{{ it.on }}" aria-current="{{ it.cur }}" onClick="{{ go }}" style="{{ it.style }}">{{ it.label }}</button>
       </sc-for>
@@ -689,7 +807,7 @@
     </div>
   </sc-if>
 
-  <main style="flex:1;padding:16px;max-width:1600px;width:100%;margin:0 auto">
+  <main data-dxview="1" class="dx-viewin" style="flex:1;padding:20px 18px;max-width:1640px;width:100%;margin:0 auto">
 
     <sc-if value="{{ isSim }}">
       <div class="dx-grid3">
@@ -813,7 +931,7 @@
                 <button class="btn btn-secondary dx-noprint" onClick="{{ explainToggle }}" style="min-height:30px">{{ explainLabel }}</button>
               </div>
             </div>
-            <div class="dx-stage" style="height:462px" role="img" aria-label="Three-dimensional schematic of the distillation column. {{ scene.caption }}. {{ scene.thermLabel }}.">
+            <div class="dx-stage dx-lit" style="height:462px" role="img" aria-label="Three-dimensional schematic of the distillation column. {{ scene.caption }}. {{ scene.thermLabel }}.">
               <i class="dx-stage-grid" aria-hidden="true"></i>
               <sc-if value="{{ scene.empty }}">
                 <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:24px">
@@ -875,12 +993,12 @@
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div class="dx-kicker">Live results</div>
-            <div class="dx-well" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;padding:1px;overflow:hidden">
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
               <sc-for list="{{ keyRows }}" as="kr" hint-placeholder-count="3">
-                <div style="background:var(--dx-raised);padding:10px 11px;display:flex;flex-direction:column;gap:2px;min-width:0">
-                  <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 66%,transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ kr.k }}</span>
-                  <span class="dx-num" style="font-size:20px;font-weight:600;line-height:1.1">{{ kr.v }}</span>
-                  <span style="font-size:10px;color:color-mix(in srgb,var(--color-text) 64%,transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ kr.u }}</span>
+                <div class="dx-well" style="padding:11px 12px;display:flex;flex-direction:column;gap:3px;min-width:0;border-top:2px solid {{ kr.c }}">
+                  <span style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:color-mix(in srgb,var(--color-text) 70%,transparent);line-height:1.25">{{ kr.k }}</span>
+                  <span class="dx-num" data-dxn="{{ kr.n }}" style="font-size:23px;font-weight:700;line-height:1.05;color:{{ kr.c }}">{{ kr.v }}</span>
+                  <span class="dx-num" style="font-size:10px;color:color-mix(in srgb,var(--color-text) 66%,transparent)">{{ kr.u }}</span>
                 </div>
               </sc-for>
             </div>
@@ -1614,12 +1732,12 @@
   <div style="{{ tipStyle }}">{{ tipText }}</div>
 </sc-if>
 <sc-if value="{{ toastOpen }}">
-  <div role="status" aria-live="polite" style="position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:80;padding:8px 16px;border:1px solid var(--color-accent);background:var(--color-bg);font-size:13px;box-shadow:var(--shadow-md)">{{ toast }}</div>
+  <div role="status" aria-live="polite" class="dx-toast" style="position:fixed;bottom:22px;left:50%;z-index:80;padding:10px 18px;border:1px solid color-mix(in srgb,var(--color-accent) 45%,transparent);border-radius:var(--dx-r-md);background:color-mix(in srgb,var(--dx-raised) 92%,transparent);backdrop-filter:blur(10px);font-size:13px;font-weight:600;box-shadow:var(--shadow-lg),0 0 30px -8px var(--dx-glow-a)">{{ toast }}</div>
 </sc-if>
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:950},&quot;startView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;landing&quot;,&quot;sim&quot;,&quot;vle&quot;,&quot;mt&quot;,&quot;column&quot;,&quot;results&quot;,&quot;sens&quot;,&quot;theory&quot;,&quot;exam&quot;,&quot;about&quot;],&quot;default&quot;:&quot;landing&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Startup&quot;},&quot;defaultMixture&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;bt&quot;,&quot;ew&quot;,&quot;mw&quot;,&quot;hh&quot;,&quot;aw&quot;],&quot;default&quot;:&quot;bt&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Startup&quot;},&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Startup&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:950},&quot;startView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;landing&quot;,&quot;sim&quot;,&quot;vle&quot;,&quot;mt&quot;,&quot;column&quot;,&quot;results&quot;,&quot;sens&quot;,&quot;theory&quot;,&quot;exam&quot;,&quot;about&quot;],&quot;default&quot;:&quot;landing&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Startup&quot;},&quot;defaultMixture&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;bt&quot;,&quot;ew&quot;,&quot;mw&quot;,&quot;hh&quot;,&quot;aw&quot;],&quot;default&quot;:&quot;bt&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Startup&quot;},&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Startup&quot;}}">
 class Component extends DCLogic {
   static COMP = {
     benzene:{name:'Benzene',cas:'71-43-2',A:6.90565,B:1211.033,C:220.790,MW:78.11,Tb:80.1,lat:30.72,lo:8,hi:103},
@@ -1703,12 +1821,12 @@ class Component extends DCLogic {
     view:(this.props||{}).startView||'landing', mixKey:(this.props||{}).defaultMixture||'bt', model:'raoult', P:101.325, alphaC:2.45,
     F:100, zF:0.45, q:1.0, xD:0.96, xB:0.04, R:2.2, Nspec:12, DF:0.45,
     eff:0.70, reb:'partial', calcMode:'design',
-    mode:'learning', theme:'light', colView:'stages', equip:'column', colVP:'front',
+    mode:'learning', colView:'stages', equip:'column', colVP:'front',
     anim:999, hoverStage:null, tip:null, tipXY:[0,0],
     explaining:false, explainI:0, wiVar:'R', wiTo:3.2, whatIf:null,
     sens:{ind:'R',dep:'N',min:1.2,max:6,n:24}, exam:{i:0,reveal:'',input:''},
     theoryOpen:'t1', toast:'', vleShow:'xy', mtDrag:null, vleHover:null,
-    theme:(this.props||{}).defaultTheme||'light',
+    theme:(this.props||{}).defaultTheme||'dark',
     custom:{a:{name:'Component A',A:6.90565,B:1211.033,C:220.79,MW:78.11,Tb:80.1,lat:30.8},
             b:{name:'Component B',A:6.95464,B:1344.800,C:219.48,MW:92.14,Tb:110.6,lat:33.2}}
   };
@@ -1717,7 +1835,147 @@ class Component extends DCLogic {
     this.setState({custom:Object.assign({},c,{[side]:side2})});
   }
 
-  componentWillUnmount(){ if(this._t) clearInterval(this._t); if(this._tt) clearTimeout(this._tt); }
+  /* ── the interaction layer ───────────────────────────────────────────
+   *
+   * Five behaviours that need the DOM after render. All of them are
+   * presentation only: nothing here reads or writes simulation state, and
+   * nothing here can change a computed value. Each one checks
+   * prefers-reduced-motion and does nothing when the user has asked for
+   * less movement.
+   *
+   *   1  numbers interpolate to their new value instead of jumping
+   *   2  the view fades and lifts when you change page
+   *   3  a light follows the pointer across large panels
+   *   4  the navigation pill slides to the active destination
+   *   5  sections reveal as they scroll into view
+   */
+  _calm(){
+    try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+    catch(e){ return false; }
+  }
+
+  /** Animate every [data-dxn] element from what it is showing to what the
+   *  render just wrote. The previous value is kept on the node itself, so
+   *  React stays the source of truth: it writes the final value, we replay
+   *  the journey to it, and we always land exactly on what it wrote. */
+  _tickNums(){
+    if (this._calm()) return;
+    const nodes = document.querySelectorAll('[data-dxn]');
+    for (const el of nodes){
+      const target = el.getAttribute('data-dxn');
+      const to = parseFloat(target);
+      if (!isFinite(to)) { el._dxv = to; continue; }
+      const from = (typeof el._dxv === 'number' && isFinite(el._dxv)) ? el._dxv : to;
+      el._dxv = to;
+      if (from === to) continue;
+      // decimals are taken from the rendered text so the format never drifts
+      const shown = el.textContent.trim();
+      const dot = shown.indexOf('.');
+      const dp = dot < 0 ? 0 : shown.length - dot - 1;
+      const suffix = /[^0-9.\-]+$/.exec(shown);
+      const tail = suffix ? suffix[0] : '';
+      if (el._dxraf) cancelAnimationFrame(el._dxraf);
+      const t0 = performance.now(), dur = 420;
+      const step = (t) => {
+        const k = Math.min(1, (t - t0) / dur);
+        const e = 1 - Math.pow(1 - k, 3);            // ease-out cubic
+        el.textContent = (from + (to - from) * e).toFixed(dp) + tail;
+        if (k < 1) el._dxraf = requestAnimationFrame(step);
+        else { el.textContent = to.toFixed(dp) + tail; el._dxraf = 0;
+               el.classList.remove('dx-bump'); void el.offsetWidth; el.classList.add('dx-bump'); }
+      };
+      el._dxraf = requestAnimationFrame(step);
+    }
+  }
+
+  /** Restart the view-entrance animation whenever the destination changes. */
+  _tickView(){
+    const v = this.state.view;
+    if (v === this._dxview) return;
+    this._dxview = v;
+    if (this._calm()) return;
+    const m = document.querySelector('[data-dxview]');
+    if (!m) return;
+    m.classList.remove('dx-viewin'); void m.offsetWidth; m.classList.add('dx-viewin');
+  }
+
+  /** Slide the navigation pill behind the active destination. */
+  _tickPill(){
+    const wrap = document.querySelector('.dx-navwrap');
+    if (!wrap) return;
+    const pill = wrap.querySelector('.dx-navpill');
+    const on = wrap.querySelector(".dx-navbtn[data-on='1']");
+    if (!pill || !on) { if (pill) pill.classList.remove('on'); return; }
+    pill.style.width = on.offsetWidth + 'px';
+    pill.style.transform = 'translateX(' + on.offsetLeft + 'px)';
+    pill.classList.add('on');
+  }
+
+  /** One pointer listener for the whole document, writing --mx/--my on the
+   *  lit panel under the cursor. Passive, and it only touches custom
+   *  properties, so it never triggers layout. */
+  _bindPointer(){
+    if (this._dxptr || this._calm()) return;
+    this._dxin = (e) => {
+      const t = e.target;
+      if (t && t.type === 'range') this._tickFill();
+    };
+    document.addEventListener('input', this._dxin, { passive: true });
+    this._dxptr = (e) => {
+      const el = e.target && e.target.closest ? e.target.closest('.dx-lit') : null;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      el.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
+      el.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
+    };
+    document.addEventListener('pointermove', this._dxptr, { passive: true });
+  }
+
+  /** Reveal sections as they arrive. Observed once, then released. */
+  /** Light the travelled part of every slider track. Reads the element's
+   *  own min/max/value, so it needs no extra binding in the markup. */
+  _tickFill(){
+    document.querySelectorAll('input[type=range]').forEach(el => {
+      const lo = parseFloat(el.min || 0), hi = parseFloat(el.max || 100), v = parseFloat(el.value);
+      if (!isFinite(lo) || !isFinite(hi) || !isFinite(v) || hi === lo) return;
+      el.style.setProperty('--dx-fill',
+        (100 * Math.max(0, Math.min(1, (v - lo) / (hi - lo)))).toFixed(2) + '%');
+    });
+  }
+
+  _tickReveal(){
+    if (this._calm()){
+      document.querySelectorAll('.dx-reveal').forEach(el => el.classList.add('seen'));
+      return;
+    }
+    if (!this._dxio){
+      if (typeof IntersectionObserver === 'undefined') return;
+      this._dxio = new IntersectionObserver((rows) => {
+        for (const row of rows){
+          if (!row.isIntersecting) continue;
+          row.target.classList.add('seen');
+          this._dxio.unobserve(row.target);
+        }
+      }, { rootMargin: '0px 0px -8% 0px', threshold: 0.06 });
+    }
+    document.querySelectorAll('.dx-reveal:not(.seen)').forEach(el => this._dxio.observe(el));
+  }
+
+  _afterRender(){
+    try {
+      this._tickView(); this._tickNums(); this._tickPill(); this._tickFill();
+      this._bindPointer(); this._tickReveal();
+    } catch (e) { /* presentation only — never let it reach the engine */ }
+  }
+  componentDidMount(){ this._afterRender(); }
+  componentDidUpdate(){ this._afterRender(); }
+
+  componentWillUnmount(){
+    if(this._t) clearInterval(this._t); if(this._tt) clearTimeout(this._tt);
+    if(this._dxio) this._dxio.disconnect();
+    if(this._dxptr) document.removeEventListener('pointermove', this._dxptr);
+    if(this._dxin) document.removeEventListener('input', this._dxin);
+  }
 
   // ---------- thermodynamics ----------
   compsOf(s){
@@ -2062,9 +2320,9 @@ class Component extends DCLogic {
     // promoted; the rest stay in order but read as supporting detail, and
     // the duties and internal flows sit behind a disclosure.
     const keyRows=[
-      {k:'Distillate', v:f(r.xD,4), u:'x_D mole frac.'},
-      {k:'Bottoms',    v:f(r.xB,4), u:'x_B mole frac.'},
-      {k:'Stages',     v:f(r.N,0),  u:hasR?('feed on '+f(r.feedStage,0)):'\u2014'}
+      {k:'Distillate', v:f(r.xD,4), n:hasR?String(this.num(r.xD)):'', u:'x_D', c:'var(--dx-liquid)'},
+      {k:'Bottoms',    v:f(r.xB,4), n:hasR?String(this.num(r.xB)):'', u:'x_B', c:'var(--dx-vapour)'},
+      {k:'Stages',     v:f(r.N,0),  n:hasR?String(this.num(r.N)):'',  u:hasR?('feed '+f(r.feedStage,0)):'\u2014', c:'var(--dx-magenta)'}
     ];
     const mkRow=rows=>rows.map(row=>({k:row[0],v:row[1],
       style:'display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--dx-hairline)'}));
