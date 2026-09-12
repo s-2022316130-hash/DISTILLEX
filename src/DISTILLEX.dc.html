@@ -84,6 +84,7 @@
     --dx-gold:    #935906;
     --dx-red:     #b91c1c;
     --dx-green:   #137638;
+    --dx-crude:   #6b3f12;   /* raw charge, unfractionated    */
 
     /* Crude-fraction ramp — a sequential thermal scale, coolest and lightest
        at the top of the tower to hottest and heaviest at the sump. It is a
@@ -158,6 +159,7 @@
     --dx-gold:    #fde047;
     --dx-red:     #f87171;
     --dx-green:   #4ade80;
+    --dx-crude:   #e0a86a;
 
     --dx-f1: #67e8f9;
     --dx-f2: #5eead4;
@@ -789,6 +791,579 @@
   .dx-colkey i { display:inline-block; width:9px; height:9px; border-radius:50%;
                  margin-right:5px; vertical-align:-1px }
 
+  /* the gateway from the landing page into the industrial exhibit */
+  .dx-rigcta {
+    margin-top:26px; padding:clamp(18px,2.6vw,26px); border-radius:var(--dx-r-lg);
+    display:flex; gap:22px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    border:1px solid color-mix(in srgb, var(--dx-heat) 30%, var(--dx-hairline));
+    background:
+      radial-gradient(110% 150% at 6% 0%,  color-mix(in srgb, var(--dx-heat)   18%, transparent), transparent 58%),
+      radial-gradient(110% 150% at 96% 100%, color-mix(in srgb, var(--dx-vapour) 16%, transparent), transparent 60%),
+      color-mix(in srgb, var(--dx-raised) 86%, transparent);
+    box-shadow:var(--shadow-md);
+  }
+  .dx-rigcta-b { min-width:0; max-width:62ch }
+  .dx-rigcta h3 { margin:5px 0 6px; font-family:var(--font-heading);
+                  font-size:clamp(20px,2.6vw,27px); line-height:1.12 }
+  .dx-rigcta p  { margin:0; font-size:13.5px; line-height:1.6;
+                  color:color-mix(in srgb, var(--color-text) 78%, transparent) }
+  .dx-rigcta-go { padding:13px 22px; font-size:14.5px; white-space:nowrap }
+  @media (max-width: 620px) { .dx-rigcta-go { width:100% } }
+
+  /* ═══ INDUSTRIAL CRUDE UNIT ═══════════════════════════════════════════
+     A page with its own identity inside DISTILLEX: darker, hotter, and built
+     around one large viewport instead of a grid of cards. The rig is CSS 3D —
+     a ring of transformed planes per vessel — because this project ships one
+     static file under script-src 'self', which rules out WebGL libraries.
+     The camera lives in custom properties so a drag can move it without React
+     re-rendering a hundred and fifty planes. */
+
+  .rig-page {
+    position:relative; min-height:100vh; overflow:hidden;
+    background:
+      radial-gradient(120% 70% at 12% 0%,  color-mix(in srgb, var(--dx-heat)   16%, transparent), transparent 58%),
+      radial-gradient(100% 60% at 92% 12%, color-mix(in srgb, var(--dx-vapour) 15%, transparent), transparent 60%),
+      radial-gradient(90%  70% at 50% 108%, color-mix(in srgb, var(--dx-orange) 14%, transparent), transparent 62%),
+      linear-gradient(176deg, #0a0e1c 0%, #0d1225 46%, #0a0d18 100%);
+    color:#e8ecf6;
+  }
+  .dx:not(.dx-dark) .rig-page {
+    background:
+      radial-gradient(120% 70% at 12% 0%,  color-mix(in srgb, var(--dx-heat)   13%, transparent), transparent 58%),
+      radial-gradient(100% 60% at 92% 12%, color-mix(in srgb, var(--dx-vapour) 12%, transparent), transparent 60%),
+      radial-gradient(90%  70% at 50% 108%, color-mix(in srgb, var(--dx-orange) 12%, transparent), transparent 62%),
+      linear-gradient(176deg, #18203a 0%, #1d2647 48%, #151b30 100%);
+  }
+  /* faint technical grid and a slow drifting light — both barely there */
+  .rig-page::before {
+    content:''; position:absolute; inset:0; pointer-events:none; opacity:.5;
+    background-image:
+      linear-gradient(rgba(148,178,255,.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,178,255,.055) 1px, transparent 1px);
+    background-size:56px 56px;
+    mask-image:radial-gradient(120% 90% at 50% 34%, #000 30%, transparent 82%);
+    -webkit-mask-image:radial-gradient(120% 90% at 50% 34%, #000 30%, transparent 82%);
+  }
+  .rig-page::after {
+    content:''; position:absolute; inset:-30%; pointer-events:none; opacity:.5;
+    background:radial-gradient(38% 30% at 30% 30%, color-mix(in srgb, var(--dx-vapour) 13%, transparent), transparent 70%);
+    animation:rigDrift 46s ease-in-out infinite alternate;
+  }
+  @keyframes rigDrift { from { transform:translate3d(-4%,2%,0) } to { transform:translate3d(8%,-5%,0) } }
+
+  .rig-wrap { position:relative; z-index:1; max-width:1440px; margin:0 auto; padding:0 20px 40px }
+
+  /* ── top bar and hero ─────────────────────────────────────────────── */
+  .rig-top { display:flex; align-items:center; gap:12px; padding:16px 0 6px; flex-wrap:wrap }
+  .rig-back {
+    display:inline-flex; align-items:center; gap:8px; min-height:38px; padding:6px 14px;
+    border-radius:999px; border:1px solid rgba(160,190,255,.24); background:rgba(12,18,36,.6);
+    color:#dfe6f7; font-size:13px; letter-spacing:.03em; cursor:pointer;
+    transition:background var(--dx-t-base) var(--dx-ease), border-color var(--dx-t-base) var(--dx-ease),
+               transform var(--dx-t-base) var(--dx-ease);
+  }
+  .rig-back:hover { background:rgba(24,34,64,.86); border-color:var(--dx-vapour); transform:translateX(-2px) }
+  .rig-hero { padding:10px 0 14px; max-width:74ch }
+  .rig-kick {
+    font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--dx-heat); display:flex; align-items:center; gap:9px;
+  }
+  .rig-hero h1 {
+    margin:6px 0 8px; font-family:var(--font-heading); font-weight:700; line-height:.98;
+    font-size:clamp(34px, 6.4vw, 68px); letter-spacing:-.01em;
+    background:linear-gradient(96deg, #fff 6%, var(--dx-heat) 46%, var(--dx-vapour) 96%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .rig-hero p { margin:0; font-size:15px; line-height:1.6; color:rgba(226,233,248,.82); max-width:66ch }
+  .dx:not(.dx-dark) .rig-hero p { color:rgba(238,242,252,.88) }
+
+  /* ── the viewport ─────────────────────────────────────────────────── */
+  .rig-view {
+    position:relative; margin-top:12px; border-radius:22px; overflow:hidden;
+    min-height:min(76vh, 720px); height:min(76vh, 720px);
+    border:1px solid rgba(150,184,255,.2);
+    background:
+      radial-gradient(80% 52% at 50% 4%,  color-mix(in srgb, var(--dx-vapour) 12%, transparent), transparent 62%),
+      radial-gradient(72% 46% at 24% 100%, color-mix(in srgb, var(--dx-heat)  17%, transparent), transparent 64%),
+      linear-gradient(178deg, rgba(9,13,27,.94), rgba(7,10,22,.98));
+    box-shadow:0 32px 90px -40px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.06);
+    touch-action:none;
+  }
+  .dx:not(.dx-dark) .rig-view {
+    background:
+      radial-gradient(80% 52% at 50% 4%,  color-mix(in srgb, var(--dx-vapour) 13%, transparent), transparent 62%),
+      radial-gradient(72% 46% at 24% 100%, color-mix(in srgb, var(--dx-heat)  16%, transparent), transparent 64%),
+      linear-gradient(178deg, #131a31, #0f1527);
+  }
+  /* ground haze, so the rig stands on something */
+  .rig-floor {
+    position:absolute; left:0; right:0; bottom:0; height:32%; pointer-events:none;
+    background:linear-gradient(180deg, transparent, color-mix(in srgb, var(--dx-heat) 13%, transparent) 62%, transparent);
+    filter:blur(6px);
+  }
+  .rig-stage {
+    position:absolute; inset:0; perspective:1650px; perspective-origin:50% 46%;
+    cursor:grab;
+  }
+  .rig-stage.grabbing { cursor:grabbing }
+  .rig-cam {
+    position:absolute; left:0; right:0; top:0; bottom:0;
+    transform-style:preserve-3d; will-change:transform;
+    transform:
+      scale(var(--rig-zoom, 1))
+      rotateX(var(--rig-tilt, 10deg))
+      rotateY(var(--rig-rot, -20deg))
+      translateY(var(--rig-pan, 0px));
+    transition:transform 940ms cubic-bezier(.22,.61,.36,1);
+  }
+  .rig-cam.dragging { transition:none }
+  .rig-cam > * { position:absolute; left:50%; top:50%; transform-style:preserve-3d }
+  .rig-p, .rig-f { pointer-events:none }
+
+  /* ── vessel skin ──────────────────────────────────────────────────── */
+  .rig-shell {
+    background:linear-gradient(90deg,
+      color-mix(in srgb, var(--dx-vapour) 30%, transparent),
+      color-mix(in srgb, var(--dx-vapour)  6%, transparent) 44%,
+      color-mix(in srgb, var(--dx-vapour) 30%, transparent));
+    border-top:1px solid color-mix(in srgb, var(--dx-vapour) 52%, transparent);
+    border-bottom:1px solid color-mix(in srgb, var(--dx-vapour) 52%, transparent);
+    backface-visibility:visible;
+    transition:opacity var(--dx-t-base) var(--dx-ease), background var(--dx-t-slow) var(--dx-ease);
+  }
+  .rig-skirt {
+    background:linear-gradient(90deg,
+      color-mix(in srgb, var(--dx-heat) 26%, transparent),
+      color-mix(in srgb, var(--dx-heat)  5%, transparent) 46%,
+      color-mix(in srgb, var(--dx-heat) 26%, transparent));
+    border-top:1px solid color-mix(in srgb, var(--dx-heat) 46%, transparent);
+  }
+  .rig-head {
+    border-radius:50%; border:1px solid color-mix(in srgb, var(--dx-vapour) 56%, transparent);
+    background:radial-gradient(circle at 42% 34%,
+      color-mix(in srgb, var(--dx-vapour) 34%, transparent),
+      color-mix(in srgb, var(--dx-vapour) 10%, transparent) 72%, transparent);
+  }
+  .rig-tray {
+    border-radius:50%; border:1.4px solid color-mix(in srgb, var(--dx-liquid) 72%, transparent);
+    background:radial-gradient(circle at 50% 50%,
+      color-mix(in srgb, var(--dx-liquid) 26%, transparent),
+      color-mix(in srgb, var(--dx-liquid) 9%, transparent) 70%, transparent);
+    box-shadow:0 0 14px color-mix(in srgb, var(--dx-liquid) 26%, transparent);
+    transition:border-color var(--dx-t-base) var(--dx-ease), box-shadow var(--dx-t-base) var(--dx-ease);
+  }
+  .rig-plat {
+    border-radius:50%; border:2px solid color-mix(in srgb, var(--dx-gold) 40%, transparent);
+    background:radial-gradient(circle at 50% 50%, transparent 64%,
+      color-mix(in srgb, var(--dx-gold) 13%, transparent) 66%, transparent 82%);
+  }
+  .rig-ladder {
+    background:repeating-linear-gradient(180deg,
+      color-mix(in srgb, var(--dx-gold) 46%, transparent) 0 1.5px, transparent 1.5px 11px);
+    border-left:1.5px solid color-mix(in srgb, var(--dx-gold) 40%, transparent);
+    border-right:1.5px solid color-mix(in srgb, var(--dx-gold) 40%, transparent);
+    opacity:.75;
+  }
+  .rig-fur { background:color-mix(in srgb, var(--dx-heat) 17%, transparent);
+             border:1px solid color-mix(in srgb, var(--dx-heat) 52%, transparent) }
+  .rig-fur.t { background:color-mix(in srgb, var(--dx-heat) 25%, transparent) }
+  .rig-fur.k { background:color-mix(in srgb, var(--dx-heat) 9%, transparent) }
+  .rig-flame {
+    border-radius:50% 50% 46% 46%;
+    background:radial-gradient(60% 100% at 50% 100%,
+      var(--dx-gold), color-mix(in srgb, var(--dx-orange) 82%, transparent) 42%,
+      color-mix(in srgb, var(--dx-red) 26%, transparent) 64%, transparent 82%);
+    box-shadow:0 0 26px color-mix(in srgb, var(--dx-orange) 60%, transparent);
+    /* no blur(): a filter flattens this out of the 3D scene and it lands
+       somewhere else entirely. The soft edge comes from the gradient. */
+    animation:rigFlame 2.6s var(--dx-ease) infinite;
+  }
+  /* opacity and glow only: animating `transform` here would replace the
+     translate3d that puts the flame inside the heater */
+  @keyframes rigFlame {
+    0%,100% { opacity:.66; box-shadow:0 0 18px color-mix(in srgb, var(--dx-orange) 44%, transparent) }
+    50%     { opacity:1;   box-shadow:0 0 34px color-mix(in srgb, var(--dx-orange) 74%, transparent) }
+  }
+  .rig-stack { background:linear-gradient(180deg,
+      color-mix(in srgb, var(--dx-heat) 34%, transparent),
+      color-mix(in srgb, var(--dx-heat) 12%, transparent));
+    border:1px solid color-mix(in srgb, var(--dx-heat) 40%, transparent) }
+  .rig-cond, .rig-drum {
+    background:linear-gradient(180deg,
+      color-mix(in srgb, var(--dx-f2) 34%, transparent),
+      color-mix(in srgb, var(--dx-f2)  8%, transparent) 52%,
+      color-mix(in srgb, var(--dx-f2) 30%, transparent));
+    border-top:1px solid color-mix(in srgb, var(--dx-f2) 50%, transparent);
+  }
+  .rig-fin { background:color-mix(in srgb, var(--dx-f2) 40%, transparent); border-radius:2px }
+  .rig-strip {
+    background:linear-gradient(180deg,
+      color-mix(in srgb, currentColor 40%, transparent),
+      color-mix(in srgb, currentColor 12%, transparent));
+    border:1px solid color-mix(in srgb, currentColor 46%, transparent); border-radius:3px;
+  }
+
+  /* ── piping, coloured by what it carries ──────────────────────────── */
+  .rig-pipe { border-radius:2px; background:currentColor; opacity:.92;
+              transition:opacity var(--dx-t-base) var(--dx-ease), filter var(--dx-t-base) var(--dx-ease) }
+  .rig-pipe.cross { opacity:.55 }
+  .rig-pipe.crude { color:color-mix(in srgb, var(--dx-crude) 76%, transparent) }
+  .rig-pipe.hot   { color:color-mix(in srgb, var(--dx-orange) 74%, transparent) }
+  .rig-pipe.vap   { color:color-mix(in srgb, var(--dx-vapour) 70%, transparent) }
+  .rig-pipe.cool  { color:color-mix(in srgb, var(--dx-f2) 74%, transparent) }
+  .rig-pipe.res   { color:color-mix(in srgb, var(--dx-f8) 74%, transparent) }
+  .rig-pipe.steam { color:color-mix(in srgb, var(--dx-info) 56%, transparent) }
+  .rig-pipe.f1,.rig-strip.f1 { color:var(--dx-f1) } .rig-pipe.f2,.rig-strip.f2 { color:var(--dx-f2) }
+  .rig-pipe.f3,.rig-strip.f3 { color:var(--dx-f3) } .rig-pipe.f4,.rig-strip.f4 { color:var(--dx-f4) }
+  .rig-pipe.f5,.rig-strip.f5 { color:var(--dx-f5) } .rig-pipe.f6,.rig-strip.f6 { color:var(--dx-f6) }
+  .rig-pipe.f7,.rig-strip.f7 { color:var(--dx-f7) } .rig-pipe.f8,.rig-strip.f8 { color:var(--dx-f8) }
+
+  /* ── traffic ──────────────────────────────────────────────────────── */
+  .rig-f i {
+    display:block; width:5px; height:5px; border-radius:50%; margin:-2.5px 0 0 -2.5px;
+    background:currentColor; box-shadow:0 0 10px currentColor;
+    animation-name:rigRun; animation-timing-function:linear; animation-iteration-count:infinite;
+  }
+  @keyframes rigRun {
+    0%   { transform:translate3d(0,0,0); opacity:0 }
+    9%   { opacity:1 }
+    82%  { opacity:1 }
+    100% { transform:translate3d(var(--fx,0px), var(--fy,0px), 0); opacity:0 }
+  }
+  .rig-f.crude { color:var(--dx-crude) }  .rig-f.hot   { color:var(--dx-orange) }
+  .rig-f.vap   { color:var(--dx-vapour) } .rig-f.liq   { color:var(--dx-liquid) }
+  .rig-f.cool  { color:var(--dx-f2) }     .rig-f.res   { color:var(--dx-f8) }
+  .rig-f.steam { color:var(--dx-info); }
+  .rig-f.f1 { color:var(--dx-f1) } .rig-f.f2 { color:var(--dx-f2) }
+  .rig-f.f3 { color:var(--dx-f3) } .rig-f.f4 { color:var(--dx-f4) }
+  .rig-f.f5 { color:var(--dx-f5) } .rig-f.f6 { color:var(--dx-f6) }
+  .rig-f.f7 { color:var(--dx-f7) } .rig-f.f8 { color:var(--dx-f8) }
+  .rig-scene.paused .rig-f i,
+  .rig-scene.paused .rig-flame { animation-play-state:paused }
+  .rig-scene.paused .rig-f i { opacity:.62 }
+
+  /* ── selection: the whole scene re-weights on one class ───────────── */
+  /* these are real buttons, for the keyboard and for screen readers, so the
+     browser's own chrome has to be taken off or it draws a box in mid-air */
+  .rig-hit { background:transparent; cursor:pointer; border-radius:10px; border:0; padding:0;
+             appearance:none; -webkit-appearance:none; font:inherit; color:inherit;
+             pointer-events:auto; -webkit-tap-highlight-color:transparent }
+  .rig-hit:focus-visible { outline:2px solid var(--dx-violet); outline-offset:2px }
+  .rig-scene.inspect .rig-hit {
+    background:color-mix(in srgb, var(--dx-violet) 7%, transparent);
+    box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--dx-violet) 46%, transparent);
+  }
+  .rig-scene.inspect .rig-hit:hover,
+  .rig-hit.hov { background:color-mix(in srgb, var(--dx-violet) 13%, transparent);
+                 box-shadow:inset 0 0 0 1.5px var(--dx-violet) }
+  .rig-hit.on  { background:color-mix(in srgb, var(--dx-magenta) 12%, transparent);
+                 box-shadow:inset 0 0 0 1.5px var(--dx-magenta) }
+
+  .rig-scene.has-sel .rig-p { opacity:.3 }
+  .rig-scene.has-sel .rig-f { opacity:.22 }
+  .rig-scene .rig-p, .rig-scene .rig-f { transition:opacity var(--dx-t-slow) var(--dx-ease) }
+  .rig-scene.sel-tower     .rig-shell, .rig-scene.sel-tower  .rig-head,
+  .rig-scene.sel-tower     .rig-plat,
+  .rig-scene.sel-trays     .rig-tray,
+  .rig-scene.sel-furnace   .rig-fur,   .rig-scene.sel-furnace .rig-flame,
+  .rig-scene.sel-furnace   .rig-stack,
+  .rig-scene.sel-crude     .rig-pipe.crude, .rig-scene.sel-crude .rig-f.crude,
+  .rig-scene.sel-feed      .rig-pipe.hot,   .rig-scene.sel-feed  .rig-f.hot,
+  .rig-scene.sel-overhead  .rig-pipe.vap,   .rig-scene.sel-overhead .rig-f.vap,
+  .rig-scene.sel-condenser .rig-cond,  .rig-scene.sel-condenser .rig-fin,
+  .rig-scene.sel-drum      .rig-drum,
+  .rig-scene.sel-reflux    .rig-pipe.cool,  .rig-scene.sel-reflux .rig-f.cool,
+  .rig-scene.sel-sidedraw  .rig-pipe.draw,  .rig-scene.sel-sidedraw .rig-strip,
+  .rig-scene.sel-sidedraw  .rig-f.draw,
+  .rig-scene.sel-reboiler  .rig-pipe.res,   .rig-scene.sel-reboiler .rig-skirt,
+  .rig-scene.sel-reboiler  .rig-f.res,      .rig-scene.sel-reboiler .rig-pipe.steam
+    { opacity:1; box-shadow:0 0 16px color-mix(in srgb, currentColor 70%, transparent) }
+
+  /* product emphasis — the selected stream leads, the rest step back */
+  .rig-scene.has-prod .rig-pipe.draw, .rig-scene.has-prod .rig-strip,
+  .rig-scene.has-prod .rig-f.draw { opacity:.16 }
+  .rig-scene.prod-naphtha  .rig-pipe.f3, .rig-scene.prod-naphtha  .rig-strip.f3, .rig-scene.prod-naphtha  .rig-f.f3,
+  .rig-scene.prod-kerosene .rig-pipe.f4, .rig-scene.prod-kerosene .rig-strip.f4, .rig-scene.prod-kerosene .rig-f.f4,
+  .rig-scene.prod-diesel   .rig-pipe.f5, .rig-scene.prod-diesel   .rig-strip.f5, .rig-scene.prod-diesel   .rig-f.f5,
+  .rig-scene.prod-gasoil   .rig-pipe.f6, .rig-scene.prod-gasoil   .rig-strip.f6, .rig-scene.prod-gasoil   .rig-f.f6,
+  .rig-scene.prod-fueloil  .rig-pipe.f7, .rig-scene.prod-fueloil  .rig-strip.f7, .rig-scene.prod-fueloil  .rig-f.f7
+    { opacity:1 !important; box-shadow:0 0 18px color-mix(in srgb, currentColor 78%, transparent) }
+  .rig-scene.prod-gas     .rig-pipe.vap, .rig-scene.prod-gas     .rig-f.vap,
+  .rig-scene.prod-lpg     .rig-pipe.cool,.rig-scene.prod-lpg     .rig-f.cool,
+  .rig-scene.prod-residue .rig-pipe.res, .rig-scene.prod-residue .rig-f.res
+    { opacity:1 !important; box-shadow:0 0 18px color-mix(in srgb, currentColor 78%, transparent) }
+
+  /* conceptual thermal view: cool overhead to hot sump */
+  .rig-scene.therm .rig-shell {
+    background:linear-gradient(180deg,
+      color-mix(in srgb, var(--dx-f1) 42%, transparent),
+      color-mix(in srgb, var(--dx-f4) 34%, transparent) 46%,
+      color-mix(in srgb, var(--dx-f7) 46%, transparent));
+  }
+  .rig-scene.therm .rig-tray { border-color:color-mix(in srgb, var(--dx-gold) 66%, transparent) }
+
+  /* ── name tags ────────────────────────────────────────────────────── */
+  .rig-tag {
+    font-size:9.5px; letter-spacing:.13em; text-transform:uppercase; font-weight:700;
+    white-space:nowrap; pointer-events:none; color:rgba(220,231,250,.62);
+    opacity:0; transition:opacity var(--dx-t-base) var(--dx-ease), color var(--dx-t-base) var(--dx-ease);
+    transform-origin:50% 100%;
+  }
+  .rig-scene.inspect .rig-tag { opacity:.82 }
+  .rig-tag.hov { opacity:1; color:var(--dx-violet) }
+  .rig-tag.on  { opacity:1; color:var(--dx-magenta) }
+
+  /* ── floating chrome inside the viewport ──────────────────────────── */
+  .rig-ov { position:absolute; z-index:4; display:flex; gap:7px; flex-wrap:wrap }
+  .rig-ov.tl { left:14px; top:14px }
+  .rig-ov.tr { right:14px; top:14px }
+  .rig-ov.bl { left:14px; bottom:14px; align-items:center }
+  .rig-ov.bc { left:50%; bottom:14px; transform:translateX(-50%); align-items:center }
+  .rig-chip {
+    display:inline-flex; align-items:center; gap:7px; min-height:34px; padding:5px 12px;
+    border-radius:999px; font-size:11.5px; letter-spacing:.06em; font-weight:600;
+    border:1px solid rgba(160,190,255,.2); background:rgba(10,15,31,.72);
+    color:rgba(226,233,248,.86); cursor:pointer; backdrop-filter:blur(7px);
+    transition:background var(--dx-t-base) var(--dx-ease), color var(--dx-t-base) var(--dx-ease),
+               border-color var(--dx-t-base) var(--dx-ease), transform var(--dx-t-base) var(--dx-ease);
+  }
+  .rig-chip:hover { background:rgba(26,36,68,.9); border-color:var(--dx-vapour); transform:translateY(-1px) }
+  .rig-chip:focus-visible { outline:2px solid var(--dx-violet); outline-offset:2px }
+  .rig-chip[data-on='1'] {
+    background:linear-gradient(180deg,
+      color-mix(in srgb, var(--dx-vapour) 30%, transparent),
+      color-mix(in srgb, var(--dx-vapour) 14%, transparent));
+    border-color:color-mix(in srgb, var(--dx-vapour) 58%, transparent);
+    color:#eaf7ff; box-shadow:0 0 20px -6px var(--dx-vapour);
+  }
+  .rig-chip.hot[data-on='1'] {
+    background:linear-gradient(180deg,
+      color-mix(in srgb, var(--dx-heat) 32%, transparent),
+      color-mix(in srgb, var(--dx-heat) 15%, transparent));
+    border-color:color-mix(in srgb, var(--dx-heat) 58%, transparent); box-shadow:0 0 20px -6px var(--dx-heat);
+  }
+  .rig-chip.vio[data-on='1'] {
+    background:linear-gradient(180deg,
+      color-mix(in srgb, var(--dx-violet) 34%, transparent),
+      color-mix(in srgb, var(--dx-violet) 16%, transparent));
+    border-color:color-mix(in srgb, var(--dx-violet) 62%, transparent); box-shadow:0 0 20px -6px var(--dx-violet);
+  }
+  .rig-seg { display:flex; gap:3px; padding:3px; border-radius:999px;
+             border:1px solid rgba(160,190,255,.2); background:rgba(10,15,31,.72);
+             backdrop-filter:blur(7px) }
+  .rig-seg .rig-chip { border-color:transparent; background:transparent; min-height:28px; padding:3px 13px }
+
+  .rig-status {
+    display:inline-flex; align-items:center; gap:9px; padding:6px 13px; border-radius:999px;
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase; font-weight:700;
+    border:1px solid rgba(160,190,255,.2); background:rgba(10,15,31,.74);
+    color:rgba(226,233,248,.84); backdrop-filter:blur(7px);
+  }
+  .rig-status i { width:7px; height:7px; border-radius:50%; background:var(--dx-green);
+                  box-shadow:0 0 9px var(--dx-green) }
+  .rig-status.paused i { background:var(--dx-gold); box-shadow:0 0 9px var(--dx-gold) }
+  .rig-status.inspect i { background:var(--dx-violet); box-shadow:0 0 9px var(--dx-violet) }
+  .rig-hint { font-size:11px; letter-spacing:.04em; color:rgba(206,218,242,.56); text-transform:none;
+              font-weight:400 }
+
+  /* ── contextual information panel ─────────────────────────────────── */
+  .rig-info {
+    position:absolute; z-index:6; right:14px; bottom:64px; width:min(340px, calc(100% - 28px));
+    border-radius:16px; padding:15px 16px 16px;
+    border:1px solid color-mix(in srgb, var(--dx-violet) 40%, rgba(160,190,255,.2));
+    background:linear-gradient(180deg, rgba(14,20,40,.95), rgba(10,14,30,.97));
+    box-shadow:0 26px 60px -28px rgba(0,0,0,.95), inset 0 1px 0 rgba(255,255,255,.05);
+    backdrop-filter:blur(12px);
+    animation:rigPanelIn 320ms cubic-bezier(.22,.61,.36,1) both;
+  }
+  @keyframes rigPanelIn {
+    from { opacity:0; transform:translate3d(0,10px,0) scale(.985); filter:blur(5px) }
+    to   { opacity:1; transform:none; filter:blur(0) }
+  }
+  .rig-info-h { display:flex; align-items:flex-start; gap:11px }
+  .rig-ico {
+    flex:0 0 auto; width:34px; height:34px; border-radius:10px; display:grid; place-items:center;
+    border:1px solid color-mix(in srgb, var(--dx-violet) 46%, transparent);
+    background:color-mix(in srgb, var(--dx-violet) 16%, transparent);
+  }
+  .rig-ico svg { width:19px; height:19px; display:block }
+  .rig-info h3 { margin:0; font-family:var(--font-heading); font-size:19px; line-height:1.1; color:#f2f6ff }
+  .rig-info .role { margin:2px 0 0; font-size:10.5px; letter-spacing:.13em; text-transform:uppercase;
+                    color:var(--dx-violet); font-weight:700 }
+  .rig-x {
+    margin-left:auto; width:28px; height:28px; flex:0 0 auto; border-radius:8px; cursor:pointer;
+    border:1px solid rgba(160,190,255,.22); background:transparent; color:rgba(222,231,250,.8);
+    display:grid; place-items:center; font-size:15px; line-height:1;
+    transition:background var(--dx-t-base) var(--dx-ease), color var(--dx-t-base) var(--dx-ease);
+  }
+  .rig-x:hover { background:rgba(255,255,255,.09); color:#fff }
+  .rig-lab { margin:13px 0 3px; font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
+             color:rgba(198,212,240,.58); font-weight:700 }
+  .rig-info p { margin:0; font-size:13px; line-height:1.62; color:rgba(228,235,250,.9) }
+  .rig-info .rig-foot { margin-top:13px; font-size:10.5px; line-height:1.5;
+                        color:rgba(196,210,238,.5); border-top:1px solid rgba(160,190,255,.14);
+                        padding-top:9px }
+
+  /* ── the 2D flowsheet ─────────────────────────────────────────────── */
+  .rig-flow2d { position:absolute; inset:0; display:grid; place-items:center; padding:22px 16px 62px;
+                animation:rigFade 420ms var(--dx-ease) both }
+  @keyframes rigFade { from { opacity:0; transform:scale(.985) } to { opacity:1; transform:none } }
+  .rig-flow2d svg { width:100%; height:100%; overflow:visible }
+  .rig-n { cursor:pointer }
+  .rig-n .body { transition:fill var(--dx-t-base) var(--dx-ease), stroke var(--dx-t-base) var(--dx-ease),
+                            stroke-width var(--dx-t-base) var(--dx-ease) }
+  .rig-n .body { fill:rgba(18,26,50,.86); stroke:color-mix(in srgb, var(--dx-vapour) 46%, transparent);
+                 stroke-width:1.4 }
+  .rig-n .cap  { fill:rgba(228,236,252,.9); font-size:10px; letter-spacing:.07em;
+                 font-family:var(--font-heading); pointer-events:none }
+  .rig-n:hover .body { stroke:var(--dx-violet); stroke-width:2.2 }
+  .rig-n.on   .body { stroke:var(--dx-magenta); stroke-width:2.6;
+                      fill:color-mix(in srgb, var(--dx-magenta) 16%, rgba(18,26,50,.9)) }
+  .rig-n:focus-visible { outline:none } .rig-n:focus-visible .body { stroke:var(--dx-violet); stroke-width:2.6 }
+  .rig-flow2d.has-sel .rig-n { opacity:.42 } .rig-flow2d.has-sel .rig-n.on { opacity:1 }
+  .rig-l { stroke-width:2; fill:none; transition:opacity var(--dx-t-base) var(--dx-ease) }
+  .rig-l.crude { stroke:var(--dx-crude) } .rig-l.hot { stroke:var(--dx-orange) }
+  .rig-l.vap { stroke:var(--dx-vapour) }  .rig-l.cool { stroke:var(--dx-f2) }
+  .rig-l.res { stroke:var(--dx-f8) }
+  .rig-l.f1 { stroke:var(--dx-f1) } .rig-l.f2 { stroke:var(--dx-f2) }
+  .rig-l.f3 { stroke:var(--dx-f3) } .rig-l.f4 { stroke:var(--dx-f4) }
+  .rig-l.f5 { stroke:var(--dx-f5) } .rig-l.f6 { stroke:var(--dx-f6) }
+  .rig-l.f7 { stroke:var(--dx-f7) } .rig-l.f8 { stroke:var(--dx-f8) }
+  .rig-l.anim { stroke-dasharray:7 9; animation:rigDash 1.5s linear infinite }
+  @keyframes rigDash { to { stroke-dashoffset:-32 } }
+  .rig-flow2d.paused .rig-l.anim { animation-play-state:paused }
+  .rig-flow2d.has-prod .rig-l.draw { opacity:.18 }
+  .rig-flow2d .rig-l.draw.on { opacity:1; stroke-width:3.4 }
+  .rig-ax { fill:rgba(202,215,242,.6); font-size:9px; letter-spacing:.12em;
+            font-family:var(--font-heading); pointer-events:none }
+
+  /* ── product cards ────────────────────────────────────────────────── */
+  .rig-prods { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px; margin-top:14px }
+  @media (max-width:1180px){ .rig-prods { grid-template-columns:repeat(3, minmax(0,1fr)) } }
+  @media (max-width: 860px){ .rig-prods { grid-template-columns:repeat(2, minmax(0,1fr)) } }
+  @media (max-width: 520px){ .rig-prods { grid-template-columns:minmax(0,1fr) } }
+  .rig-card {
+    position:relative; overflow:hidden; text-align:left; cursor:pointer;
+    border-radius:15px; padding:13px 14px 14px; min-height:112px;
+    border:1px solid rgba(160,190,255,.16); background:rgba(12,17,34,.66);
+    color:rgba(230,236,250,.92);
+    transition:transform var(--dx-t-base) var(--dx-ease), border-color var(--dx-t-base) var(--dx-ease),
+               background var(--dx-t-base) var(--dx-ease), box-shadow var(--dx-t-base) var(--dx-ease);
+  }
+  .rig-card::before {
+    content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:currentColor;
+    box-shadow:0 0 18px currentColor; opacity:.9;
+  }
+  .rig-card::after {
+    content:''; position:absolute; inset:0; pointer-events:none; opacity:0;
+    background:radial-gradient(120% 90% at 0% 50%, color-mix(in srgb, currentColor 18%, transparent), transparent 62%);
+    transition:opacity var(--dx-t-base) var(--dx-ease);
+  }
+  .rig-card:hover { transform:translateY(-3px); border-color:color-mix(in srgb, currentColor 52%, transparent) }
+  .rig-card:hover::after { opacity:1 }
+  .rig-card:focus-visible { outline:2px solid var(--dx-violet); outline-offset:2px }
+  .rig-card[data-on='1'] {
+    border-color:currentColor; background:rgba(18,25,48,.9);
+    box-shadow:0 0 0 1px color-mix(in srgb, currentColor 42%, transparent), 0 18px 44px -26px currentColor;
+  }
+  .rig-card[data-on='1']::after { opacity:1 }
+  .rig-card .nm { display:block; font-family:var(--font-heading); font-size:17px; color:#f3f7ff; line-height:1.15 }
+  .rig-card .rg { display:block; margin-top:3px; font-size:10.5px; letter-spacing:.1em;
+                  text-transform:uppercase; color:currentColor; font-weight:700 }
+  .rig-card .nt { display:block; margin-top:7px; font-size:11.5px; line-height:1.5;
+                  color:rgba(214,224,246,.74) }
+  .rig-card.f1 { color:var(--dx-f1) } .rig-card.f2 { color:var(--dx-f2) }
+  .rig-card.f3 { color:var(--dx-f3) } .rig-card.f4 { color:var(--dx-f4) }
+  .rig-card.f5 { color:var(--dx-f5) } .rig-card.f6 { color:var(--dx-f6) }
+  .rig-card.f7 { color:var(--dx-f7) } .rig-card.f8 { color:var(--dx-f8) }
+
+  .rig-h2 { display:flex; align-items:baseline; gap:13px; margin:34px 2px 4px; flex-wrap:wrap }
+  .rig-h2 h2 { margin:0; font-family:var(--font-heading); font-size:clamp(21px,3vw,30px); color:#f1f5ff }
+  .rig-h2 span { font-size:12px; color:rgba(206,218,242,.6) }
+  .rig-h2 i { flex:1; min-width:30px; height:1px;
+              background:linear-gradient(90deg, color-mix(in srgb, var(--dx-heat) 48%, transparent), transparent) }
+  .rig-grp { margin:16px 2px 6px; font-size:10.5px; letter-spacing:.18em; text-transform:uppercase;
+             font-weight:700; color:rgba(208,220,244,.56) }
+
+  /* ── the process story ────────────────────────────────────────────── */
+  .rig-steps { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:10px; margin-top:10px }
+  .rig-step {
+    position:relative; text-align:left; cursor:pointer; border-radius:14px; padding:14px;
+    border:1px solid rgba(160,190,255,.16); background:rgba(12,17,34,.62); color:rgba(228,235,250,.9);
+    transition:transform var(--dx-t-base) var(--dx-ease), border-color var(--dx-t-base) var(--dx-ease),
+               background var(--dx-t-base) var(--dx-ease);
+  }
+  .rig-step:hover { transform:translateY(-3px); border-color:color-mix(in srgb, var(--dx-heat) 52%, transparent) }
+  .rig-step:focus-visible { outline:2px solid var(--dx-violet); outline-offset:2px }
+  .rig-step[data-on='1'] { border-color:var(--dx-heat); background:rgba(24,20,34,.86);
+                           box-shadow:0 16px 40px -26px var(--dx-heat) }
+  .rig-step b { display:block; font-family:var(--font-heading); font-size:12px; letter-spacing:.16em;
+                color:var(--dx-heat) }
+  .rig-step .t { display:block; margin-top:5px; font-family:var(--font-heading); font-size:16px; color:#f2f6ff }
+  .rig-step .d { display:block; margin-top:6px; font-size:11.5px; line-height:1.55; color:rgba(212,223,246,.72) }
+
+  .rig-note { margin:26px 2px 0; font-size:11.5px; line-height:1.6; color:rgba(198,211,238,.56);
+              max-width:92ch }
+  .rig-sig { margin-top:30px; padding-top:16px; border-top:1px solid rgba(160,190,255,.14);
+             text-align:center; font-size:11px; letter-spacing:.24em; text-transform:uppercase;
+             color:rgba(212,223,246,.62) }
+  .rig-sig b { font-weight:700; letter-spacing:.24em }
+
+  /* ── tour ─────────────────────────────────────────────────────────── */
+  .rig-tour {
+    position:absolute; z-index:7; left:50%; transform:translateX(-50%); bottom:62px;
+    width:min(520px, calc(100% - 28px)); border-radius:14px; padding:12px 14px;
+    border:1px solid color-mix(in srgb, var(--dx-heat) 42%, transparent);
+    background:linear-gradient(180deg, rgba(22,18,32,.95), rgba(12,13,26,.97));
+    box-shadow:0 24px 56px -28px rgba(0,0,0,.9); backdrop-filter:blur(10px);
+    animation:rigTourIn 320ms cubic-bezier(.22,.61,.36,1) both;
+    display:flex; align-items:center; gap:12px;
+  }
+  /* keeps the centring translate: a plain `transform:none` would throw the
+     panel to the left as the animation lands */
+  @keyframes rigTourIn {
+    from { opacity:0; transform:translateX(-50%) translateY(10px) }
+    to   { opacity:1; transform:translateX(-50%) }
+  }
+  .rig-tour .n { font-family:var(--font-heading); font-size:12px; letter-spacing:.14em;
+                 color:var(--dx-heat); white-space:nowrap }
+  .rig-tour .b { flex:1; min-width:0 }
+  .rig-tour .b b { display:block; font-family:var(--font-heading); font-size:16px; color:#f4f7ff }
+  .rig-tour .b span { display:block; margin-top:3px; font-size:11.5px; line-height:1.5;
+                      color:rgba(214,224,246,.78) }
+
+  /* ── responsive ───────────────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    .rig-view { height:min(62vh, 520px); min-height:380px; border-radius:18px }
+    .rig-info { right:0; left:0; bottom:0; width:auto; border-radius:18px 18px 0 0;
+                max-height:56%; overflow:auto; padding-bottom:20px;
+                animation:rigSheetIn 320ms cubic-bezier(.22,.61,.36,1) both }
+    @keyframes rigSheetIn { from { opacity:0; transform:translate3d(0,100%,0) } to { opacity:1; transform:none } }
+    .rig-info::before { content:''; display:block; width:38px; height:4px; border-radius:99px;
+                        background:rgba(180,200,240,.34); margin:-4px auto 11px }
+    .rig-ov.bc { bottom:10px } .rig-ov.bl { display:none }
+    .rig-tour { bottom:58px }
+    .rig-chip { min-height:38px; padding:7px 13px }
+    .rig-seg .rig-chip { min-height:32px }
+  }
+  @media (max-width: 560px) {
+    .rig-wrap { padding:0 14px 32px }
+    .rig-view { height:min(58vh, 440px) }
+    .rig-ov.tl, .rig-ov.tr { left:10px; right:10px; top:10px }
+    .rig-ov.tr { justify-content:flex-end }
+  }
+
+  /* ── reduced motion: everything still works, nothing drifts ───────── */
+  @media (prefers-reduced-motion: reduce) {
+    .rig-page::after { animation:none }
+    .rig-f i { animation:none; opacity:.85 }
+    .rig-flame { animation:none }
+    .rig-cam { transition:none }
+    .rig-l.anim { animation:none }
+    .rig-info, .rig-tour, .rig-flow2d { animation:none }
+    .rig-card:hover, .rig-step:hover, .rig-back:hover, .rig-chip:hover { transform:none }
+  }
+
   /* ═══ crude-oil tower ═════════════════════════════════════════════════
      Original artwork, drawn as SVG rather than photographed: it can be
      exploded, animated and highlighted per stream, and it carries no
@@ -1130,6 +1705,15 @@
         </svg>
       </div>
     </div>
+
+    <div class="dx-rigcta">
+      <div class="dx-rigcta-b">
+        <div class="dx-kicker" style="color:var(--dx-heat)">Interactive exhibit</div>
+        <h3>Walk through the industrial column</h3>
+        <p>The tower above is the diagram. The next page is the unit itself &mdash; turn it, open the furnace, the trays, the condenser, and follow any product from the pump to the pipe rack.</p>
+      </div>
+      <button class="btn btn-primary dx-rigcta-go" onClick="{{ openRig }}">Explore the industrial column &rarr;</button>
+    </div>
   </section>
 
   <!-- ══ explore the simulator ════════════════════════════════════════════ -->
@@ -1154,6 +1738,173 @@
 
   <div class="dx-sig"><b>Shafin Ahamed Neon</b></div>
 </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isRig }}">
+<div class="rig-page">
+  <div class="rig-wrap">
+
+    <div class="rig-top">
+      <button class="rig-back" onClick="{{ leaveRig }}">&larr;&#160;DISTILLEX</button>
+      <span style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(206,218,242,.5)">Industrial unit</span>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="rig-chip" onClick="{{ rigOut }}">Open the simulator</button>
+        <button class="rig-chip" onClick="{{ toggleTheme }}">{{ themeLabel }}</button>
+      </div>
+    </div>
+
+    <header class="rig-hero">
+      <div class="rig-kick"><span class="dx-dot live" aria-hidden="true"></span>Atmospheric distillation</div>
+      <h1>Crude oil distillation</h1>
+      <p>Explore how crude oil is separated into useful petroleum fractions inside an industrial distillation column. Turn the unit, open any component, and follow a stream from the pump to the product.</p>
+    </header>
+
+    <div class="rig-view" style="{{ rigSpeedStyle }}">
+      <i class="rig-floor" aria-hidden="true"></i>
+
+      <sc-if value="{{ rigIs3D }}">
+        <div class="rig-stage" tabindex="0" role="application" aria-label="Interactive three-dimensional crude oil distillation unit. Drag to turn it, or use the arrow keys. Components can be opened for an explanation."
+             onPointerLeave="{{ rigUnhover }}">
+          <div class="{{ rigWrapCls }}" style="position:absolute;inset:0;transform-style:preserve-3d">
+            <div class="rig-cam" style="{{ rigCamStyle }}">
+              <sc-for list="{{ rig.parts }}" as="pt" hint-placeholder-count="120">
+                <i class="rig-p {{ pt.cls }}" style="{{ pt.style }}"></i>
+              </sc-for>
+              <sc-for list="{{ rig.flows }}" as="fl" hint-placeholder-count="40">
+                <span class="rig-f {{ fl.cls }}" style="{{ fl.style }}"><i style="{{ fl.dot }}"></i></span>
+              </sc-for>
+              <sc-for list="{{ rig.tags }}" as="tg" hint-placeholder-count="11">
+                <span class="{{ tg.cls }}" style="{{ tg.style }}">{{ tg.label }}</span>
+              </sc-for>
+              <sc-for list="{{ rig.hits }}" as="ht" hint-placeholder-count="11">
+                <button class="{{ ht.cls }}" data-rk="{{ ht.k }}" style="{{ ht.style }}"
+                        onClick="{{ rigPick }}" onMouseEnter="{{ rigHover }}" onMouseLeave="{{ rigUnhover }}"
+                        onFocus="{{ rigHover }}" onBlur="{{ rigUnhover }}"
+                        aria-label="{{ ht.name }}"></button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ rigIs2D }}">
+        <div class="{{ rigFlowCls }}">
+          <svg viewBox="0 0 1000 570" preserveAspectRatio="xMidYMid meet" role="img"
+               aria-label="Process flow diagram of an atmospheric crude distillation unit">
+            <sc-for list="{{ rigLines }}" as="ln" hint-placeholder-count="18">
+              <path class="{{ ln.cls }}" d="{{ ln.d }}"></path>
+            </sc-for>
+            <g stroke="color-mix(in srgb,var(--dx-liquid) 60%,transparent)" stroke-width="1.6">
+              <sc-for list="{{ rigTrayLines }}" as="tl" hint-placeholder-count="6">
+                <line x1="{{ tl.x1 }}" y1="{{ tl.y }}" x2="{{ tl.x2 }}" y2="{{ tl.y }}"></line>
+              </sc-for>
+            </g>
+            <sc-for list="{{ rigNodes }}" as="nd" hint-placeholder-count="11">
+              <g class="{{ nd.cls }}" data-rk="{{ nd.k }}" tabindex="0" role="button" aria-label="{{ nd.name }}"
+                 onClick="{{ rigPick }}" onMouseEnter="{{ rigHover }}" onMouseLeave="{{ rigUnhover }}">
+                <rect class="body" x="{{ nd.x }}" y="{{ nd.y }}" width="{{ nd.w }}" height="{{ nd.h }}" rx="{{ nd.rx }}"></rect>
+                <text class="cap" x="{{ nd.tx }}" y="{{ nd.ty }}" text-anchor="middle">{{ nd.cap }}</text>
+              </g>
+            </sc-for>
+            <text class="rig-ax" x="952" y="56" text-anchor="end">PRODUCTS &rarr;</text>
+          </svg>
+        </div>
+      </sc-if>
+
+      <div class="rig-ov tl">
+        <div class="rig-seg" role="group" aria-label="Representation" onClick="{{ rigMode }}">
+          <sc-for list="{{ rigModeBtns }}" as="mb" hint-placeholder-count="2">
+            <button class="rig-chip" data-rm="{{ mb.k }}" data-on="{{ mb.on }}" aria-pressed="{{ mb.cur }}">{{ mb.label }}</button>
+          </sc-for>
+        </div>
+        <sc-if value="{{ rigIs3D }}">
+          <div class="rig-seg" role="group" aria-label="Camera" onClick="{{ rigCam }}">
+            <sc-for list="{{ rigCamBtns }}" as="cb" hint-placeholder-count="5">
+              <button class="rig-chip" data-rc="{{ cb.k }}" data-on="{{ cb.on }}" aria-pressed="{{ cb.cur }}">{{ cb.label }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+      <div class="rig-ov tr">
+        <button class="rig-chip vio" data-on="{{ rigInspectOn }}" aria-pressed="{{ rigInspectOn }}" onClick="{{ rigInspect }}">Inspect</button>
+        <button class="rig-chip hot" data-on="{{ rigThermOn }}" aria-pressed="{{ rigThermOn }}" onClick="{{ rigTherm }}">Temperature</button>
+        <button class="rig-chip" onClick="{{ rigTourToggle }}">{{ rigTourLabel }}</button>
+      </div>
+
+      <div class="rig-ov bl">
+        <span class="{{ rigStatusCls }}"><i aria-hidden="true"></i>{{ rigStatus }}<span class="rig-hint">{{ rigHint }}</span></span>
+      </div>
+
+      <div class="rig-ov bc">
+        <div class="rig-seg" role="group" aria-label="Process animation">
+          <button class="rig-chip" onClick="{{ rigPlay }}">{{ rigPlayLabel }}</button>
+          <button class="rig-chip" onClick="{{ rigRestart }}">&#8635; Restart</button>
+        </div>
+        <div class="rig-seg" role="group" aria-label="Flow speed" onClick="{{ rigSpeed }}">
+          <sc-for list="{{ rigSpeedBtns }}" as="sb" hint-placeholder-count="3">
+            <button class="rig-chip" data-rs="{{ sb.k }}" data-on="{{ sb.on }}" aria-pressed="{{ sb.cur }}">{{ sb.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ rigTourOn }}">
+        <div class="rig-tour" role="status">
+          <span class="n">{{ rigTour.n }}</span>
+          <span class="b"><b>{{ rigTour.title }}</b><span>{{ rigTour.body }}</span></span>
+          <button class="rig-chip" onClick="{{ rigTourToggle }}">Skip</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ rigHasInfo }}">
+        <aside class="rig-info" role="dialog" aria-label="Component information">
+          <div class="rig-info-h">
+            <span class="rig-ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--dx-violet)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="{{ rigInfo.icon }}"></path></svg>
+            </span>
+            <div style="min-width:0">
+              <h3>{{ rigInfo.name }}</h3>
+              <p class="role">{{ rigInfo.role }}</p>
+            </div>
+            <button class="rig-x" onClick="{{ rigClose }}" aria-label="Close">&times;</button>
+          </div>
+          <div class="rig-lab">What it does</div>
+          <p>{{ rigInfo.what }}</p>
+          <div class="rig-lab">{{ rigInfo.whyLab }}</div>
+          <p>{{ rigInfo.why }}</p>
+          <div class="rig-foot">{{ rigInfo.foot }}</div>
+        </aside>
+      </sc-if>
+    </div>
+
+    <div class="rig-h2"><h2>Typical products</h2><i aria-hidden="true"></i><span>Select one to trace it through the unit</span></div>
+    <sc-for list="{{ rigGroups }}" as="gp" hint-placeholder-count="3">
+      <div class="rig-grp">{{ gp.name }}</div>
+      <div class="rig-prods">
+        <sc-for list="{{ gp.items }}" as="it" hint-placeholder-count="3">
+          <button class="{{ it.cls }}" data-rp="{{ it.k }}" data-on="{{ it.on }}" aria-pressed="{{ it.cur }}" onClick="{{ rigProd }}">
+            <span class="nm">{{ it.name }}</span>
+            <span class="rg">{{ it.range }}</span>
+            <span class="nt">{{ it.note }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-for>
+
+    <div class="rig-h2"><h2>How the process works</h2><i aria-hidden="true"></i><span>Each step opens the equipment that does it</span></div>
+    <div class="rig-steps" onClick="{{ rigStep }}">
+      <sc-for list="{{ rigSteps }}" as="sp" hint-placeholder-count="6">
+        <button class="rig-step" data-rk="{{ sp.k }}" data-on="{{ sp.on }}">
+          <b>{{ sp.no }}</b><span class="t">{{ sp.title }}</span><span class="d">{{ sp.body }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <p class="rig-note">This page is an educational visualisation of the atmospheric crude unit, not a simulation of one. The geometry is stylised, the traffic is illustrative, and no temperature, pressure, rate or yield is claimed for the unit shown — DISTILLEX computes none for a crude oil. The boiling ranges on the product cards are the conventional cut points quoted for an atmospheric tower in unit-operations texts; they describe the industry, not a calculation. The illustration is original artwork drawn for this page, so it carries no third-party licence. For the stage-by-stage arithmetic behind all of it, open the binary simulator.</p>
+
+    <div class="rig-sig"><b>Shafin Ahamed Neon</b></div>
+  </div>
 </div>
 </sc-if>
 
@@ -2301,6 +3052,87 @@ class Component extends DCLogic {
     ['residue',  'Residue',        'above 400', 'Atmospheric bottoms — bitumen, or feed to a vacuum tower.',                     8]
   ];
 
+  /** The industrial atmospheric crude unit, as one list of components.
+   *  Both the 3D rig and the 2D flowsheet are built from this list and key
+   *  their selection off `k`, so a component picked in one view is the same
+   *  object in the other — the 2D/3D link is an identity, not a lookup table
+   *  written twice.
+   *
+   *  Every description is qualitative. This page is an educational
+   *  visualisation of the process, not a simulation of it: no temperature,
+   *  pressure, yield or flow figure is claimed for the unit, because DISTILLEX
+   *  does not compute one for a crude oil. The binary engine elsewhere in the
+   *  app is untouched and is not consulted here.
+   *
+   *  [key, name, role, what it does, why it matters, zone, colour role]     */
+  static RIG = [
+    ['crude','Crude feed','Raw charge to the unit',
+     'Desalted crude oil is pumped from storage through a train of heat exchangers that recover heat from the hot products leaving the unit.',
+     'Preheating the charge against its own products is what makes the unit economic — every degree recovered here is a degree the furnace does not have to fire.',
+     'lower','crude'],
+    ['furnace','Furnace','Fired heater on the transfer line',
+     'The charge passes through tubes in a fired heater and leaves partly vaporised. The furnace supplies all the heat the separation needs.',
+     'Distillation separates by boiling point, so the feed must be brought to a condition where the lighter material is vapour and the heavier material is still liquid. The furnace is what creates that condition.',
+     'lower','heat'],
+    ['feed','Feed entry','Flash zone, lower tower',
+     'The partly vaporised charge enters the tower below the trays. The vapour disengages and rises; the unvaporised liquid falls into the stripping section.',
+     'The split that happens at this one point sets the ceiling on what the column above can recover — material that does not vaporise here can only leave in the bottoms.',
+     'lower','crude'],
+    ['tower','Fractionating tower','The column itself',
+     'A tall vessel held at a temperature that falls continuously from the flash zone to the overhead, with internals that keep rising vapour and falling liquid in contact along the whole height.',
+     'The temperature gradient is the instrument. Each height in the tower corresponds to a boiling range, which is why a product can be withdrawn at the elevation where it condenses.',
+     'middle','vapour'],
+    ['trays','Trays','Vapour–liquid contacting internals',
+     'Horizontal decks perforated with valves or caps. Vapour bubbles up through the liquid held on each tray while liquid flows across the tray and down to the one below.',
+     'One contact gives one approach to equilibrium. Stacking many in series is what turns a single crude flash into a set of separated fractions — the same stage-by-stage idea the binary simulator in DISTILLEX solves numerically.',
+     'middle','vapour'],
+    ['overhead','Overhead line','Top vapour outlet',
+     'The vapour that reaches the top of the tower without condensing leaves through the overhead line and runs to the condenser.',
+     'It carries the lightest material in the crude. Whatever leaves here has escaped every tray below, so the overhead composition is the sharpest statement of what the column achieved.',
+     'upper','vapour'],
+    ['condenser','Condenser','Overhead cooling',
+     'The overhead vapour is cooled against air or water and condenses. Gas that stays uncondensed is drawn off separately.',
+     'Condensing the overhead is what makes reflux possible. Without liquid at the top there is nothing to run back down the tower, and the trays above the feed would do no work.',
+     'upper','cool'],
+    ['drum','Reflux drum','Overhead accumulator',
+     'The condensed overhead collects in a horizontal drum. Uncondensed gas leaves the top, condensed liquid the bottom, and any water that separates is drawn from a boot.',
+     'The drum is the buffer the control system works against. It is where the split between reflux returned and distillate withdrawn is actually made.',
+     'upper','cool'],
+    ['reflux','Reflux return','Liquid returned to the top tray',
+     'Part of the condensed overhead is pumped back to the top of the tower instead of being taken as product.',
+     'Reflux is the descending liquid for the whole section above the feed. More reflux means a sharper separation and a larger furnace duty — the central trade-off in distillation, and the one the simulator lets you set directly.',
+     'upper','cool'],
+    ['sidedraw','Side draws','Intermediate product take-offs',
+     'Liquid is withdrawn from trays part-way up the tower, usually through small side strippers that steam or reboil the light ends back into the main column.',
+     'Side draws are why one tower can make several products at once. Each is taken at the elevation whose temperature matches the boiling range wanted, and stripping it sharpens the front end of the cut.',
+     'middle','gold'],
+    ['reboiler','Bottoms section','Stripping and residue withdrawal',
+     'The liquid reaching the bottom is stripped — in a crude unit usually with steam rather than a fired reboiler — and the residue is pumped away.',
+     'Stripping recovers valuable light material that would otherwise be lost into the residue, and the vapour it raises is the upward traffic for the trays below the feed.',
+     'lower','heat']
+  ];
+  /** The steps of the process, in order, each pointing at the component the
+   *  rig should highlight. The story and the equipment are the same objects. */
+  static RIG_STEPS = [
+    ['Crude preparation','Desalted crude is pumped from storage and preheated against the hot products leaving the unit.','crude'],
+    ['Heating','The fired heater raises the charge until part of it is vapour and part is still liquid.','furnace'],
+    ['Vaporisation','In the flash zone the vapour disengages and rises; the liquid falls into the stripping section.','feed'],
+    ['Vapour–liquid contact','On every tray, rising vapour and falling liquid meet and exchange material. Each contact sharpens the separation.','trays'],
+    ['Condensation','Vapour reaching the overhead is cooled and condensed, and collects in the reflux drum.','condenser'],
+    ['Product separation','Reflux returns to the top; products are withdrawn at the overhead, at the side draws and from the bottom.','sidedraw']
+  ];
+  /** Camera presets. Each is a target the camera eases to — nothing snaps. */
+  static RIG_CAM = [
+    ['over','Overview',   { rot:-20, tilt:10, zoom:0.86, pan:0   }],
+    ['iso','Isometric',   { rot:-34, tilt:18, zoom:0.88, pan:0   }],
+    ['up','Upper',        { rot:-16, tilt: 6, zoom:1.42, pan:168 }],
+    ['mid','Middle',      { rot:-24, tilt: 8, zoom:1.38, pan:-14 }],
+    ['low','Lower',       { rot:-16, tilt:12, zoom:1.38, pan:-182}]
+  ];
+  /** Which camera preset each component is best read from. */
+  static RIG_FOCUS = { crude:'low', furnace:'low', feed:'low', reboiler:'low',
+                       tower:'over', trays:'mid', sidedraw:'mid',
+                       overhead:'up', condenser:'up', drum:'up', reflux:'up' };
   static NAV = [['sim','Simulation'],['vle','VLE Explorer'],['mt','McCabe\u2013Thiele'],['column','Column'],['results','Results'],['sens','Sensitivity'],['theory','Theory'],['exam','Exam Mode'],['validate','Validation'],['about','About']];
   static EXPLAIN = [
     ['Feed enters the column','The feed stream F, at composition z\u1da0 and quality q, enters at the feed stage. Its quality decides how much of it joins the descending liquid and how much joins the rising vapour.'],
@@ -2378,6 +3210,9 @@ class Component extends DCLogic {
     explaining:false, explainI:0, wiVar:'R', wiTo:3.2, whatIf:null,
     sens:{ind:'R',dep:'N',min:1.2,max:6,n:24}, exam:{i:0,reveal:'',input:''},
     theoryOpen:'t1', theoryQ:'', toast:'', vleShow:'xy', mtDrag:null, vleHover:null,
+    rig:{ sel:null, hov:null, prod:null, mode:'3d', playing:true, speed:1,
+          therm:false, inspect:false, cam:'over', rot:-20, tilt:10, zoom:0.86, pan:0,
+          tour:-1, entered:false },
     theme:(this.props||{}).defaultTheme||'dark',
     custom:{a:{name:'Component A',A:6.90565,B:1211.033,C:220.79,MW:78.11,Tb:80.1,lat:30.8},
             b:{name:'Component B',A:6.95464,B:1344.800,C:219.48,MW:92.14,Tb:110.6,lat:33.2}}
@@ -2564,9 +3399,205 @@ class Component extends DCLogic {
     try {
       this._tickView(); this._tickNums(); this._tickPill(); this._tickFill(); this._tickSvgText();
       this._bindPointer(); this._tickReveal();
+      this._bindRig(); this._rigReplay();
     } catch (e) { /* presentation only — never let it reach the engine */ }
   }
-  componentDidMount(){ this._afterRender(); }
+  /** The industrial page is the one view with a URL of its own. Everything
+   *  else in DISTILLEX is in-memory state, and stays that way; this adds a
+   *  route rather than a router. Over http(s) it uses a real path (vercel.json
+   *  rewrites it to index.html); opened from the filesystem, where pushState
+   *  is not allowed, it falls back to the hash, so the offline copy still
+   *  links correctly. */
+  static ROUTE = 'industrial-distillation';
+  routeView(){
+    try {
+      const p = (window.location.pathname || '').replace(/\/+$/, '');
+      if (p === '/' + Component.ROUTE) return 'rig';
+      const h = (window.location.hash || '').replace(/^#\/?/, '');
+      if (h === Component.ROUTE) return 'rig';
+    } catch (e) {}
+    return null;
+  }
+  pushRoute(on){
+    const R = Component.ROUTE;
+    try {
+      const pr = window.location.protocol;
+      if (pr === 'http:' || pr === 'https:'){
+        window.history.pushState({ dx: on ? 'rig' : 'home' }, '',
+          on ? (window.location.origin + '/' + R) : (window.location.origin + '/'));
+        return;
+      }
+    } catch (e) {}
+    try { window.location.hash = on ? ('#/' + R) : ''; } catch (e) {}
+  }
+  initRoute(){
+    if (this._routed) return;
+    this._routed = true;
+    if (this.routeView() === 'rig' && this.state.view !== 'rig') this.setState({ view:'rig' });
+    const sync = () => {
+      const w = this.routeView();
+      if (w === 'rig') { if (this.state.view !== 'rig') this.setState({ view:'rig' }); }
+      else if (this.state.view === 'rig') this.setState({ view:'landing' });
+    };
+    try {
+      window.addEventListener('popstate', sync);
+      window.addEventListener('hashchange', sync);
+    } catch (e) {}
+  }
+  /** The guided tour walks the process in order, moving the camera and opening
+   *  each component in turn. It is a sequence of ordinary selections, so
+   *  anything the user does — including Skip — simply takes over. */
+  rigTourStop(){ if (this._tour){ clearTimeout(this._tour); this._tour = null; } }
+  rigTourGo(i){
+    this.rigTourStop();
+    const ST = Component.RIG_STEPS;
+    if (i < 0 || i >= ST.length){ this.setRig({ tour:-1 }); return; }
+    const k = ST[i][2];
+    const pre = Component.RIG_CAM.find(c => c[0] === (Component.RIG_FOCUS[k] || 'over'));
+    this.setRig(Object.assign({ tour:i, sel:k, prod:null },
+      pre ? { cam:pre[0], rot:pre[2].rot, tilt:pre[2].tilt, zoom:pre[2].zoom, pan:pre[2].pan } : {}));
+    const dwell = this._calm() ? 7600 : 5400;
+    this._tour = setTimeout(() => this.rigTourGo(i + 1), dwell);
+  }
+  /** Open a component, or close it if it is already open. Selecting also
+   *  takes the camera to the viewpoint that reads it best, and ends a tour —
+   *  the user has taken over. */
+  rigSelect(k){
+    const rg = this.state.rig || {};
+    const on = rg.sel === k ? null : k;
+    const cam = on ? (Component.RIG_FOCUS[k] || rg.cam) : rg.cam;
+    const pre = Component.RIG_CAM.find(c => c[0] === cam);
+    this.rigTourStop();
+    this.setRig(Object.assign({ sel:on, prod:null, tour:-1 },
+      on && pre ? { cam, rot:pre[2].rot, tilt:pre[2].tilt,
+                    zoom:pre[2].zoom, pan:pre[2].pan } : {}));
+  }
+  rigHoverKey(k){ if (k !== (this.state.rig || {}).hov) this.setRig({ hov:k }); }
+  /** Turning and zooming the rig. The camera lives in custom properties, so a
+   *  drag writes straight to the DOM and commits to state only when the
+   *  pointer lifts — a hundred and fifty planes are never re-rendered mid-turn. */
+  _bindRig(){
+    const st = document.querySelector('.rig-stage');
+    if (!st || st._dxRig) return;
+    st._dxRig = true;
+    const camEl = () => st.querySelector('.rig-cam');
+    const ptr = new Map();
+    let start = null, moved = 0, pinch = null;
+    const now = () => { const r = this.state.rig || {};
+      return { rot:+r.rot || 0, tilt:+r.tilt || 0, zoom:+r.zoom || 1 }; };
+    const clamp = v => ({ rot:Math.max(-180, Math.min(180, v.rot)),
+                          tilt:Math.max(-14, Math.min(46, v.tilt)),
+                          zoom:Math.max(0.55, Math.min(2.8, v.zoom)) });
+    const paint = v => { const c = camEl(); if (!c) return;
+      c.classList.add('dragging');
+      c.style.setProperty('--rig-rot', v.rot.toFixed(2) + 'deg');
+      c.style.setProperty('--rig-tilt', v.tilt.toFixed(2) + 'deg');
+      c.style.setProperty('--rig-zoom', v.zoom.toFixed(3)); };
+    st.addEventListener('pointerdown', e => {
+      ptr.set(e.pointerId, { x:e.clientX, y:e.clientY });
+      if (ptr.size === 1){
+        start = Object.assign({ x:e.clientX, y:e.clientY }, now());
+        moved = 0; st.classList.add('grabbing');
+        // deliberately NOT capturing here: capturing on pointerdown retargets
+        // the click to the stage, and the component buttons never hear it.
+        // Capture is taken below, once a turn has actually begun.
+      } else if (ptr.size === 2){
+        const a = [...ptr.values()];
+        pinch = { d:Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1, z:now().zoom };
+      }
+    });
+    st.addEventListener('pointermove', e => {
+      if (!ptr.has(e.pointerId)) return;
+      ptr.set(e.pointerId, { x:e.clientX, y:e.clientY });
+      if (ptr.size >= 2 && pinch){
+        const a = [...ptr.values()];
+        const d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+        moved += 9;
+        paint(clamp({ rot:now().rot, tilt:now().tilt, zoom:pinch.z * (d / pinch.d) }));
+        return;
+      }
+      if (!start) return;
+      const dx = e.clientX - start.x, dy = e.clientY - start.y;
+      const was = moved;
+      moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
+      if (moved < 4) return;
+      if (was < 4){ try { st.setPointerCapture(e.pointerId); } catch (x) {} }
+      paint(clamp({ rot:start.rot + dx * 0.42, tilt:start.tilt - dy * 0.24, zoom:start.zoom }));
+    });
+    const end = e => {
+      ptr.delete(e.pointerId);
+      if (ptr.size < 2) pinch = null;
+      if (ptr.size) return;
+      st.classList.remove('grabbing');
+      const c = camEl();
+      if (c && moved >= 4){
+        const cs = getComputedStyle(c);
+        // a turn is a deliberate move, so it also clears the active preset
+        this._rigDrag = true;
+        setTimeout(() => { this._rigDrag = false; }, 400);
+        c.classList.remove('dragging');
+        this.setRig({ rot:parseFloat(cs.getPropertyValue('--rig-rot')) || 0,
+                      tilt:parseFloat(cs.getPropertyValue('--rig-tilt')) || 0,
+                      zoom:parseFloat(cs.getPropertyValue('--rig-zoom')) || 1, cam:'' });
+      } else if (c) c.classList.remove('dragging');
+      start = null; moved = 0;
+    };
+    st.addEventListener('pointerup', end);
+    st.addEventListener('pointercancel', end);
+    // Chrome's hit testing inside a preserve-3d subtree does not reliably
+    // deliver a click to a coplanar descendant: elementsFromPoint reports the
+    // component correctly while the dispatched event lands on the container.
+    // So the stage resolves the component from the pointer position itself,
+    // and the buttons remain for the keyboard and for assistive technology.
+    const keyAt = (x, y) => {
+      const list = document.elementsFromPoint(x, y) || [];
+      for (const n of list){
+        if (n.dataset && n.dataset.rk) return n.dataset.rk;
+        if (n.classList && n.classList.contains('rig-stage')) break;
+      }
+      return null;
+    };
+    // a turn must not also count as a click on whatever was under the finger
+    st.addEventListener('click', e => {
+      if (this._rigDrag){ this._rigDrag = false; e.stopPropagation(); e.preventDefault(); return; }
+      if (e.target && e.target.closest && e.target.closest('[data-rk]')) return;
+      const k = keyAt(e.clientX, e.clientY);
+      if (k){ e.stopPropagation(); e.preventDefault(); this.rigSelect(k); }
+    }, true);
+    // hover preview, resolved the same way and throttled to a frame
+    let hRaf = 0;
+    st.addEventListener('pointermove', e => {
+      if (start || ptr.size || hRaf) return;
+      const x = e.clientX, y = e.clientY;
+      hRaf = requestAnimationFrame(() => { hRaf = 0; this.rigHoverKey(keyAt(x, y)); });
+    });
+    // keyboard: the stage itself is focusable, so the rig can be turned
+    // without a pointer at all
+    st.addEventListener('keydown', e => {
+      const K = { ArrowLeft:['rot', -9], ArrowRight:['rot', 9],
+                  ArrowUp:['tilt', 4], ArrowDown:['tilt', -4],
+                  '+':['zoom', 0.12], '=':['zoom', 0.12], '-':['zoom', -0.12] }[e.key];
+      if (!K) return;
+      e.preventDefault();
+      const v = now(); v[K[0]] += K[1];
+      this.setRig(Object.assign(clamp(v), { cam:'' }));
+    });
+  }
+  /** Restart replays the traffic from the top rather than just resetting state. */
+  _rigReplay(){
+    if (this._rigEpochDone === this._rigEpoch) return;
+    this._rigEpochDone = this._rigEpoch;
+    document.querySelectorAll('.rig-f i').forEach(el => {
+      el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+    });
+  }
+  /** A page swap keeps the old scroll offset, which on a page this tall lands
+   *  the reader in the middle of it. Jump, never smooth-scroll: the content
+   *  underneath has already changed. */
+  toTop(){ try { window.scrollTo(0, 0); } catch (e) {} }
+  /** One place to change rig state, so no handler has to rebuild the object. */
+  setRig(patch){ this.setState({ rig: Object.assign({}, this.state.rig, patch) }); }
+  componentDidMount(){ this._afterRender(); this.initRoute(); }
   componentDidUpdate(){ this._afterRender(); }
 
   componentWillUnmount(){
@@ -2973,7 +4004,8 @@ class Component extends DCLogic {
          flowAnim:'stroke-dasharray:6 4;animation:dxFlowR 1.2s linear infinite',
          actualLabel: s.reb==='partial'?'Actual trays (reboiler excluded)':'Actual trays',
          colCaption: hasR? (nS>26? 'showing 26 of '+nS+' stages':'') : 'no valid solution'},
-      isLanding:s.view==='landing', isApp:s.view!=='landing',
+      isLanding:s.view==='landing', isRig:s.view==='rig',
+      isApp:s.view!=='landing'&&s.view!=='rig',
       isSim:s.view==='sim', isColumn:s.view==='column',
       navItems, issues, hasIssues:issues.length>0,
       themeClass:s.theme==='dark'?'dx-dark':'', themeLabel:s.theme==='dark'?'Light mode':'Dark mode', themeIcon:s.theme==='dark'?'\u2600':'\u25d1',
@@ -3022,6 +4054,37 @@ class Component extends DCLogic {
       trayPick:(e)=>{const n=+e.currentTarget.dataset.n;
         this.setState({pinStage:this.state.pinStage===n?null:n});},
       trayClear:()=>this.setState({pinStage:null,hoverStage:null}),
+      // ── industrial page ──────────────────────────────────────────────
+      openRig:()=>{ this.pushRoute(true); this.setState({view:'rig'}); this.toTop(); },
+      leaveRig:()=>{ this.pushRoute(false); this.setState({view:'landing'}); this.toTop(); },
+      rigOut:()=>{ this.pushRoute(false); this.setState({view:'sim'}); this.toTop(); },
+      rigPick:(e)=>{ const el=e.target.closest('[data-rk]'); if(el) this.rigSelect(el.dataset.rk); },
+      rigHover:(e)=>{ const el=e.target.closest('[data-rk]');
+        this.rigHoverKey(el?el.dataset.rk:null); },
+      rigUnhover:()=>{ if(this.state.rig.hov) this.setRig({hov:null}); },
+      rigProd:(e)=>{ const el=e.target.closest('[data-rp]'); if(!el) return;
+        const k=el.dataset.rp;
+        this.setRig({ prod:this.state.rig.prod===k?null:k, sel:null, tour:-1 }); },
+      rigClose:()=>this.setRig({sel:null,prod:null}),
+      rigCam:(e)=>{ const el=e.target.closest('[data-rc]'); if(!el) return;
+        const pre=Component.RIG_CAM.find(c=>c[0]===el.dataset.rc); if(!pre) return;
+        this.setRig({cam:pre[0],rot:pre[2].rot,tilt:pre[2].tilt,zoom:pre[2].zoom,pan:pre[2].pan}); },
+      rigMode:(e)=>{ const el=e.target.closest('[data-rm]'); if(el) this.setRig({mode:el.dataset.rm}); },
+      rigPlay:()=>this.setRig({playing:!this.state.rig.playing}),
+      rigSpeed:(e)=>{ const el=e.target.closest('[data-rs]'); if(el) this.setRig({speed:+el.dataset.rs}); },
+      rigTherm:()=>this.setRig({therm:!this.state.rig.therm}),
+      rigInspect:()=>this.setRig({inspect:!this.state.rig.inspect}),
+      rigRestart:()=>{ const pre=Component.RIG_CAM[0];
+        this.setRig({sel:null,prod:null,tour:-1,playing:true,cam:pre[0],
+          rot:pre[2].rot,tilt:pre[2].tilt,zoom:pre[2].zoom,pan:pre[2].pan});
+        // replay the traffic from the top by remounting the animated layer
+        this._rigEpoch=(this._rigEpoch||0)+1; },
+      rigStep:(e)=>{ const el=e.target.closest('[data-rk]'); if(!el) return;
+        // a story step always opens its component, never toggles it shut
+        if(this.state.rig.sel!==el.dataset.rk) this.rigSelect(el.dataset.rk); },
+      rigTourToggle:()=>{ const on=this.state.rig.tour>=0;
+        if(on){ this.rigTourStop(); this.setRig({tour:-1,sel:null}); }
+        else { this.rigTourGo(0); } },
       pickEquip:(e)=>this.setState({equip:e.currentTarget.dataset.k}),
       explainToggle:()=>this.setState({explaining:!s.explaining,explainI:0}),
       explainNext:()=>this.setState({explainI:(s.explainI+1)%S.EXPLAIN.length}),
@@ -3049,6 +4112,8 @@ class Component extends DCLogic {
           catch(err){ this.flash('Could not read that file \u2014 expected DISTILLEX JSON'); } };
         rd.readAsText(fl); e.target.value='';},
       ...(()=>{ try { return this.extras(s,r,hasR); } catch(err){ console.error('DISTILLEX extras error: '+(err&&err.message)+' | '+(err&&err.stack)); return {}; } })(),
+      // the industrial page is built only while it is open
+      ...(s.view==='rig' ? (()=>{ try { return this.rigView(s); } catch(err){ console.error('DISTILLEX rig error: '+(err&&err.message)+' | '+(err&&err.stack)); return {}; } })() : {}),
       runWhatIf:()=>{
         // Both sides of the comparison must clear the same gate. The before
         // side used to call solve() directly, so invalid state reached the
@@ -3305,6 +4370,247 @@ class Component extends DCLogic {
     const v = s.pinStage !== null && s.pinStage !== undefined ? s.pinStage : s.hoverStage;
     return (v === null || v === undefined) ? null : Math.round(v);
   }
+  /* ══ the industrial rig ══════════════════════════════════════════════
+     A stylised atmospheric crude unit built from CSS 3D primitives. There is
+     no WebGL here and no 3D library: the CSS constraints of this project
+     (script-src 'self', no bundler) rule both out, and a ring of transformed
+     planes gives a vessel that holds up under rotation at a fraction of the
+     weight. Geometry is computed here, in one place, rather than written out
+     as hand-tuned markup.
+
+     Scene units are CSS pixels about an origin at the centre of the viewport;
+     y grows downward. Every part is absolutely positioned at that origin and
+     moved by its own transform.                                          */
+
+  /** One plane. Everything below is made of these. */
+  rigPlane(cls, w, h, tf, extra){
+    return { cls, style:'width:' + w.toFixed(1) + 'px;height:' + h.toFixed(1) +
+      'px;margin-left:' + (-w / 2).toFixed(1) + 'px;margin-top:' + (-h / 2).toFixed(1) +
+      'px;transform:' + tf + (extra ? ';' + extra : '') };
+  }
+  /** Vertical cylinder as a ring of planes. */
+  rigCyl(out, cls, x, y, z, r, h, n, extra){
+    const w = (2 * Math.PI * r) / n + 1.4;
+    for (let i = 0; i < n; i++){
+      const a = i * (360 / n);
+      // the half turned away from the viewer is what reads as the far wall
+      out.push(this.rigPlane(cls + (Math.cos(a * Math.PI / 180) > 0.01 ? ' near' : ' far'),
+        w, h, 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) rotateY(' +
+        a.toFixed(1) + 'deg) translateZ(' + r.toFixed(1) + 'px)', extra));
+    }
+  }
+  /** Horizontal cylinder, axis along x. */
+  rigCylX(out, cls, x, y, z, r, len, n, extra){
+    const h = (2 * Math.PI * r) / n + 1.4;
+    for (let i = 0; i < n; i++){
+      const a = i * (360 / n);
+      out.push(this.rigPlane(cls + (Math.sin(a * Math.PI / 180) > 0.01 ? ' near' : ' far'),
+        len, h, 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) rotateX(' +
+        a.toFixed(1) + 'deg) translateZ(' + r.toFixed(1) + 'px)', extra));
+    }
+  }
+  /** A disc lying in the horizontal plane — trays, heads, platforms. */
+  rigDisc(out, cls, x, y, z, d, extra){
+    out.push(this.rigPlane(cls, d, d,
+      'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) rotateX(90deg)', extra));
+  }
+  /** A pipe run in the x-y plane. `solid` crosses two planes so the run still
+   *  reads as a tube when the scene is turned; thinner branch lines use one. */
+  rigPipe(out, cls, x1, y1, x2, y2, z, w, solid, extra){
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 0.5) return;
+    const ang = Math.atan2(dy, dx) * 180 / Math.PI;
+    const base = 'translate3d(' + ((x1 + x2) / 2).toFixed(1) + 'px,' +
+      ((y1 + y2) / 2).toFixed(1) + 'px,' + z + 'px) rotateZ(' + ang.toFixed(2) + 'deg)';
+    out.push(this.rigPlane(cls, len, w, base, extra));
+    if (solid) out.push(this.rigPlane(cls + ' cross', len, w, base + ' rotateX(90deg)', extra));
+  }
+  /** A six-faced box — the fired heater. */
+  rigBox(out, cls, x, y, z, w, h, d){
+    const at = 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) ';
+    out.push(this.rigPlane(cls + ' f', w, h, at + 'translateZ(' + (d / 2) + 'px)'));
+    out.push(this.rigPlane(cls + ' k', w, h, at + 'translateZ(' + (-d / 2) + 'px) rotateY(180deg)'));
+    out.push(this.rigPlane(cls + ' s', d, h, at + 'rotateY(90deg) translateZ(' + (w / 2) + 'px)'));
+    out.push(this.rigPlane(cls + ' s', d, h, at + 'rotateY(-90deg) translateZ(' + (w / 2) + 'px)'));
+    out.push(this.rigPlane(cls + ' t', w, d, at + 'rotateX(90deg) translateZ(' + (h / 2) + 'px)'));
+    out.push(this.rigPlane(cls + ' t', w, d, at + 'rotateX(-90deg) translateZ(' + (h / 2) + 'px)'));
+  }
+
+  /** Where each thing sits. One table, so the 3D rig, the hit targets, the
+   *  labels and the product streams cannot drift apart. */
+  static RIG_GEO = {
+    R: 84, TOP: -232, BOT: 232, SKIRT: 300,
+    FUR: { x:-322, y:206, w:168, h:126, d:116 },
+    CON: { x: 292, y:-300, r:30, len:148 },
+    DRM: { x: 292, y:-206, r:38, len:166 }
+  };
+  /** Product draw elevations, top to bottom, against Component.CRUDE order.
+   *  The sequence is the one the process actually has — lightest overhead,
+   *  heaviest at the sump. No yield, temperature or rate is claimed. */
+  static RIG_DRAW = {
+    gas:      { y:-352, kind:'over',  cmp:'condenser' },
+    lpg:      { y:-206, kind:'over',  cmp:'drum'      },
+    naphtha:  { y:-148, kind:'side',  cmp:'sidedraw'  },
+    kerosene: { y: -72, kind:'side',  cmp:'sidedraw'  },
+    diesel:   { y:   6, kind:'side',  cmp:'sidedraw'  },
+    gasoil:   { y:  80, kind:'side',  cmp:'sidedraw'  },
+    fueloil:  { y: 150, kind:'side',  cmp:'sidedraw'  },
+    residue:  { y: 300, kind:'bot',   cmp:'reboiler'  }
+  };
+
+  rigScene(s){
+    const G = Component.RIG_GEO, R = G.R, TOP = G.TOP, BOT = G.BOT;
+    const rg = s.rig || {};
+    const calm = this._calm ? this._calm() : false;
+    // a phone gets a lighter rig: fewer staves, fewer particles, same process
+    const lite = (() => { try { return window.matchMedia('(max-width: 760px)').matches; }
+                          catch (e) { return false; } })();
+    const parts = [], flows = [], hits = [], tags = [], streams = [];
+    const sel = rg.sel || null, hov = rg.hov || null, prod = rg.prod || null;
+
+    // ── tower ────────────────────────────────────────────────────────────
+    this.rigCyl(parts, 'rig-shell', 0, (TOP + BOT) / 2, 0, R, BOT - TOP, lite ? 12 : 18);
+    this.rigDisc(parts, 'rig-head', 0, TOP, 0, R * 2);
+    this.rigDisc(parts, 'rig-head', 0, BOT, 0, R * 2);
+    this.rigCyl(parts, 'rig-skirt', 0, (BOT + G.SKIRT) / 2, 0, R * 0.92, G.SKIRT - BOT, lite ? 8 : 12);
+    // trays: the internals, drawn over the working height
+    const nTray = lite ? 9 : 14;
+    for (let i = 0; i < nTray; i++){
+      const y = TOP + 46 + (BOT - TOP - 96) * (i / (nTray - 1));
+      this.rigDisc(parts, 'rig-tray', 0, y, 0, R * 1.82);
+    }
+    // platforms and a ladder — the scale cues
+    [TOP + 64, -18, BOT - 70].forEach(y =>
+      this.rigDisc(parts, 'rig-plat', 0, y, 0, R * 2.62));
+    parts.push(this.rigPlane('rig-ladder', 15, BOT - TOP - 40,
+      'translate3d(0px,' + ((TOP + BOT) / 2) + 'px,0px) rotateY(-62deg) translateZ(' + (R + 15) + 'px)'));
+
+    // ── fired heater and the transfer line ───────────────────────────────
+    const F = G.FUR;
+    this.rigBox(parts, 'rig-fur', F.x, F.y, 0, F.w, F.h, F.d);
+    this.rigPlane && parts.push(this.rigPlane('rig-flame', F.w * 0.72, F.h * 0.42,
+      'translate3d(' + F.x + 'px,' + (F.y + F.h * 0.22) + 'px,' + (F.d / 2 + 1) + 'px)'));
+    parts.push(this.rigPlane('rig-stack', 26, 96,
+      'translate3d(' + (F.x + F.w * 0.3) + 'px,' + (F.y - F.h / 2 - 48) + 'px,0px)'));
+    this.rigPipe(parts, 'rig-pipe crude', -470, F.y + 26, F.x - F.w / 2, F.y + 26, 0, 11, true);
+    this.rigPipe(parts, 'rig-pipe hot', F.x + F.w / 2, F.y - 20, -150, F.y - 20, 0, 13, true);
+    this.rigPipe(parts, 'rig-pipe hot', -150, F.y - 20, -150, 150, 0, 13, true);
+    this.rigPipe(parts, 'rig-pipe hot', -150, 150, -R, 150, 0, 13, true);
+
+    // ── overhead, condenser, reflux drum ─────────────────────────────────
+    const C = G.CON, D = G.DRM;
+    this.rigPipe(parts, 'rig-pipe vap', 0, TOP, 0, -352, 0, 12, true);
+    this.rigPipe(parts, 'rig-pipe vap', 0, -352, C.x - C.len / 2, -352, 0, 12, true);
+    this.rigPipe(parts, 'rig-pipe vap', C.x, -352, C.x, C.y - C.r, 0, 12, false);
+    this.rigCylX(parts, 'rig-cond', C.x, C.y, 0, C.r, C.len, lite ? 7 : 10);
+    for (let i = 0; i < (lite ? 3 : 5); i++)
+      parts.push(this.rigPlane('rig-fin', 8, C.r * 2.3,
+        'translate3d(' + (C.x - C.len / 2 + 18 + i * (C.len - 36) / (lite ? 2 : 4)) + 'px,' +
+        C.y + 'px,0px)'));
+    this.rigPipe(parts, 'rig-pipe cool', C.x, C.y + C.r, C.x, D.y - D.r, 0, 11, false);
+    this.rigCylX(parts, 'rig-drum', D.x, D.y, 0, D.r, D.len, lite ? 8 : 12);
+    // reflux back to the top tray, and the two overhead products away
+    this.rigPipe(parts, 'rig-pipe cool', D.x - D.len / 2, D.y, 0, D.y, 0, 11, true);
+    this.rigPipe(parts, 'rig-pipe cool', 0, D.y, 0, TOP + 16, 0, 11, true);
+    this.rigPipe(parts, 'rig-pipe cool', D.x + D.len / 2, D.y, 452, D.y, 0, 10, false);
+    this.rigPipe(parts, 'rig-pipe vap', D.x, D.y - D.r, D.x, -352, 0, 9, false);
+    this.rigPipe(parts, 'rig-pipe vap', D.x, -352, 452, -352, 0, 9, false);
+
+    // ── side draws, one per liquid fraction taken off the tower ──────────
+    const DR = Component.RIG_DRAW;
+    Component.CRUDE.forEach(c => {
+      const d = DR[c[0]];
+      if (!d || d.kind !== 'side') return;
+      this.rigPipe(parts, 'rig-pipe draw f' + c[4], R, d.y, 196, d.y, 0, 9, false);
+      this.rigPipe(parts, 'rig-pipe draw f' + c[4], 196, d.y, 452, d.y, 0, 9, false);
+      parts.push(this.rigPlane('rig-strip f' + c[4], 26, 58,
+        'translate3d(196px,' + (d.y + 30) + 'px,0px)'));
+    });
+    // ── sump, stripping steam and the residue line ───────────────────────
+    this.rigPipe(parts, 'rig-pipe steam', -300, 268, -R * 0.9, 268, 0, 9, false);
+    this.rigPipe(parts, 'rig-pipe res', 0, G.SKIRT, 0, 344, 0, 12, true);
+    this.rigPipe(parts, 'rig-pipe res', 0, 344, 452, 344, 0, 12, false);
+
+    // ── animated traffic ─────────────────────────────────────────────────
+    // Particles run along straight segments. The anchor carries the position,
+    // the dot inside carries the motion, so one keyframe serves every path.
+    const run = (cls, x1, y1, x2, y2, n, secs, spread) => {
+      const k = lite ? Math.max(2, Math.round(n * 0.6)) : n;
+      for (let i = 0; i < k; i++){
+        const off = spread ? (i % 3 - 1) * spread : 0;
+        flows.push({ cls:'rig-f ' + cls,
+          style:'transform:translate3d(' + (x1 + off) + 'px,' + y1 + 'px,' +
+            (spread ? ((i % 2) ? spread : -spread) : 0) + 'px)',
+          dot:'--fx:' + (x2 - x1) + 'px;--fy:' + (y2 - y1) +
+            'px;animation-duration:calc(' + secs.toFixed(2) + 's * var(--rig-speed,1));animation-delay:' +
+            (-(i * secs / k)).toFixed(2) + 's' });
+      }
+    };
+    run('crude', -470, F.y + 26, F.x - F.w / 2, F.y + 26, 3, 3.0);
+    run('hot',   F.x + F.w / 2, F.y - 20, -150, F.y - 20, 3, 2.6);
+    run('hot',   -150, F.y - 20, -150, 150, 3, 2.2);
+    run('hot',   -150, 150, -R, 150, 2, 1.4);
+    run('vap',   0, 200, 0, TOP + 20, 6, 4.2, 40);          // vapour up the tower
+    run('liq',   0, TOP + 30, 0, 210, 5, 5.0, 26);          // reflux down the tower
+    run('vap',   0, TOP, 0, -352, 3, 2.0);
+    run('vap',   0, -352, C.x - C.len / 2, -352, 4, 3.0);
+    run('cool',  C.x, C.y + C.r, C.x, D.y - D.r, 2, 1.6);
+    run('cool',  D.x - D.len / 2, D.y, 0, D.y, 4, 3.2);
+    run('cool',  0, D.y, 0, TOP + 16, 2, 1.5);
+    run('res',   0, G.SKIRT, 0, 344, 2, 1.8);
+    run('res',   0, 344, 452, 344, 4, 3.6);
+    Component.CRUDE.forEach(c => {
+      const d = DR[c[0]];
+      if (!d || d.kind !== 'side') return;
+      run('draw f' + c[4], R, d.y, 452, d.y, 3, 3.2);
+    });
+    run('steam', -300, 268, -R * 0.9, 268, 3, 2.4);
+
+    // ── what the pointer can actually reach ──────────────────────────────
+    // One billboarded plane per component, sized to its equipment and kept
+    // clear of its neighbours so a click is never ambiguous.
+    const HIT = {
+      crude:    [-455, F.y + 26,  86,  46],
+      furnace:  [F.x,  F.y,      168, 150],
+      feed:     [-118, 150,      120,  46],
+      tower:    [ -34, -186,      92,  62],
+      trays:    [ -34,   40,      92, 128],
+      sidedraw: [ 300,  -30,     190, 220],
+      overhead: [ 128, -352,     140,  36],
+      condenser:[C.x,  C.y,     C.len + 16, C.r * 2 + 24],
+      drum:     [D.x,  D.y,     D.len + 16, D.r * 2 + 22],
+      reflux:   [ 108, D.y,     146,  38],
+      reboiler: [   0,  300,    170,  74]
+    };
+    Component.RIG.forEach(c => {
+      const h = HIT[c[0]]; if (!h) return;
+      hits.push({ k:c[0], name:c[1],
+        cls:'rig-hit' + (sel === c[0] ? ' on' : '') + (hov === c[0] ? ' hov' : ''),
+        style:'width:' + h[2] + 'px;height:' + h[3] + 'px;margin-left:' + (-h[2] / 2) +
+          'px;margin-top:' + (-h[3] / 2) + 'px;transform:translate3d(' + h[0] + 'px,' +
+          h[1] + 'px,0px)' });
+      tags.push({ k:c[0], label:c[1],
+        cls:'rig-tag' + (sel === c[0] ? ' on' : '') + (hov === c[0] ? ' hov' : ''),
+        style:'transform:translate3d(' + h[0] + 'px,' + (h[1] - h[3] / 2 - 13) + 'px,10px)' });
+    });
+
+    // ── product streams, shared with the flowsheet and the cards ─────────
+    Component.CRUDE.forEach(c => {
+      const d = DR[c[0]];
+      streams.push({ k:c[0], name:c[1], range:c[2], note:c[3], tone:String(c[4]),
+        cmp:d ? d.cmp : 'tower',
+        cls:'rig-prod f' + c[4] + (prod === c[0] ? ' on' : (prod ? ' dim' : '')) });
+    });
+
+    // selection and product emphasis ride on the wrapper, so one class change
+    // re-weights the whole scene rather than every part being rebuilt
+    const emph = (sel ? ' sel-' + sel : '') + (prod ? ' prod-' + prod : '');
+    return { parts, flows, hits, tags, streams, sel, hov, prod, calm,
+             wrapCls:'rig-scene' + emph + (sel ? ' has-sel' : '') + (prod ? ' has-prod' : '') +
+              (rg.inspect ? ' inspect' : '') +
+                     (rg.therm ? ' therm' : '') + (rg.playing ? '' : ' paused') };
+  }
   columnScene(s, r, ok){
     // the split gives the column half the width, so it draws narrower there;
     // on its own it fills the frame it is given
@@ -3463,6 +4769,166 @@ class Component extends DCLogic {
       case 't18': return 'At total reflux this separation would need N_min = ' + f(r.Nmin, 2) + ' stages (Fenske).';
       default:    return '';
     }
+  }
+  /** The flowsheet, keyed by the same component ids as the rig. Two drawings,
+   *  one list of objects: selecting in either view selects the same thing, so
+   *  the 2D/3D link needs no translation table. [x, y, w, h, caption]      */
+  static RIG_2D = {
+    crude:    [  46, 386,  92, 46, 'CRUDE'],
+    furnace:  [ 186, 378, 104, 62, 'FURNACE'],
+    feed:     [ 342, 386,  62, 34, 'FEED'],
+    tower:    [ 428,  62, 124, 438, 'TOWER'],
+    trays:    [ 440, 176, 100, 152, 'TRAYS'],
+    overhead: [ 566,  34,  84, 32, 'OVERHEAD'],
+    condenser:[ 690,  26, 116, 50, 'CONDENSER'],
+    drum:     [ 686, 108, 124, 54, 'REFLUX DRUM'],
+    reflux:   [ 566, 116,  84, 32, 'REFLUX'],
+    sidedraw: [ 604, 286, 118, 132, 'SIDE DRAWS'],
+    reboiler: [ 428, 508, 124, 40, 'BOTTOMS']
+  };
+  /** A glyph per component. Small, geometric, drawn rather than iconographic. */
+  static RIG_ICON = {
+    crude:    'M4 13h16M6 9h12M8 5h8',
+    furnace:  'M12 3c2 3-1 4 0 6 2-1 3 1 3 3a5 5 0 0 1-10 0c0-3 3-5 4-6 1 2 2 1 3-3z',
+    feed:     'M3 12h12m0 0-4-4m4 4-4 4M19 5v14',
+    tower:    'M8 3h8v18H8zM8 8h8M8 13h8M8 18h8',
+    trays:    'M4 7h16M4 12h16M4 17h16M8 7v5M16 12v5',
+    overhead: 'M5 19V9a4 4 0 0 1 4-4h10m0 0-4-3m4 3-4 3',
+    condenser:'M3 12h18M6 8v8M10 8v8M14 8v8M18 8v8',
+    drum:     'M3 9h18v6H3zM3 12a3 3 0 0 0 18 0',
+    reflux:   'M19 6H9a4 4 0 0 0-4 4v9m0 0 3-3m-3 3-3-3',
+    sidedraw: 'M6 4v16M6 8h12m0 0-3-3m3 3-3 3M6 16h12m0 0-3-3m3 3-3 3',
+    reboiler: 'M4 16h16M7 20h10M12 4v8m-3-3 3 3 3-3'
+  };
+
+  /** Everything the industrial page renders. Built only when that page is
+   *  open, so the rest of the app carries none of its cost. */
+  rigView(s){
+    const S = Component, rg = s.rig || {}, out = {};
+    const sc = this.rigScene(s);
+    out.rig = sc;
+    out.rigWrapCls = sc.wrapCls;
+    out.rigIs3D = rg.mode !== '2d';
+    out.rigIs2D = rg.mode === '2d';
+
+    // camera: the committed position. A drag writes the same custom
+    // properties straight to the DOM, so dragging never re-renders the scene.
+    out.rigCamStyle = '--rig-rot:' + (rg.rot || 0).toFixed(2) + 'deg;--rig-tilt:' +
+      (rg.tilt || 0).toFixed(2) + 'deg;--rig-zoom:' + (rg.zoom || 1).toFixed(3) +
+      ';--rig-pan:' + Math.round(rg.pan || 0) + 'px';
+    out.rigCamBtns = S.RIG_CAM.map(c => ({ k:c[0], label:c[1],
+      on:(rg.cam === c[0] ? '1' : '0'), cur:(rg.cam === c[0] ? 'true' : 'false') }));
+    out.rigModeBtns = [['3d','3D view'],['2d','Process view']].map(([k, label]) => ({
+      k, label, on:((rg.mode || '3d') === k ? '1' : '0'),
+      cur:((rg.mode || '3d') === k ? 'true' : 'false') }));
+
+    // ── the flowsheet ──────────────────────────────────────────────────
+    const N = S.RIG_2D, box = k => N[k];
+    const cx = k => box(k)[0] + box(k)[2] / 2, cy = k => box(k)[1] + box(k)[3] / 2;
+    out.rigNodes = S.RIG.map(c => {
+      const b = box(c[0]);
+      return { k:c[0], x:b[0], y:b[1], w:b[2], h:b[3], rx:(c[0] === 'tower' ? 12 : 8),
+        tx:(b[0] + b[2] / 2), ty:(b[1] + b[3] / 2 + 4), cap:b[4],
+        cls:'rig-n' + (sc.sel === c[0] ? ' on' : ''), name:c[1] };
+    });
+    const L = [];
+    const line = (cls, d, anim) => L.push({ cls:'rig-l ' + cls + (anim ? ' anim' : ''), d });
+    line('crude', 'M' + (box('crude')[0] + box('crude')[2]) + ' ' + cy('crude') +
+                  'H' + box('furnace')[0], true);
+    line('hot',   'M' + (box('furnace')[0] + box('furnace')[2]) + ' ' + cy('furnace') +
+                  'H' + box('feed')[0], true);
+    line('hot',   'M' + (box('feed')[0] + box('feed')[2]) + ' ' + cy('feed') +
+                  'H' + box('tower')[0], true);
+    line('vap',   'M' + cx('tower') + ' ' + box('tower')[1] + 'V' + cy('overhead') +
+                  'H' + box('overhead')[0], true);
+    line('vap',   'M' + (box('overhead')[0] + box('overhead')[2]) + ' ' + cy('overhead') +
+                  'H' + box('condenser')[0], true);
+    line('cool',  'M' + cx('condenser') + ' ' + (box('condenser')[1] + box('condenser')[3]) +
+                  'V' + box('drum')[1], true);
+    line('cool',  'M' + box('drum')[0] + ' ' + cy('drum') + 'H' +
+                  (box('reflux')[0] + box('reflux')[2]), true);
+    line('cool',  'M' + box('reflux')[0] + ' ' + cy('reflux') + 'H' + cx('tower') +
+                  'V' + box('tower')[1], true);
+    line('res',   'M' + cx('tower') + ' ' + (box('tower')[1] + box('tower')[3]) +
+                  'V' + box('reboiler')[1], true);
+
+    // product lines — the ones that carry a fraction and sync with the cards
+    const prodLine = (k, d) => {
+      const c = S.CRUDE.find(a => a[0] === k);
+      L.push({ cls:'rig-l draw f' + c[4] + (sc.prod === k ? ' on' : '') + ' anim', d });
+    };
+    prodLine('gas',  'M' + cx('drum') + ' ' + box('drum')[1] + 'V70H952');
+    prodLine('lpg',  'M' + (box('drum')[0] + box('drum')[2]) + ' ' + cy('drum') + 'H952');
+    const SIDE = ['naphtha','kerosene','diesel','gasoil','fueloil'];
+    SIDE.forEach((k, i) => {
+      const y = 300 + i * 26;
+      prodLine(k, 'M' + (box('tower')[0] + box('tower')[2]) + ' ' + y + 'H' +
+        (box('sidedraw')[0] + box('sidedraw')[2]) + 'H952');
+    });
+    prodLine('residue', 'M' + (box('reboiler')[0] + box('reboiler')[2]) + ' ' +
+      cy('reboiler') + 'H952');
+    out.rigLines = L;
+    out.rigTrayLines = [0,1,2,3,4,5].map(i => ({
+      y:(box('trays')[1] + 14 + i * (box('trays')[3] - 28) / 5).toFixed(0),
+      x1:(box('trays')[0] + 10), x2:(box('trays')[0] + box('trays')[2] - 10) }));
+    out.rigFlowCls = 'rig-flow2d' + (sc.sel ? ' has-sel' : '') +
+      (sc.prod ? ' has-prod' : '') + (rg.playing ? '' : ' paused');
+
+    // ── the contextual panel ───────────────────────────────────────────
+    const comp = sc.sel ? S.RIG.find(c => c[0] === sc.sel) : null;
+    const frac = sc.prod ? S.CRUDE.find(c => c[0] === sc.prod) : null;
+    out.rigHasInfo = !!(comp || frac);
+    if (comp){
+      out.rigInfo = { name:comp[1], role:comp[2], what:comp[3], why:comp[4],
+        icon:S.RIG_ICON[comp[0]] || S.RIG_ICON.tower, whyLab:'Why it matters',
+        foot:'Educational visualisation — no operating condition is claimed for this unit.' };
+    } else if (frac){
+      const d = S.RIG_DRAW[frac[0]] || {};
+      out.rigInfo = { name:frac[1], role:'Typical fraction · ' + frac[2] + ' °C',
+        what:frac[3],
+        why:'Taken off at the elevation where this boiling range condenses — ' +
+             (d.kind === 'over' ? 'from the overhead system, above every tray.'
+              : d.kind === 'bot' ? 'from the bottom of the tower, below every tray.'
+              : 'as a side draw part-way up the tower.'),
+        icon:S.RIG_ICON.sidedraw, whyLab:'Where it leaves',
+        foot:'Boiling ranges are the conventional cut points quoted for an atmospheric tower. They describe the industry process and are not computed by DISTILLEX.' };
+    } else out.rigInfo = { name:'', role:'', what:'', why:'', icon:'', whyLab:'', foot:'' };
+
+    // ── status, controls, story, cards ─────────────────────────────────
+    out.rigStatusCls = 'rig-status' + (rg.inspect ? ' inspect' : (rg.playing ? '' : ' paused'));
+    out.rigStatus = rg.inspect ? 'Inspect' : (rg.playing ? 'Running' : 'Paused');
+    out.rigHint = rg.inspect ? 'Every labelled component can be opened'
+      : (out.rigIs2D ? 'Click any block or product line'
+                     : 'Drag to turn · click a component');
+    out.rigPlayLabel = rg.playing ? '❘❘ Pause' : '▶ Play';
+    out.rigSpeedBtns = [['0.55','Slow'],['1','Normal'],['1.8','Fast']].map(([k, label]) => ({
+      k, label, on:(String(rg.speed || 1) === k ? '1' : '0'),
+      cur:(String(rg.speed || 1) === k ? 'true' : 'false') }));
+    out.rigThermOn = rg.therm ? '1' : '0';
+    out.rigInspectOn = rg.inspect ? '1' : '0';
+    out.rigSpeedStyle = '--rig-speed:' + (1 / (+rg.speed || 1)).toFixed(3);
+
+    const tourOn = rg.tour >= 0 && rg.tour < S.RIG_STEPS.length;
+    out.rigTourOn = tourOn;
+    out.rigTourLabel = tourOn ? 'Skip tour' : 'Start guided tour';
+    out.rigTour = tourOn
+      ? { n:('0' + (rg.tour + 1)) + ' / 0' + S.RIG_STEPS.length,
+          title:S.RIG_STEPS[rg.tour][0], body:S.RIG_STEPS[rg.tour][1] }
+      : { n:'', title:'', body:'' };
+
+    out.rigSteps = S.RIG_STEPS.map((t, i) => ({
+      k:t[2], no:('0' + (i + 1)).slice(-2), title:t[0], body:t[1],
+      on:(sc.sel === t[2] ? '1' : '0') }));
+
+    const GRP = [['Light fractions', ['gas','lpg','naphtha']],
+                 ['Middle fractions', ['kerosene','diesel']],
+                 ['Heavy fractions', ['gasoil','fueloil','residue']]];
+    out.rigGroups = GRP.map(([name, keys]) => ({ name,
+      items:S.CRUDE.filter(c => keys.indexOf(c[0]) >= 0).map(c => ({
+        k:c[0], name:c[1], range:c[2] + ' °C', note:c[3],
+        cls:'rig-card f' + c[4], on:(sc.prod === c[0] ? '1' : '0'),
+        cur:(sc.prod === c[0] ? 'true' : 'false') })) }));
+    return out;
   }
   /** Live self-validation. Each row recomputes something the engine claims and
    *  checks it against a closed form, an identity, or the engine's own internal
