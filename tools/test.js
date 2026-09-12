@@ -556,12 +556,155 @@ function suiteBuild() {
   }
 }
 
+/* ── 13. the industrial crude-unit engine ───────────────────────────────────
+   The CDU model is a separate module, so it is loaded and exercised directly.
+   Every check here is either a closed-form identity, an internal consistency
+   requirement, or a direction the physics must move in. None compares against
+   a transcribed reference value; no such validation has been performed.     */
+function suiteCDU() {
+  const CDU = require(path.join(__dirname, '..', 'src', 'rig', 'engine.js'));
+  const base = CDU.baseCase();
+  const R0 = CDU.run(base);
+  const mass = r => r.products.reduce((a, p) => a + p.mass, 0);
+  const get  = (r, k) => r.products.find(p => p.key === k).mass;
+  const runW = o => CDU.run(Object.assign({}, base, o));
+
+  // ── thermodynamics against closed forms ──────────────────────────────
+  for (const c of CDU.COMP) {
+    ok(near(CDU.psat(c, c.Tb), 101.325, 1e-6),
+       'Psat = 1 atm at the normal boiling point (' + c.TbC + ' °C)');
+  }
+  ok(CDU.COMP.every((c, i) => i === 0 || c.Tb > CDU.COMP[i - 1].Tb),
+     'the pseudocomponent grid is strictly ordered in boiling point');
+  ok(CDU.COMP.every((c, i) => i === 0 || c.M > CDU.COMP[i - 1].M),
+     'molar mass rises with boiling point across the grid');
+  // a K-value must fall as the pressure rises, and rise with temperature
+  const cmid = CDU.COMP[10];
+  ok(CDU.kval(cmid, 500, 100) > CDU.kval(cmid, 500, 300), 'K falls as pressure rises');
+  ok(CDU.kval(cmid, 560, 175) > CDU.kval(cmid, 500, 175), 'K rises with temperature');
+
+  // ── the flash solves what it claims to ───────────────────────────────
+  const z = CDU.assayZ(CDU.ASSAY.medium, 0);
+  ok(near(z.reduce((a, b) => a + b, 0), 1, 1e-12), 'assay mole fractions sum to one');
+  for (const T of [520, 580, 628, 660]) {
+    const f = CDU.flash(z, T, 175);
+    // Rachford–Rice residual: Σ z(K−1)/(1+ψ(K−1)) must vanish
+    let res = 0;
+    for (let i = 0; i < z.length; i++)
+      res += z[i] * (f.K[i] - 1) / (1 + f.psi * (f.K[i] - 1));
+    ok(Math.abs(res) < 1e-9, 'Rachford–Rice residual vanishes at ' + T + ' K', String(res));
+    let sx = 0, sy = 0;
+    for (let i = 0; i < z.length; i++) { sx += f.x[i]; sy += f.y[i]; }
+    ok(near(sx, 1, 1e-9) && near(sy, 1, 1e-9), 'flash phases each sum to one at ' + T + ' K');
+    // and the phases must recombine to the feed
+    let worst = 0;
+    for (let i = 0; i < z.length; i++)
+      worst = Math.max(worst, Math.abs(f.psi * f.y[i] + (1 - f.psi) * f.x[i] - z[i]));
+    ok(worst < 1e-12, 'flash phases recombine to the feed at ' + T + ' K', String(worst));
+  }
+  // a flash hotter than the dew point is all vapour, colder than the bubble all liquid
+  const bT = CDU.bubbleT(z, 175, 400).T, dT = CDU.dewT(z, 175, 700).T;
+  ok(dT > bT, 'dew point lies above the bubble point');
+  ok(CDU.flash(z, bT - 40, 175).psi < 1e-9, 'below the bubble point nothing vaporises');
+  ok(CDU.flash(z, dT + 60, 175).psi > 1 - 1e-6, 'above the dew point everything does');
+
+  // ── Kremser against its own closed form ──────────────────────────────
+  ok(near(CDU.kremserAbsorb(1, 6), 6 / 7, 1e-9), 'Kremser at A = 1 gives N/(N+1)');
+  ok(CDU.kremserAbsorb(3, 8) > CDU.kremserAbsorb(3, 4), 'more stages absorb more');
+  ok(CDU.kremserAbsorb(4, 5) > CDU.kremserAbsorb(2, 5), 'a larger factor absorbs more');
+  ok(CDU.kremserAbsorb(0.2, 100) <= 1 && CDU.kremserAbsorb(9, 100) <= 1,
+     'Kremser stays a fraction at both extremes');
+
+  // ── the run: balances and convergence ────────────────────────────────
+  ok(R0.ok && R0.converged, 'the base case converges');
+  ok(R0.status === 'complete' && R0.warns.length === 0,
+     'the base case completes without warnings', JSON.stringify(R0.warns));
+  ok(Math.abs(R0.balance.closure) < 1e-6,
+     'base-case mass balance closes to better than 1e-6', R0.balance.closure.toExponential(2));
+  ok(near(mass(R0), R0.feed.mass, R0.feed.mass * 1e-6),
+     'products sum to the charge', (mass(R0) - R0.feed.mass).toExponential(2));
+  ok(R0.products.every(p => p.mass >= 0), 'no product has a negative rate');
+  // the temperature profile must fall monotonically from the flash zone up
+  const T = R0.internals.Tprofile, fs2 = R0.internals.feedStage;
+  let mono = true;
+  for (let j = 2; j <= fs2; j++) if (T[j] < T[j - 1] - 1e-6) mono = false;
+  ok(mono, 'the tray temperatures rise monotonically from the top tray to the flash zone');
+  ok(T[fs2] > T[1], 'the flash zone is hotter than the top tray');
+  ok(near(T[fs2], base.furnaceT, 1e-6), 'the flash zone sits at the furnace outlet');
+  // the cuts must be ordered by boiling point, lightest overhead
+  const order = ['gas', 'naphtha', 'kerosene', 'diesel', 'gasoil', 'residue'];
+  let asc = true;
+  for (let i = 1; i < order.length; i++)
+    if (get2(R0, order[i]) <= get2(R0, order[i - 1])) asc = false;
+  ok(asc, 'the product cuts are ordered by mid-boiling point, lightest first');
+  function get2(r, k) { return r.products.find(p => p.key === k).tbp50; }
+
+  // ── the model must actually respond ──────────────────────────────────
+  const hot = runW({ furnaceT: 370 }), cool = runW({ furnaceT: 300 });
+  ok(hot.flash.psi > cool.flash.psi, 'a hotter furnace vaporises more of the charge');
+  ok(get(hot, 'residue') < get(cool, 'residue'), 'a hotter furnace leaves less residue');
+  const hiR = runW({ reflux: 5 }), loR = runW({ reflux: 1.6 });
+  ok(hiR.internals.Tprofile[1] < loR.internals.Tprofile[1],
+     'more reflux cools the top of the tower');
+  ok(get(hiR, 'naphtha') < get(loR, 'naphtha'),
+     'more reflux sends less material overhead');
+  const hiP = runW({ colP: 330, topP: 250 }), loP = runW({ colP: 130, topP: 115 });
+  ok(hiP.flash.psi < loP.flash.psi, 'raising the pressure vaporises less');
+  const lightC = runW({ assay: 'light' }), heavyC = runW({ assay: 'heavy' });
+  ok(get(lightC, 'residue') < get(heavyC, 'residue'),
+     'a lighter charge leaves less atmospheric residue');
+  ok(get(lightC, 'naphtha') > get(heavyC, 'naphtha'), 'and yields more naphtha');
+  const wet = runW({ sideSteam: 6 }), dry = runW({ sideSteam: 0 });
+  const width = (r, k) => { const p = r.products.find(x => x.key === k);
+                            return p.tbp95 - p.tbp5; };
+  ok(width(wet, 'kerosene') < width(dry, 'kerosene'),
+     'side-stripper steam narrows the kerosene cut');
+  const dbl = runW({ feedRate: 2400 });
+  ok(near(get(dbl, 'diesel'), 2 * get(R0, 'diesel'), 2 * get(R0, 'diesel') * 1e-6),
+     'doubling the charge doubles every product');
+
+  // ── the draws must land on what was asked for ────────────────────────
+  const spec = runW({ drawKero: 9, drawDiesel: 20, drawGasoil: 8 });
+  ok(spec.converged, 'a re-specified draw set converges');
+  ok(Math.abs(spec.balance.closure) < 1e-6, 'and still closes its balance');
+  ok(get(spec, 'diesel') > get(spec, 'kerosene'),
+     'a larger diesel draw than kerosene draw yields more diesel');
+
+  // ── every product's own boiling curve must be self-consistent ────────
+  for (const p of R0.products) {
+    if (p.mass < 1e-6) continue;
+    ok(p.tbp5 <= p.tbp50 + 1e-9 && p.tbp50 <= p.tbp95 + 1e-9,
+       p.name + ': its 5/50/95 points are ordered');
+    ok(p.M > 0 && p.sg > 0, p.name + ': molar mass and density are positive');
+  }
+
+  // ── bad input is refused, not solved ─────────────────────────────────
+  const bad = [
+    [{ furnaceT: 500 }, 'furnace outlet out of range'],
+    [{ reflux: 0.1 }, 'reflux below the modelled range'],
+    [{ feedRate: 'x' }, 'a non-numeric charge rate'],
+    [{ assay: 'nope' }, 'an unknown feed'],
+    [{ topP: 300, colP: 175 }, 'an overhead above the flash zone'],
+    [{ furnaceT: 220, feedT: 260 }, 'a furnace colder than its own feed'],
+    [{ drawKero: 40, drawDiesel: 40, drawGasoil: 30 }, 'draws exceeding the charge']
+  ];
+  for (const [patch, what] of bad) {
+    const r = runW(patch);
+    ok(!r.ok && r.status === 'error' && r.errs.length > 0, 'refuses ' + what);
+    ok(!r.products, 'and returns no products for ' + what);
+  }
+  // a case that merely strains the model warns rather than failing
+  const strain = runW({ furnaceT: 385 });
+  ok(strain.ok && strain.warns.some(w => /crack/i.test(w)),
+     'warns about cracking above 375 °C rather than refusing');
+}
+
 const SUITES = {
   identity: suiteIdentity, analytic: suiteAnalytic, 'pure-component': suitePureComponent,
   thermo: suiteThermo, invariants: suiteInvariants, matrix: suiteMatrix,
   validation: suiteValidation, 'save-load': suiteSaveLoad,
   disclosures: suiteDisclosures, contrast: suiteContrast,
-  headers: suiteHeaders, build: suiteBuild,
+  headers: suiteHeaders, build: suiteBuild, cdu: suiteCDU,
 };
 
 function main() {
