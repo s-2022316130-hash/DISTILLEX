@@ -899,6 +899,59 @@
   </div>
 
   <p style="margin-top:40px;font-size:11px;line-height:1.6;color:color-mix(in srgb,var(--color-text) 72%,transparent);max-width:88ch">This simulator is intended for education and conceptual engineering analysis. Results depend on the selected thermodynamic model and assumptions and should not be used as the sole basis for industrial process design.</p>
+  <!-- ══ how separation works ═════════════════════════════════════════════ -->
+  <section class="dx-reveal" style="margin-top:76px">
+    <div class="dx-head" style="margin-bottom:20px">
+      <div class="dx-head-l">
+        <div class="dx-kicker">The principle</div>
+        <h2 class="dx-title" style="font-size:clamp(24px,3vw,34px)">Three things happen on every tray</h2>
+        <p class="dx-sub">A column is one idea repeated. Boil a little, let the vapour meet the liquid coming down, condense a little &mdash; and each repetition moves the mixture further apart.</p>
+      </div>
+    </div>
+    <div class="dx-grid3b">
+      <div class="card blueprint dx-lit" style="padding:20px;display:flex;flex-direction:column;gap:12px">
+        <svg viewBox="0 0 200 108" style="width:100%;height:auto" aria-hidden="true">
+          <rect x="58" y="52" width="84" height="42" rx="6" fill="color-mix(in srgb,var(--dx-orange) 16%,transparent)" stroke="var(--dx-orange)" stroke-width="1.4"></rect>
+          <path class="flame" d="M74 94 l10 -18 l10 18 l10 -18 l10 18" fill="none" stroke="var(--dx-orange)" stroke-width="2" stroke-linejoin="round"></path>
+          <circle cx="84" cy="34" r="3.4" fill="var(--dx-vapour)" style="animation:dxRise 2.4s linear infinite"></circle>
+          <circle cx="100" cy="30" r="2.8" fill="var(--dx-vapour)" style="animation:dxRise 2.9s linear infinite;animation-delay:.5s"></circle>
+          <circle cx="116" cy="36" r="3.1" fill="var(--dx-vapour)" style="animation:dxRise 2.6s linear infinite;animation-delay:1s"></circle>
+        </svg>
+        <div><div class="dx-kicker" style="color:var(--dx-orange)">01 &middot; Boil</div>
+        <div style="font-family:var(--font-heading);font-size:19px;margin-top:3px">Heat makes vapour</div></div>
+        <p class="card-body" style="margin:0">The reboiler boils liquid at the sump. Because the lighter component is more volatile, the vapour leaving is already richer in it than the liquid it came from.</p>
+      </div>
+      <div class="card blueprint dx-lit" style="padding:20px;display:flex;flex-direction:column;gap:12px">
+        <svg viewBox="0 0 200 108" style="width:100%;height:auto" aria-hidden="true">
+          <g stroke-width="1.4" fill="none">
+            <line x1="40" y1="26" x2="160" y2="26" stroke="var(--dx-liquid)" opacity=".8"></line>
+            <line x1="40" y1="54" x2="160" y2="54" stroke="var(--dx-liquid)" opacity=".8"></line>
+            <line x1="40" y1="82" x2="160" y2="82" stroke="var(--dx-liquid)" opacity=".8"></line>
+          </g>
+          <circle cx="72" cy="68" r="3.2" fill="var(--dx-vapour)" style="animation:dxRise 2.2s linear infinite"></circle>
+          <circle cx="72" cy="40" r="3.2" fill="var(--dx-vapour)" style="animation:dxRise 2.2s linear infinite;animation-delay:.7s"></circle>
+          <circle cx="128" cy="40" r="2.8" fill="var(--dx-liquid)" style="animation:dxFall 2.6s linear infinite"></circle>
+          <circle cx="128" cy="68" r="2.8" fill="var(--dx-liquid)" style="animation:dxFall 2.6s linear infinite;animation-delay:.9s"></circle>
+        </svg>
+        <div><div class="dx-kicker" style="color:var(--dx-vapour)">02 &middot; Enrich</div>
+        <div style="font-family:var(--font-heading);font-size:19px;margin-top:3px">Each tray is one stage</div></div>
+        <p class="card-body" style="margin:0">Vapour rises, liquid falls, and they exchange on every tray. One tray is one equilibrium stage &mdash; and stacking them is what turns a small difference in volatility into a clean split.</p>
+      </div>
+      <div class="card blueprint dx-lit" style="padding:20px;display:flex;flex-direction:column;gap:12px">
+        <svg viewBox="0 0 200 108" style="width:100%;height:auto" aria-hidden="true">
+          <path d="M40 30 H128 a20 20 0 0 1 0 40 H70" fill="none" stroke="var(--dx-liquid)" stroke-width="1.6"
+                stroke-dasharray="7 5" style="animation:dxFlowR 1.4s linear infinite"></path>
+          <rect x="118" y="20" width="46" height="20" rx="5" fill="color-mix(in srgb,var(--dx-vapour) 18%,transparent)" stroke="var(--dx-vapour)" stroke-width="1.4"></rect>
+          <path d="M70 70 v18 h56" fill="none" stroke="var(--dx-magenta)" stroke-width="1.6"></path>
+          <circle cx="126" cy="88" r="3.4" fill="var(--dx-magenta)"></circle>
+        </svg>
+        <div><div class="dx-kicker" style="color:var(--dx-magenta)">03 &middot; Return</div>
+        <div style="font-family:var(--font-heading);font-size:19px;margin-top:3px">Reflux does the work</div></div>
+        <p class="card-body" style="margin:0">Condense the overhead and send part of it back down. That returned liquid is what every rising vapour meets &mdash; more reflux, fewer stages needed, more energy spent. The trade-off you set in the simulator.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ══ from crude to products ═══════════════════════════════════════════
        An original SVG of an atmospheric crude tower. It is an illustration
        of the industrial process this simulator teaches the principles of;
@@ -972,6 +1025,26 @@
             </g>
           </sc-for>
         </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ explore the simulator ════════════════════════════════════════════ -->
+  <section class="dx-reveal dx-lit" style="margin-top:80px;position:relative;border-radius:var(--dx-r-xl);overflow:hidden;
+       border:1px solid color-mix(in srgb,var(--color-accent) 24%,var(--dx-hairline));
+       background:radial-gradient(120% 140% at 12% 0%, color-mix(in srgb,var(--dx-violet) 22%,transparent), transparent 58%),
+                  radial-gradient(110% 130% at 88% 100%, color-mix(in srgb,var(--dx-vapour) 18%,transparent), transparent 62%),
+                  color-mix(in srgb,var(--dx-raised) 82%,transparent);
+       box-shadow:var(--shadow-lg);padding:clamp(28px,4vw,52px)">
+    <div style="display:flex;gap:34px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      <div style="min-width:0;max-width:58ch">
+        <div class="dx-kicker">Your turn</div>
+        <h2 class="dx-title" style="font-size:clamp(26px,3.4vw,40px);margin-top:6px">Build the column yourself</h2>
+        <p class="dx-sub" style="margin-top:10px;font-size:15px">Pick a mixture, set the reflux, and watch the stage count answer back. Every number is solved in your browser from the thermodynamic model you choose &mdash; nothing is pre-computed, and nothing is sent anywhere.</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" data-v="sim" onClick="{{ go }}" style="padding:12px 24px;font-size:15px">Start simulation</button>
+        <button class="btn btn-secondary" data-v="mt" onClick="{{ go }}" style="padding:12px 24px;font-size:15px">See McCabe&ndash;Thiele</button>
       </div>
     </div>
   </section>
