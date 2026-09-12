@@ -4,8 +4,11 @@
     python3 tools/build.py            rewrite index.html from src/
     python3 tools/build.py --check    verify index.html matches src/ (exit 1 if not)
 
-src/DISTILLEX.dc.html is the single source of truth for the markup and the
-calculation engine. index.html is a deployable single-file bundle produced by
+src/DISTILLEX.dc.html is the source of truth for the markup and the binary
+calculation engine. Larger subsystems live in their own modules under
+src/rig/ and are inlined here at build time by an `// @include` directive, so
+the repository keeps real files while the deployable artefact stays a single
+self-contained page. index.html is a deployable single-file bundle produced by
 Claude Design's publisher; this script regenerates the one part of it that is
 derived from the source — the __bundler/template block — and leaves the asset
 layer (the loader shell, the gzip+base64 manifest of fonts and React, the
@@ -27,6 +30,45 @@ import json, os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC  = os.path.join(ROOT, 'src', 'DISTILLEX.dc.html')
 IDX  = os.path.join(ROOT, 'index.html')
+MODS = os.path.join(ROOT, 'src')
+
+# `  // @include rig/engine.js` on a line of its own is replaced by that file,
+# every line re-indented to the directive's own column. Deterministic, so
+# --check stays byte-exact.
+INCLUDE_RE = re.compile(r'^([ \t]*)//[ \t]*@include[ \t]+([A-Za-z0-9_./-]+\.js)[ \t]*$', re.M)
+
+
+def inline_modules(src, seen=None):
+    """Resolve @include directives, depth-first, refusing cycles."""
+    seen = seen or []
+
+    def sub(m):
+        pad, rel = m.group(1), m.group(2)
+        path = os.path.normpath(os.path.join(MODS, rel))
+        if not path.startswith(MODS + os.sep):
+            sys.exit('build: @include escapes src/: ' + rel)
+        if rel in seen:
+            sys.exit('build: @include cycle at ' + rel)
+        if not os.path.exists(path):
+            sys.exit('build: @include target missing: ' + rel)
+        body = open(path, encoding='utf-8').read().rstrip('\n')
+        body = inline_modules(body, seen + [rel])
+        head = pad + '/* ' + rel + ' — inlined by tools/build.py */'
+        lines = [head] + [(pad + ln if ln.strip() else '') for ln in body.split('\n')]
+        return '\n'.join(lines)
+
+    return INCLUDE_RE.sub(sub, src)
+
+
+def module_files():
+    """Every .js under src/rig, for reporting."""
+    out = []
+    root = os.path.join(MODS, 'rig')
+    if os.path.isdir(root):
+        for name in sorted(os.listdir(root)):
+            if name.endswith('.js'):
+                out.append(os.path.join('rig', name))
+    return out
 
 # Tags the HTML parser relocates unless they are disguised (table scoping and
 # select content). Mirrors the publisher's own encoder.
@@ -95,7 +137,7 @@ def asset_layer(idx):
 
 
 def build_template(src, style_block, support_uuid, dsjs_uuid):
-    t = src
+    t = inline_modules(src)
     t = t.replace('<script src="./support.js"></script>',
                   '<script src="%s"></script>' % support_uuid)
     t = re.sub(r'(<html[^>]*>)\n<head>', r'\1<head>', t, count=1)
@@ -129,11 +171,13 @@ def main():
             return 0
         print('build --check: index.html is STALE — run `python3 tools/build.py`', file=sys.stderr)
         return 1
+    mods = module_files()
+    note = ' (+%d module%s)' % (len(mods), '' if len(mods) == 1 else 's') if mods else ''
     if out == idx:
         print('build: index.html already up to date')
         return 0
     open(IDX, 'w', encoding='utf-8').write(out)
-    print('build: regenerated index.html from src/DISTILLEX.dc.html')
+    print('build: regenerated index.html from src/DISTILLEX.dc.html' + note)
     return 0
 
 

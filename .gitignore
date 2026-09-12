@@ -11,3 +11,7 @@ node_modules/
 .cache/
 *.log
 __pycache__/
+
+# QA harness output — the harnesses live outside the repo, but a run started
+# from the repo root used to drop its report here
+contrast_*.json

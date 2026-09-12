@@ -458,8 +458,18 @@ function suiteContrast() {
   const dsCss = /<style>\/\* Industry[\s\S]*?<\/style>/.exec(tpl)[0];
   const darkRule = /\.dx-dark \{([\s\S]*?)\}/.exec(source)[1];
 
-  const tok = (css, name) => {
-    const m = new RegExp('--' + name + ':\\s*(#[0-9a-fA-F]{6})').exec(css);
+  // The component stylesheet is loaded after the inlined design system and
+  // re-pitches the palette, so a token has to be read from the override first
+  // and only then from the design system it replaces — otherwise this suite
+  // would happily validate colours the page no longer uses.
+  const rootBlock = /:root \{([\s\S]*?)\n  \}/.exec(source);
+  const overrideLight = rootBlock ? rootBlock[1] : '';
+  const tok = (css, name, override) => {
+    const re = () => new RegExp('--' + name + ':\\s*(#[0-9a-fA-F]{6})');
+    const o = override !== undefined ? override : '';
+    const m0 = re().exec(o);
+    if (m0) return m0[1];
+    const m = re().exec(css);
     return m ? m[1] : null;
   };
   const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
@@ -478,14 +488,20 @@ function suiteContrast() {
   ok(!!inkLight && !!inkDark, 'the text-safe accent is defined for both themes');
   if (!inkLight || !inkDark) return;
 
+  // the raised panel is where most text actually sits, so it is checked too
   const themes = [
-    ['light', tok(dsCss, inkLight[1]), tok(dsCss, 'color-bg'), tok(dsCss, 'color-surface')],
-    ['dark', tok(darkRule, inkDark[1]), tok(darkRule, 'color-bg'), tok(darkRule, 'color-surface')],
+    ['light', tok(dsCss, inkLight[1], overrideLight), tok(dsCss, 'color-bg', overrideLight),
+     tok(dsCss, 'color-surface', overrideLight), tok(dsCss, 'dx-raised', overrideLight),
+     tok(dsCss, 'dx-ctrl', overrideLight)],
+    ['dark', tok(darkRule, inkDark[1]), tok(darkRule, 'color-bg'),
+     tok(darkRule, 'color-surface'), tok(darkRule, 'dx-raised'), tok(darkRule, 'dx-ctrl')],
   ];
-  for (const [name, ink, bg, surf] of themes) {
-    ok(!!ink && !!bg && !!surf, name + ': palette resolved', ink + ' / ' + bg + ' / ' + surf);
-    if (!ink || !bg || !surf) continue;
-    for (const [what, ground] of [['page background', bg], ['card surface', surf]]) {
+  for (const [name, ink, bg, surf, raised, ctrl] of themes) {
+    ok(!!ink && !!bg && !!surf && !!raised && !!ctrl, name + ': palette resolved',
+       ink + ' / ' + bg + ' / ' + surf + ' / ' + raised + ' / ' + ctrl);
+    if (!ink || !bg || !surf || !raised || !ctrl) continue;
+    for (const [what, ground] of [['page background', bg], ['inset surface', surf],
+                                  ['raised panel', raised], ['control surface', ctrl]]) {
       const r = ratio(ink, ground);
       ok(r >= 4.5, name + ': accent text on the ' + what + ' meets 4.5:1',
          ink + ' on ' + ground + ' = ' + r.toFixed(2) + ':1');
@@ -495,10 +511,31 @@ function suiteContrast() {
        ratio(bg, ink).toFixed(2) + ':1');
   }
   // the raw accent stays available for non-text use, where 3:1 (1.4.11) applies
-  const rawLight = tok(dsCss, 'color-accent');
-  ok(ratio(rawLight, tok(dsCss, 'color-bg')) >= 3,
-     'the unchanged accent still meets the 3:1 non-text bound',
-     ratio(rawLight, tok(dsCss, 'color-bg')).toFixed(2) + ':1');
+  const rawLight = tok(dsCss, 'color-accent', overrideLight);
+  const bgLight = tok(dsCss, 'color-bg', overrideLight);
+  ok(ratio(rawLight, bgLight) >= 3,
+     'the raw accent meets the 3:1 non-text bound',
+     ratio(rawLight, bgLight).toFixed(2) + ':1');
+  // the semantic and status hues are text in the interface, so they are held
+  // to the text bound on every ground they are painted on
+  for (const [theme, block, grounds] of [
+    ['light', overrideLight, ['color-bg', 'color-surface', 'dx-raised', 'dx-ctrl']],
+    ['dark', darkRule, ['color-bg', 'color-surface', 'dx-raised', 'dx-ctrl']]]) {
+    for (const role of ['dx-ok', 'dx-warn', 'dx-err', 'dx-info', 'dx-liquid', 'dx-vapour',
+                        'dx-violet', 'dx-magenta', 'dx-heat', 'dx-orange', 'dx-gold',
+                        'dx-red', 'dx-green',
+                        'dx-f1', 'dx-f2', 'dx-f3', 'dx-f4', 'dx-f5', 'dx-f6', 'dx-f7', 'dx-f8']) {
+      const c = tok(block, role, block);
+      if (!c) { ok(false, theme + ': ' + role + ' is defined'); continue; }
+      let worst = 99, on = '';
+      for (const g of grounds) {
+        const gv = tok(dsCss, g, block); if (!gv) continue;
+        const r = ratio(c, gv); if (r < worst) { worst = r; on = gv; }
+      }
+      ok(worst >= 4.5, theme + ': ' + role + ' meets 4.5:1 on every ground it is used on',
+         c + ' worst ' + worst.toFixed(2) + ':1 on ' + on);
+    }
+  }
   // no text may go back to the raw accent, but controls legitimately keep it
   const textUses = (source.match(/(?:^|[^-a-z])color:var\(--color-accent\)/g) || []).length;
   ok(textUses === 0, 'no text is painted with the raw accent', String(textUses));
@@ -519,12 +556,387 @@ function suiteBuild() {
   }
 }
 
+/* ── 13. the industrial crude-unit engine ───────────────────────────────────
+   The CDU model is a separate module, so it is loaded and exercised directly.
+   Every check here is either a closed-form identity, an internal consistency
+   requirement, or a direction the physics must move in. None compares against
+   a transcribed reference value; no such validation has been performed.     */
+function suiteCDU() {
+  const CDU = require(path.join(__dirname, '..', 'src', 'rig', 'engine.js'));
+  const base = CDU.baseCase();
+  const R0 = CDU.run(base);
+  const mass = r => r.products.reduce((a, p) => a + p.mass, 0);
+  const get  = (r, k) => r.products.find(p => p.key === k).mass;
+  const runW = o => CDU.run(Object.assign({}, base, o));
+
+  // ── thermodynamics against closed forms ──────────────────────────────
+  for (const c of CDU.COMP) {
+    ok(near(CDU.psat(c, c.Tb), 101.325, 1e-6),
+       'Psat = 1 atm at the normal boiling point (' + c.TbC + ' °C)');
+  }
+  ok(CDU.COMP.every((c, i) => i === 0 || c.Tb > CDU.COMP[i - 1].Tb),
+     'the pseudocomponent grid is strictly ordered in boiling point');
+  ok(CDU.COMP.every((c, i) => i === 0 || c.M > CDU.COMP[i - 1].M),
+     'molar mass rises with boiling point across the grid');
+  // a K-value must fall as the pressure rises, and rise with temperature
+  const cmid = CDU.COMP[10];
+  ok(CDU.kval(cmid, 500, 100) > CDU.kval(cmid, 500, 300), 'K falls as pressure rises');
+  ok(CDU.kval(cmid, 560, 175) > CDU.kval(cmid, 500, 175), 'K rises with temperature');
+
+  // ── the flash solves what it claims to ───────────────────────────────
+  const z = CDU.assayZ(CDU.ASSAY.medium, 0);
+  ok(near(z.reduce((a, b) => a + b, 0), 1, 1e-12), 'assay mole fractions sum to one');
+  for (const T of [520, 580, 628, 660]) {
+    const f = CDU.flash(z, T, 175);
+    // Rachford–Rice residual: Σ z(K−1)/(1+ψ(K−1)) must vanish
+    let res = 0;
+    for (let i = 0; i < z.length; i++)
+      res += z[i] * (f.K[i] - 1) / (1 + f.psi * (f.K[i] - 1));
+    ok(Math.abs(res) < 1e-9, 'Rachford–Rice residual vanishes at ' + T + ' K', String(res));
+    let sx = 0, sy = 0;
+    for (let i = 0; i < z.length; i++) { sx += f.x[i]; sy += f.y[i]; }
+    ok(near(sx, 1, 1e-9) && near(sy, 1, 1e-9), 'flash phases each sum to one at ' + T + ' K');
+    // and the phases must recombine to the feed
+    let worst = 0;
+    for (let i = 0; i < z.length; i++)
+      worst = Math.max(worst, Math.abs(f.psi * f.y[i] + (1 - f.psi) * f.x[i] - z[i]));
+    ok(worst < 1e-12, 'flash phases recombine to the feed at ' + T + ' K', String(worst));
+  }
+  // a flash hotter than the dew point is all vapour, colder than the bubble all liquid
+  const bT = CDU.bubbleT(z, 175, 400).T, dT = CDU.dewT(z, 175, 700).T;
+  ok(dT > bT, 'dew point lies above the bubble point');
+  ok(CDU.flash(z, bT - 40, 175).psi < 1e-9, 'below the bubble point nothing vaporises');
+  ok(CDU.flash(z, dT + 60, 175).psi > 1 - 1e-6, 'above the dew point everything does');
+
+  // ── Kremser against its own closed form ──────────────────────────────
+  ok(near(CDU.kremserAbsorb(1, 6), 6 / 7, 1e-9), 'Kremser at A = 1 gives N/(N+1)');
+  ok(CDU.kremserAbsorb(3, 8) > CDU.kremserAbsorb(3, 4), 'more stages absorb more');
+  ok(CDU.kremserAbsorb(4, 5) > CDU.kremserAbsorb(2, 5), 'a larger factor absorbs more');
+  ok(CDU.kremserAbsorb(0.2, 100) <= 1 && CDU.kremserAbsorb(9, 100) <= 1,
+     'Kremser stays a fraction at both extremes');
+
+  // ── the run: balances and convergence ────────────────────────────────
+  ok(R0.ok && R0.converged, 'the base case converges');
+  ok(R0.status === 'complete' && R0.warns.length === 0,
+     'the base case completes without warnings', JSON.stringify(R0.warns));
+  ok(Math.abs(R0.balance.closure) < 1e-6,
+     'base-case mass balance closes to better than 1e-6', R0.balance.closure.toExponential(2));
+  ok(near(mass(R0), R0.feed.mass, R0.feed.mass * 1e-6),
+     'products sum to the charge', (mass(R0) - R0.feed.mass).toExponential(2));
+  ok(R0.products.every(p => p.mass >= 0), 'no product has a negative rate');
+  // the temperature profile must fall monotonically from the flash zone up
+  const T = R0.internals.Tprofile, fs2 = R0.internals.feedStage;
+  let mono = true;
+  for (let j = 2; j <= fs2; j++) if (T[j] < T[j - 1] - 1e-6) mono = false;
+  ok(mono, 'the tray temperatures rise monotonically from the top tray to the flash zone');
+  ok(T[fs2] > T[1], 'the flash zone is hotter than the top tray');
+  ok(near(T[fs2], base.furnaceT, 1e-6), 'the flash zone sits at the furnace outlet');
+  // the cuts must be ordered by boiling point, lightest overhead
+  const order = ['gas', 'naphtha', 'kerosene', 'diesel', 'gasoil', 'residue'];
+  let asc = true;
+  for (let i = 1; i < order.length; i++)
+    if (get2(R0, order[i]) <= get2(R0, order[i - 1])) asc = false;
+  ok(asc, 'the product cuts are ordered by mid-boiling point, lightest first');
+  function get2(r, k) { return r.products.find(p => p.key === k).tbp50; }
+
+  // ── the model must actually respond ──────────────────────────────────
+  const hot = runW({ furnaceT: 370 }), cool = runW({ furnaceT: 300 });
+  ok(hot.flash.psi > cool.flash.psi, 'a hotter furnace vaporises more of the charge');
+  ok(get(hot, 'residue') < get(cool, 'residue'), 'a hotter furnace leaves less residue');
+  const hiR = runW({ reflux: 5 }), loR = runW({ reflux: 1.6 });
+  ok(hiR.internals.Tprofile[1] < loR.internals.Tprofile[1],
+     'more reflux cools the top of the tower');
+  ok(get(hiR, 'naphtha') < get(loR, 'naphtha'),
+     'more reflux sends less material overhead');
+  const hiP = runW({ colP: 330, topP: 250 }), loP = runW({ colP: 130, topP: 115 });
+  ok(hiP.flash.psi < loP.flash.psi, 'raising the pressure vaporises less');
+  const lightC = runW({ assay: 'light' }), heavyC = runW({ assay: 'heavy' });
+  ok(get(lightC, 'residue') < get(heavyC, 'residue'),
+     'a lighter charge leaves less atmospheric residue');
+  ok(get(lightC, 'naphtha') > get(heavyC, 'naphtha'), 'and yields more naphtha');
+  const wet = runW({ sideSteam: 6 }), dry = runW({ sideSteam: 0 });
+  const width = (r, k) => { const p = r.products.find(x => x.key === k);
+                            return p.tbp95 - p.tbp5; };
+  ok(width(wet, 'kerosene') < width(dry, 'kerosene'),
+     'side-stripper steam narrows the kerosene cut');
+  const dbl = runW({ feedRate: 2400 });
+  ok(near(get(dbl, 'diesel'), 2 * get(R0, 'diesel'), 2 * get(R0, 'diesel') * 1e-6),
+     'doubling the charge doubles every product');
+
+  // ── the draws must land on what was asked for ────────────────────────
+  const spec = runW({ drawKero: 9, drawDiesel: 20, drawGasoil: 8 });
+  ok(spec.converged, 'a re-specified draw set converges');
+  ok(Math.abs(spec.balance.closure) < 1e-6, 'and still closes its balance');
+  ok(get(spec, 'diesel') > get(spec, 'kerosene'),
+     'a larger diesel draw than kerosene draw yields more diesel');
+
+  // ── every product's own boiling curve must be self-consistent ────────
+  for (const p of R0.products) {
+    if (p.mass < 1e-6) continue;
+    ok(p.tbp5 <= p.tbp50 + 1e-9 && p.tbp50 <= p.tbp95 + 1e-9,
+       p.name + ': its 5/50/95 points are ordered');
+    ok(p.M > 0 && p.sg > 0, p.name + ': molar mass and density are positive');
+  }
+
+  // ── bad input is refused, not solved ─────────────────────────────────
+  const bad = [
+    [{ furnaceT: 500 }, 'furnace outlet out of range'],
+    [{ reflux: 0.1 }, 'reflux below the modelled range'],
+    [{ feedRate: 'x' }, 'a non-numeric charge rate'],
+    [{ assay: 'nope' }, 'an unknown feed'],
+    [{ topP: 300, colP: 175 }, 'an overhead above the flash zone'],
+    [{ furnaceT: 220, feedT: 260 }, 'a furnace colder than its own feed'],
+    [{ drawKero: 40, drawDiesel: 40, drawGasoil: 30 }, 'draws exceeding the charge']
+  ];
+  for (const [patch, what] of bad) {
+    const r = runW(patch);
+    ok(!r.ok && r.status === 'error' && r.errs.length > 0, 'refuses ' + what);
+    ok(!r.products, 'and returns no products for ' + what);
+  }
+  // a case that merely strains the model warns rather than failing
+  const strain = runW({ furnaceT: 385 });
+  ok(strain.ok && strain.warns.some(w => /crack/i.test(w)),
+     'warns about cracking above 375 °C rather than refusing');
+}
+
+
+/* ── rig: geometry, plant, flow sheet and the view model ────────────────
+   The simulator's presentation layers. They must not compute a process
+   quantity, they must not invent one when there is no result, and the
+   geometry they hand the renderer must be well formed. Everything here is
+   structural — no reference values.                                       */
+function suiteRig() {
+  const { GEO, GLM, PLANT, RIG2D, RIGINFO, CDU } = load().modules;
+  const r = CDU.run(CDU.baseCase());
+
+  // ── meshes ───────────────────────────────────────────────────────────
+  // The same names the renderer builds, at the same shapes. Segment counts
+  // differ; the checks here are structural, not about tessellation.
+  const meshes = {
+    cyl: GEO.cylinder(24, false, false), cylCap: GEO.cylinder(24, true, true),
+    rod: GEO.cylinder(10, false, false), rodCap: GEO.cylinder(10, true, true),
+    cone: GEO.cone(24, 0.62), skirt: GEO.cone(24, 0.94), dish: GEO.dish(20, 6),
+    box: GEO.box(), annulus: GEO.annulus(24, 0.62, true),
+    ringThin: GEO.annulus(22, 0.90, true), disc: GEO.annulus(24, 0.06, true),
+    cylArc: GEO.cylArc(28, Math.PI * 1.44, 0.055),
+    sphere: GEO.sphere(16, 10), knuckle: GEO.sphere(10, 6)
+  };
+  for (const k in meshes) {
+    const m = meshes[k], nv = m.pos.length / 3;
+    ok(m.idx.length === m.count && m.count % 3 === 0, 'mesh ' + k + ' has whole triangles');
+    let bad = 0, badN = 0;
+    for (let i = 0; i < m.idx.length; i++) if (m.idx[i] >= nv || m.idx[i] < 0) bad++;
+    for (let i = 0; i < nv; i++) {
+      const L = Math.hypot(m.nrm[i*3], m.nrm[i*3+1], m.nrm[i*3+2]);
+      if (!(L > 0.92 && L < 1.08)) badN++;
+    }
+    ok(bad === 0, 'mesh ' + k + ' indexes only existing vertices', 'out of range: ' + bad);
+    ok(badN === 0, 'mesh ' + k + ' has unit normals', 'bad: ' + badN + ' of ' + nv);
+  }
+
+  // ── the plant ────────────────────────────────────────────────────────
+  const P = PLANT.build();
+  ok(P.objects.length > 400, 'plant builds a detailed model', P.objects.length + ' objects');
+  // level of detail must only ever coarsen something too small to show it
+  const coarse = { rod: 1, rodCap: 1, knuckle: 1 };
+  const wrong = P.objects.filter(o => {
+    const rx = Math.hypot(o.m[0], o.m[1], o.m[2]), rz = Math.hypot(o.m[8], o.m[9], o.m[10]);
+    return coarse[o.mesh] && Math.max(rx, rz) >= 0.30;
+  });
+  ok(wrong.length === 0, 'no large object was given a low-poly mesh', wrong.length + ' objects');
+  ok(P.objects.filter(o => coarse[o.mesh]).length > 200,
+     'the small parts of the plant do use the low-poly meshes');
+  ok(P.objects.every(o => meshes[o.mesh] !== undefined),
+     'every object names a mesh the renderer builds',
+     P.objects.filter(o => meshes[o.mesh] === undefined).map(o => o.mesh).join(','));
+  ok(P.objects.every(o => o.m && o.m.length === 16 && Array.prototype.every.call(o.m, Number.isFinite)),
+     'every object carries a finite 4x4 transform');
+  ok(P.objects.every(o => o.col && o.col.length === 3 && o.col.every(c => c >= 0 && c <= 1.2)),
+     'every object colour is in range');
+  const feet = P.objects.filter(o => o.m[13] < -0.01);
+  ok(feet.length === 0, 'nothing is modelled below the paving', feet.length + ' objects');
+  ok(P.streams.length === 11, 'every stream the result reports has a pipe run', P.streams.length);
+  ok(P.streams.every(st => st.pts.length >= 2 &&
+        st.pts.every(q => q.length === 3 && q.every(Number.isFinite))),
+     'every stream is a well-formed polyline');
+  ok(P.shellTop > P.skirtTop && P.skirtTop > 0 && P.feedY > P.skirtTop && P.feedY < P.shellTop,
+     'the flash zone sits inside the shell');
+  ok(P.sideY.length === 3 && P.sideY[0] > P.sideY[1] && P.sideY[1] > P.sideY[2],
+     'the side draws descend in the right order');
+
+  // pick ids are shared with the information layer and the flow sheet
+  const picks = {};
+  P.objects.forEach(o => { if (o.pick) picks[o.pick] = true; });
+  Object.keys(picks).forEach(k => ok(!!RIGINFO.describe(k),
+    'pick id "' + k + '" has an information record'));
+  Object.keys(RIGINFO.FOCUS).forEach(k => ok(!!RIGINFO.describe(k),
+    'focus target "' + k + '" has an information record'));
+  ok(RIGINFO.TOUR.every(t => RIGINFO.describe(t.sel) && t.title && t.text),
+     'every guided-tour stop names a real component');
+
+  // cameras are derived from the plant, so they must move with it
+  const cams = RIGINFO.cameras(P);
+  ok(cams.length >= 6, 'there are camera presets for every part of the unit');
+  ok(cams.every(c => c.t.every(Number.isFinite) && c.dist > 10 && c.dist < 260 &&
+                     Math.abs(c.pitch) < 1.2), 'every camera preset is usable');
+  ok(new Set(RIGINFO.TOUR.map(t => t.cam)).size <= cams.length &&
+     RIGINFO.TOUR.every(t => cams.some(c => c.key === t.cam)),
+     'every tour stop names a camera that exists');
+
+  // ── the flow sheet ───────────────────────────────────────────────────
+  const d0 = RIG2D.build(null, 'material', null, null, true);
+  ok(d0.pipes.length > 10 && d0.out.length === 6,
+     'the flow sheet draws with no result at all');
+  ok(d0.out.every(o => o.rate === '—'),
+     'with no result every product rate is a dash, not a number');
+  ok(d0.temps.length === 0, 'with no result no temperature is claimed');
+
+  const d1 = RIG2D.build(r, 'material', null, null, true);
+  ok(d1.out.length === 6 && d1.out.every(o => /^[\d.]+$/.test(o.rate)),
+     'with a result every product carries its computed rate');
+  const shown = d1.out.map(o => parseFloat(o.rate)).reduce((a, b) => a + b, 0);
+  ok(Math.abs(shown - r.feed.mass) / r.feed.mass < 0.005,
+     'the rates on the flow sheet sum to the charge', shown.toFixed(1) + ' vs ' + r.feed.mass);
+  ok(d1.temps.length >= 5, 'the solved temperatures are annotated');
+  const ys = d1.out.map(o => o.y);
+  ok(new Set(ys).size === ys.length, 'no two product labels share a row');
+  for (let i = 1; i < ys.length; i++)
+    ok(ys[i] - ys[i-1] >= 40, 'product labels are far enough apart to read');
+  ok(d1.pipes.every(q => /^M[-\d.]/.test(q.d) && q.w > 0 && isFinite(q.w)),
+     'every pipe has a path and a weight');
+
+  // line weight and tracer pace must follow the flow, not the other way round
+  const big = RIG2D.gauge(600, 1200), small = RIG2D.gauge(30, 1200);
+  ok(big > small, 'a larger stream is drawn heavier');
+  ok(RIG2D.pace(600, 1200) < RIG2D.pace(30, 1200), 'a larger stream runs its tracers faster');
+  ok(RIG2D.pace(0, 1200) === 0, 'a stream carrying nothing has no tracer');
+  const hot = RIG2D.heat(370, 30, 380), cold = RIG2D.heat(40, 30, 380);
+  ok(hot !== cold && /^rgb\(/.test(hot), 'the thermal ramp is a colour and it varies');
+  ok(RIG2D.heat(-50, 30, 380) === RIG2D.heat(30, 30, 380), 'the ramp clamps below its range');
+  ok(RIG2D.heat(900, 30, 380) === RIG2D.heat(380, 30, 380), 'the ramp clamps above its range');
+
+  // the thermal view must not stretch its scale to the run, or two runs
+  // could not be compared
+  const hotRun = CDU.run(Object.assign(CDU.baseCase(), { furnaceT: 380 }));
+  const tA = RIG2D.build(r, 'thermal', null, null, false);
+  const tB = RIG2D.build(hotRun, 'thermal', null, null, false);
+  ok(tA.legend && tB.legend && tA.legend.lo === tB.legend.lo && tA.legend.hi === tB.legend.hi,
+     'the thermal scale is the same for every run');
+
+  // selection dims everything else, in both views, from the one key
+  const sel = RIG2D.build(r, 'material', 'furnace', null, false);
+  const fur = sel.blocks.filter(bq => bq.pick === 'furnace')[0];
+  ok(fur && fur.op === 1, 'the selected block is drawn at full strength');
+  ok(sel.pipes.filter(q => q.pick !== 'furnace').every(q => q.op < 0.5),
+     'everything else is dimmed when something is selected');
+
+  // ── the simulator's own palette ──────────────────────────────────────
+  // The rig page is a dark instrument surround whatever the app theme, so it
+  // carries its own tokens and the `contrast` suite's palette does not cover
+  // them. Every text tone must clear WCAG 1.4.3 (4.5:1) on every surface it
+  // can appear over.
+  {
+    const rigCss = source.slice(source.indexOf('.dx-rig {'), source.indexOf('.dx-rig {') + 1400);
+    const tok = n => {
+      const m = new RegExp('--r-' + n + ':\\s*(#[0-9a-fA-F]{6})').exec(rigCss);
+      return m && m[1];
+    };
+    const lum = h => {
+      const v = h.slice(1).match(/../g).map(x => parseInt(x, 16) / 255)
+                 .map(c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+      return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+    };
+    const ratio = (a, b) => {
+      const x = lum(a), y = lum(b);
+      return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+    };
+    const surfaces = ['l0', 'l1', 'l2', 'l3'].map(n => [n, tok(n)]);
+    const texts = ['ink', 'dim', 'faint', 'cyan', 'viol', 'mag', 'amber',
+                   'orange', 'red', 'green'].map(n => [n, tok(n)]);
+    ok(surfaces.every(q => q[1]) && texts.every(q => q[1]),
+       'every rig colour token is a hex literal the suite can read');
+    texts.forEach(([tn, tv]) => surfaces.forEach(([sn, sv]) => {
+      if (!tv || !sv) return;
+      ok(ratio(tv, sv) >= 4.5,
+         'rig --r-' + tn + ' on --r-' + sn + ' clears 4.5:1',
+         ratio(tv, sv).toFixed(2) + ':1');
+    }));
+  }
+
+  // ── the view model ───────────────────────────────────────────────────
+  const c = C();
+  c.state = Object.assign({}, c.state);
+  const vm0 = c.rigView(c.state);
+  ok(vm0.rigSt.label === 'READY', 'the page opens READY');
+  ok(vm0.rigProducts.every(q => q.rate === '—' && q.pct === '—'),
+     'no product rate is shown before a run');
+  ok(vm0.rigKeyFigs.every(q => q.v === '—'), 'no headline figure is invented');
+  ok(vm0.rigBal === null && vm0.rigConv === null, 'no balance or convergence before a run');
+  ok(vm0.rigSections.length === 5 && vm0.rigSections.every(sec => sec.fields.length > 0),
+     'the operator panel has all five sections');
+  const fieldKeys = [];
+  vm0.rigSections.forEach(sec => sec.fields.forEach(fl => fieldKeys.push(fl.k)));
+  ok(fieldKeys.every(k => CDU.LIMITS[k]), 'every panel field is a real engine input');
+  Object.keys(CDU.LIMITS).forEach(k => ok(fieldKeys.indexOf(k) >= 0,
+    'engine input "' + k + '" is reachable from the panel'));
+  ok(vm0.rigSections.every(sec => sec.fields.every(fl =>
+      fl.min === CDU.LIMITS[fl.k].min && fl.max === CDU.LIMITS[fl.k].max)),
+     'every slider offers exactly the range the engine accepts');
+
+  c.state.rig = Object.assign({}, c.state.rig, { r: r, status: 'complete', warns: [] });
+  const vm1 = c.rigView(c.state);
+  ok(vm1.rigSt.label === 'COMPLETE', 'a clean run reports COMPLETE');
+  ok(vm1.rigConv.converged === r.converged, 'convergence is reported, not asserted');
+  ok(vm1.rigConv.outer === String(r.outer), 'the sweep count is the solver’s own');
+  ok(vm1.rigConv.trace && vm1.rigConv.trace.n === r.trace.length,
+     'the residual plot has one point per sweep');
+  const rate = vm1.rigProducts.map(q => parseFloat(q.rate)).reduce((a, b) => a + b, 0);
+  ok(Math.abs(rate - r.feed.mass) / r.feed.mass < 0.005,
+     'the product strip sums to the charge');
+  ok(vm1.rigBal.ok === (Math.abs(r.balance.closure) <= 1e-6),
+     'the balance verdict follows the computed closure');
+  ok(vm1.rigStages.length < r.internals.Tprofile.length,
+     'the ordinary view lists the named stages, not every tray');
+  c.state.rig = Object.assign({}, c.state.rig, { expert: true });
+  const vm2 = c.rigView(c.state);
+  ok(vm2.rigStages.length === r.internals.Tprofile.length,
+     'expert view lists every stage the solver carries');
+  ok(vm2.rigFlows.length > 6 && vm2.rigCut && vm2.rigCut.bars.length === CDU.NBP_C.length,
+     'expert view exposes the internal flows and the pseudocomponent grid');
+
+  // a refused run must leave nothing behind that looks like a result
+  const c2 = C();
+  c2.state = Object.assign({}, c2.state);
+  c2.state.rig = Object.assign({}, c2.state.rig,
+    { status: 'error', errs: [{ msg: 'no' }], r: null });
+  const vmE = c2.rigView(c2.state);
+  ok(vmE.rigSt.tone === 'err' && vmE.rigHasErr, 'an error is reported as an error');
+  ok(!vmE.rigHasR && vmE.rigProducts.every(q => q.rate === '—'),
+     'a failed run shows no product rates');
+  ok(vmE.rigD2.out.every(q => q.rate === '—'),
+     'a failed run leaves the flow sheet without numbers');
+
+  // formatting must not manufacture precision
+  ok(c.rigFmt(NaN, 2) === '—' && c.rigFmt(undefined, 1) === '—',
+     'a missing number prints as a dash');
+  ok(c.rigRate(1234.5678) === '1235' && c.rigRate(9.87654) === '9.9',
+     'rates are quoted to about three significant figures');
+  ok(/^2\.6×10⁻⁸$/.test(c.rigExp(2.6e-8)), 'small numbers get an exponent, not zeros');
+
+  // the gateway preview is the same flow sheet, and honest before the run
+  const g0 = c2.rigGate(c2.state);
+  ok(g0.gateFigs.every(q => q.v === '—'), 'the gateway invents nothing before a run');
+  const g1 = c.rigGate(c.state);
+  ok(g1.gateFigs.every(q => q.v !== '—'), 'the gateway shows the prewarmed run');
+  ok(g1.gateD2.out.length === 6, 'the gateway draws the whole flow sheet');
+}
+
 const SUITES = {
   identity: suiteIdentity, analytic: suiteAnalytic, 'pure-component': suitePureComponent,
   thermo: suiteThermo, invariants: suiteInvariants, matrix: suiteMatrix,
   validation: suiteValidation, 'save-load': suiteSaveLoad,
   disclosures: suiteDisclosures, contrast: suiteContrast,
-  headers: suiteHeaders, build: suiteBuild,
+  headers: suiteHeaders, build: suiteBuild, cdu: suiteCDU, rig: suiteRig,
 };
 
 function main() {
