@@ -849,13 +849,34 @@
         <div style="display:flex;flex-direction:column;gap:14px">
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Live results</h6>
-            <sc-for list="{{ liveRows }}" as="row" hint-placeholder-count="8">
-              <div style="{{ row.style }}">
-                <span style="font-size:12.5px;color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ row.k }}</span>
-                <span style="font-size:13.5px;font-variant-numeric:tabular-nums;text-align:right">{{ row.v }}</span>
+            <div class="dx-kicker">Live results</div>
+            <div class="dx-well" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;padding:1px;overflow:hidden">
+              <sc-for list="{{ keyRows }}" as="kr" hint-placeholder-count="3">
+                <div style="background:var(--dx-raised);padding:10px 11px;display:flex;flex-direction:column;gap:2px;min-width:0">
+                  <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb,var(--color-text) 66%,transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ kr.k }}</span>
+                  <span class="dx-num" style="font-size:20px;font-weight:600;line-height:1.1">{{ kr.v }}</span>
+                  <span style="font-size:10px;color:color-mix(in srgb,var(--color-text) 64%,transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ kr.u }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div>
+              <sc-for list="{{ liveRows }}" as="row" hint-placeholder-count="6">
+                <div style="{{ row.style }}">
+                  <span style="font-size:12.5px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ row.k }}</span>
+                  <span class="dx-num" style="font-size:13px;font-weight:600;text-align:right">{{ row.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <details class="dx-dis"><summary>Duties and internal flows</summary>
+              <div class="dx-dis-b" style="padding-bottom:2px">
+                <sc-for list="{{ moreRows }}" as="row2" hint-placeholder-count="6">
+                  <div style="{{ row2.style }}">
+                    <span style="font-size:12.5px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ row2.k }}</span>
+                    <span class="dx-num" style="font-size:13px;font-weight:600;text-align:right">{{ row2.v }}</span>
+                  </div>
+                </sc-for>
               </div>
-            </sc-for>
+            </details>
           </section>
 
           <section class="card blueprint" style="padding:14px;gap:8px">
@@ -2011,16 +2032,28 @@ class Component extends DCLogic {
       (r.E||[]).map(t=>({text:'\u26a0  '+KINDLABEL[this.kindOf(t)]+'  \u00b7  '+t,style:errStyle})),
       (r.W||[]).map(t=>({text:'i  '+t,style:'font-size:12.5px;padding:6px 10px;border:1px dashed var(--color-divider);color:color-mix(in srgb,var(--color-text) 72%,transparent)'})));
 
-    const liveRows=[
-      ['Distillate x_D',f(r.xD,4)],['Bottoms x_B',f(r.xB,4)],
+    // The readout had sixteen rows of equal weight, so nothing said which of
+    // them was the answer. The three a student is actually asking for are
+    // promoted; the rest stay in order but read as supporting detail, and
+    // the duties and internal flows sit behind a disclosure.
+    const keyRows=[
+      {k:'Distillate', v:f(r.xD,4), u:'x_D mole frac.'},
+      {k:'Bottoms',    v:f(r.xB,4), u:'x_B mole frac.'},
+      {k:'Stages',     v:f(r.N,0),  u:hasR?('feed on '+f(r.feedStage,0)):'\u2014'}
+    ];
+    const mkRow=rows=>rows.map(row=>({k:row[0],v:row[1],
+      style:'display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--dx-hairline)'}));
+    const liveRows=mkRow([
       ['Recovery of light key',hasR?(100*r.rec).toFixed(2)+' %':'\u2014'],
       ['Separation factor',hasR?(r.sep>=1000?r.sep.toExponential(2):f(r.sep,1)):'\u2014'],
-      ['Theoretical stages',f(r.N,0)],['Actual trays',f(r.Nact,0)],['Feed stage',f(r.feedStage,0)],
-      ['Reflux ratio R',f(r.R,2)],['Minimum reflux R_min',f(r.Rmin,3)],['Minimum stages N_min',f(r.Nmin,2)],
+      ['Reflux ratio R',f(r.R,2)],['Minimum reflux R_min',f(r.Rmin,3)],
+      ['Minimum stages N_min',f(r.Nmin,2)],['Actual trays',f(r.Nact,0)]
+    ]);
+    const moreRows=mkRow([
       ['Condenser duty',hasR?f(r.Qc,3)+' MW':'\u2014'],['Reboiler duty',hasR?f(r.Qr,3)+' MW':'\u2014'],
       ['Feed F',f(r.F,1)+' kmol/h'],['Distillate D',f(r.D,2)+' kmol/h'],['Bottoms B',f(r.B,2)+' kmol/h'],
       ['Top / bottom T',hasR?f(r.Ttop,1)+' / '+f(r.Tbot,1)+' \u00b0C':'\u2014']
-    ].map((row,i)=>({k:row[0],v:row[1],style:'display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:3px 0'+(i%2?';background:color-mix(in srgb,var(--color-text) 3%,transparent)':'')}));
+    ]);
 
     const stageRows = hasR? st.map(a=>({n:a.n,sec:a.rect?'Rectifying':(a.n===r.N&&s.reb==='partial'?'Reboiler':'Stripping'),
       x:a.x.toFixed(4),y:a.y.toFixed(4),T:a.T.toFixed(1),a:a.a.toFixed(3),L:a.L.toFixed(1),V:a.V.toFixed(1),
@@ -2068,7 +2101,7 @@ class Component extends DCLogic {
       specNote: s.calcMode==='design'
         ? 'Design mode: you fix both product purities and the reflux; the engine returns the stages required.'
         : 'Rating mode: you fix the stage count and the distillate cut; the engine solves for the purities that column actually delivers.',
-      trays, bubbles, profiles, stageRows, liveRows, equipment,
+      trays, bubbles, profiles, stageRows, liveRows, keyRows, moreRows, equipment,
       equipInfo:{title:eq.title,body:eq.body,duty},
       hover:!!hoverStg,
       hoverRows: hoverStg? [
