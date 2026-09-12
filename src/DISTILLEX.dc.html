@@ -500,6 +500,19 @@
     .dx .seg-opt { min-height:44px }
     .dx input[type=range] { height:44px }
     .dx-grid2 { grid-template-columns:minmax(0,1fr) } .dx-side { grid-template-columns:minmax(0,1fr) }
+    /* Ten destinations wrapped to three rows on a phone and swallowed the
+       first screen. One swipeable rail instead: every item stays reachable,
+       the active one is scrolled into view, and the page itself never
+       scrolls sideways because the overflow is on this element. */
+    .dx-nav nav { flex-wrap:nowrap; overflow-x:auto; scroll-snap-type:x proximity;
+                  -webkit-overflow-scrolling:touch; scrollbar-width:none;
+                  margin-inline:-4px; padding-inline:4px }
+    .dx-nav nav::-webkit-scrollbar { display:none }
+    .dx-nav nav .btn { flex:none; scroll-snap-align:center }
+    /* The simulator stage is tall on a small screen. The hero stage is
+       square by aspect-ratio, so it must keep its own sizing — forcing a
+       height on it makes it wider than the viewport. */
+    .dx-stage:not(.dx-stage-hero) { height:340px !important }
   }
   @media print { .dx-noprint { display:none !important } }
 </style>
@@ -555,7 +568,7 @@
       </div>
       <div style="margin-top:22px;font-size:12px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Runs entirely client-side · Ideal VLE (Raoult) and constant-volatility models · No account, no server</div>
     </div>
-    <div class="dx-stage" style="aspect-ratio:1/1;display:grid;place-items:center" role="img" aria-label="Three-dimensional cutaway of a fractionating column showing its trays, the feed stage and counter-current vapour and liquid traffic.">
+    <div class="dx-stage dx-stage-hero" style="aspect-ratio:1/1;display:grid;place-items:center" role="img" aria-label="Three-dimensional cutaway of a fractionating column showing its trays, the feed stage and counter-current vapour and liquid traffic.">
       <i class="dx-stage-grid" aria-hidden="true"></i>
       <div class="dx-stage-inner dx-vp-iso" style="position:absolute;inset:0;display:grid;place-items:center">
         <div class="dx-col" style="width:{{ scene.W }}px;height:{{ scene.H }}px">
