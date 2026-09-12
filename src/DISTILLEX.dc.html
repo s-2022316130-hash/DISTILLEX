@@ -825,7 +825,34 @@
       radial-gradient(100% 60% at 92% 12%, color-mix(in srgb, var(--dx-vapour) 15%, transparent), transparent 60%),
       radial-gradient(90%  70% at 50% 108%, color-mix(in srgb, var(--dx-orange) 14%, transparent), transparent 62%),
       linear-gradient(176deg, #0a0e1c 0%, #0d1225 46%, #0a0d18 100%);
+    background-color:#0a0e1c;
     color:#e8ecf6;
+    /* The rig stands on a dark surface in either theme, so it takes the
+       dark palette with it. Without this the light theme hands it role
+       colours tuned for a white page and the labels fall below AA on
+       their own background. Values are the .dx-dark ones verbatim. */
+    --dx-vapour: #22d3ee;
+    --dx-liquid: #8b9cff;
+    --dx-violet: #b39bff;
+    --dx-magenta: #f472d0;
+    --dx-heat: #fbbf24;
+    --dx-ok: #34d399;
+    --dx-warn: #fbbf24;
+    --dx-err: #fb7185;
+    --dx-info: #7dd3fc;
+    --dx-orange: #fb923c;
+    --dx-gold: #fde047;
+    --dx-red: #f87171;
+    --dx-green: #4ade80;
+    --dx-crude: #e0a86a;
+    --dx-f1: #67e8f9;
+    --dx-f2: #5eead4;
+    --dx-f3: #a3e635;
+    --dx-f4: #fde047;
+    --dx-f5: #fbbf24;
+    --dx-f6: #fb923c;
+    --dx-f7: #f87171;
+    --dx-f8: #e879a0;
   }
   .dx:not(.dx-dark) .rig-page {
     background:
@@ -833,6 +860,7 @@
       radial-gradient(100% 60% at 92% 12%, color-mix(in srgb, var(--dx-vapour) 12%, transparent), transparent 60%),
       radial-gradient(90%  70% at 50% 108%, color-mix(in srgb, var(--dx-orange) 12%, transparent), transparent 62%),
       linear-gradient(176deg, #18203a 0%, #1d2647 48%, #151b30 100%);
+    background-color:#18203a;
   }
   /* faint technical grid and a slow drifting light — both barely there */
   .rig-page::before {
@@ -845,9 +873,9 @@
     -webkit-mask-image:radial-gradient(120% 90% at 50% 34%, #000 30%, transparent 82%);
   }
   .rig-page::after {
-    content:''; position:absolute; inset:-30%; pointer-events:none; opacity:.5;
+    content:''; position:absolute; inset:0 -14% 34%; pointer-events:none; opacity:.5;
     background:radial-gradient(38% 30% at 30% 30%, color-mix(in srgb, var(--dx-vapour) 13%, transparent), transparent 70%);
-    animation:rigDrift 46s ease-in-out infinite alternate;
+    will-change:transform; animation:rigDrift 46s ease-in-out infinite alternate;
   }
   @keyframes rigDrift { from { transform:translate3d(-4%,2%,0) } to { transform:translate3d(8%,-5%,0) } }
 
@@ -864,6 +892,12 @@
   }
   .rig-back:hover { background:rgba(24,34,64,.86); border-color:var(--dx-vapour); transform:translateX(-2px) }
   .rig-hero { padding:10px 0 14px; max-width:74ch }
+  @media (max-width: 620px) {
+    .rig-hero { padding:4px 0 10px }
+    .rig-hero h1 { font-size:clamp(30px, 9vw, 40px); margin:4px 0 6px }
+    .rig-hero p { font-size:13.5px; line-height:1.5 }
+    .rig-top { padding:12px 0 2px; gap:8px }
+  }
   .rig-kick {
     font-size:11px; letter-spacing:.22em; text-transform:uppercase;
     color:var(--dx-heat); display:flex; align-items:center; gap:9px;
@@ -886,6 +920,7 @@
       radial-gradient(80% 52% at 50% 4%,  color-mix(in srgb, var(--dx-vapour) 12%, transparent), transparent 62%),
       radial-gradient(72% 46% at 24% 100%, color-mix(in srgb, var(--dx-heat)  17%, transparent), transparent 64%),
       linear-gradient(178deg, rgba(9,13,27,.94), rgba(7,10,22,.98));
+    background-color:#070a16;
     box-shadow:0 32px 90px -40px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.06);
     touch-action:none;
   }
@@ -894,6 +929,7 @@
       radial-gradient(80% 52% at 50% 4%,  color-mix(in srgb, var(--dx-vapour) 13%, transparent), transparent 62%),
       radial-gradient(72% 46% at 24% 100%, color-mix(in srgb, var(--dx-heat)  16%, transparent), transparent 64%),
       linear-gradient(178deg, #131a31, #0f1527);
+    background-color:#0f1527;
   }
   /* ground haze, so the rig stands on something */
   .rig-floor {
@@ -908,15 +944,15 @@
   .rig-stage.grabbing { cursor:grabbing }
   .rig-cam {
     position:absolute; left:0; right:0; top:0; bottom:0;
-    transform-style:preserve-3d; will-change:transform;
+    transform-style:preserve-3d;
     transform:
-      scale(var(--rig-zoom, 1))
+      scale(calc(var(--rig-zoom, 1) * var(--rig-fit, 1)))
       rotateX(var(--rig-tilt, 10deg))
       rotateY(var(--rig-rot, -20deg))
-      translateY(var(--rig-pan, 0px));
+      translateY(calc(var(--rig-pan, 0px) + var(--rig-nudge, 0px)));
     transition:transform 940ms cubic-bezier(.22,.61,.36,1);
   }
-  .rig-cam.dragging { transition:none }
+  .rig-cam.dragging { transition:none; will-change:transform }
   .rig-cam > * { position:absolute; left:50%; top:50%; transform-style:preserve-3d }
   .rig-p, .rig-f { pointer-events:none }
 
@@ -949,8 +985,7 @@
     background:radial-gradient(circle at 50% 50%,
       color-mix(in srgb, var(--dx-liquid) 26%, transparent),
       color-mix(in srgb, var(--dx-liquid) 9%, transparent) 70%, transparent);
-    box-shadow:0 0 14px color-mix(in srgb, var(--dx-liquid) 26%, transparent);
-    transition:border-color var(--dx-t-base) var(--dx-ease), box-shadow var(--dx-t-base) var(--dx-ease);
+    transition:border-color var(--dx-t-base) var(--dx-ease);
   }
   .rig-plat {
     border-radius:50%; border:2px solid color-mix(in srgb, var(--dx-gold) 40%, transparent);
@@ -973,17 +1008,13 @@
     background:radial-gradient(60% 100% at 50% 100%,
       var(--dx-gold), color-mix(in srgb, var(--dx-orange) 82%, transparent) 42%,
       color-mix(in srgb, var(--dx-red) 26%, transparent) 64%, transparent 82%);
-    box-shadow:0 0 26px color-mix(in srgb, var(--dx-orange) 60%, transparent);
     /* no blur(): a filter flattens this out of the 3D scene and it lands
        somewhere else entirely. The soft edge comes from the gradient. */
     animation:rigFlame 2.6s var(--dx-ease) infinite;
   }
   /* opacity and glow only: animating `transform` here would replace the
      translate3d that puts the flame inside the heater */
-  @keyframes rigFlame {
-    0%,100% { opacity:.66; box-shadow:0 0 18px color-mix(in srgb, var(--dx-orange) 44%, transparent) }
-    50%     { opacity:1;   box-shadow:0 0 34px color-mix(in srgb, var(--dx-orange) 74%, transparent) }
-  }
+  @keyframes rigFlame { 0%,100% { opacity:.62 } 50% { opacity:1 } }
   .rig-stack { background:linear-gradient(180deg,
       color-mix(in srgb, var(--dx-heat) 34%, transparent),
       color-mix(in srgb, var(--dx-heat) 12%, transparent));
@@ -1019,9 +1050,13 @@
   .rig-pipe.f7,.rig-strip.f7 { color:var(--dx-f7) } .rig-pipe.f8,.rig-strip.f8 { color:var(--dx-f8) }
 
   /* ── traffic ──────────────────────────────────────────────────────── */
+  /* the halo is painted into the gradient rather than blurred by a shadow */
   .rig-f i {
-    display:block; width:5px; height:5px; border-radius:50%; margin:-2.5px 0 0 -2.5px;
-    background:currentColor; box-shadow:0 0 10px currentColor;
+    display:block; width:9px; height:9px; border-radius:50%; margin:-4.5px 0 0 -4.5px;
+    background:radial-gradient(circle,
+      currentColor 0 30%,
+      color-mix(in srgb, currentColor 46%, transparent) 44%,
+      transparent 72%);
     animation-name:rigRun; animation-timing-function:linear; animation-iteration-count:infinite;
   }
   @keyframes rigRun {
@@ -1054,9 +1089,9 @@
     box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--dx-violet) 46%, transparent);
   }
   .rig-scene.inspect .rig-hit:hover,
-  .rig-hit.hov { background:color-mix(in srgb, var(--dx-violet) 13%, transparent);
+  .rig-scene.inspect .rig-hit.hov { background:color-mix(in srgb, var(--dx-violet) 14%, transparent);
                  box-shadow:inset 0 0 0 1.5px var(--dx-violet) }
-  .rig-hit.on  { background:color-mix(in srgb, var(--dx-magenta) 12%, transparent);
+  .rig-scene.inspect .rig-hit.on { background:color-mix(in srgb, var(--dx-magenta) 13%, transparent);
                  box-shadow:inset 0 0 0 1.5px var(--dx-magenta) }
 
   .rig-scene.has-sel .rig-p { opacity:.3 }
@@ -1122,8 +1157,8 @@
   .rig-chip {
     display:inline-flex; align-items:center; gap:7px; min-height:34px; padding:5px 12px;
     border-radius:999px; font-size:11.5px; letter-spacing:.06em; font-weight:600;
-    border:1px solid rgba(160,190,255,.2); background:rgba(10,15,31,.72);
-    color:rgba(226,233,248,.86); cursor:pointer; backdrop-filter:blur(7px);
+    border:1px solid rgba(160,190,255,.2); background:rgba(10,15,31,.88);
+    color:rgba(226,233,248,.86); cursor:pointer;
     transition:background var(--dx-t-base) var(--dx-ease), color var(--dx-t-base) var(--dx-ease),
                border-color var(--dx-t-base) var(--dx-ease), transform var(--dx-t-base) var(--dx-ease);
   }
@@ -1149,15 +1184,14 @@
     border-color:color-mix(in srgb, var(--dx-violet) 62%, transparent); box-shadow:0 0 20px -6px var(--dx-violet);
   }
   .rig-seg { display:flex; gap:3px; padding:3px; border-radius:999px;
-             border:1px solid rgba(160,190,255,.2); background:rgba(10,15,31,.72);
-             backdrop-filter:blur(7px) }
+             border:1px solid rgba(160,190,255,.2); background:rgba(10,15,31,.88) }
   .rig-seg .rig-chip { border-color:transparent; background:transparent; min-height:28px; padding:3px 13px }
 
   .rig-status {
     display:inline-flex; align-items:center; gap:9px; padding:6px 13px; border-radius:999px;
     font-size:11px; letter-spacing:.14em; text-transform:uppercase; font-weight:700;
-    border:1px solid rgba(160,190,255,.2); background:rgba(10,15,31,.74);
-    color:rgba(226,233,248,.84); backdrop-filter:blur(7px);
+    border:1px solid rgba(160,190,255,.2); background:rgba(10,15,31,.9);
+    color:rgba(226,233,248,.84);
   }
   .rig-status i { width:7px; height:7px; border-radius:50%; background:var(--dx-green);
                   box-shadow:0 0 9px var(--dx-green) }
@@ -1205,10 +1239,10 @@
                         padding-top:9px }
 
   /* ── the 2D flowsheet ─────────────────────────────────────────────── */
-  .rig-flow2d { position:absolute; inset:0; display:grid; place-items:center; padding:22px 16px 62px;
+  .rig-flow2d { position:absolute; inset:0; padding:18px 16px 64px; overflow:hidden;
                 animation:rigFade 420ms var(--dx-ease) both }
   @keyframes rigFade { from { opacity:0; transform:scale(.985) } to { opacity:1; transform:none } }
-  .rig-flow2d svg { width:100%; height:100%; overflow:visible }
+  .rig-flow2d svg { width:100%; height:100%; display:block }
   .rig-n { cursor:pointer }
   .rig-n .body { transition:fill var(--dx-t-base) var(--dx-ease), stroke var(--dx-t-base) var(--dx-ease),
                             stroke-width var(--dx-t-base) var(--dx-ease) }
@@ -1334,7 +1368,8 @@
 
   /* ── responsive ───────────────────────────────────────────────────── */
   @media (max-width: 900px) {
-    .rig-view { height:min(62vh, 520px); min-height:380px; border-radius:18px }
+    .rig-view { height:min(64vh, 540px); min-height:380px; border-radius:18px }
+    .rig-cam { --rig-fit:.62 }
     .rig-info { right:0; left:0; bottom:0; width:auto; border-radius:18px 18px 0 0;
                 max-height:56%; overflow:auto; padding-bottom:20px;
                 animation:rigSheetIn 320ms cubic-bezier(.22,.61,.36,1) both }
@@ -1343,15 +1378,33 @@
                         background:rgba(180,200,240,.34); margin:-4px auto 11px }
     .rig-ov.bc { bottom:10px } .rig-ov.bl { display:none }
     .rig-tour { bottom:58px }
-    .rig-chip { min-height:38px; padding:7px 13px }
-    .rig-seg .rig-chip { min-height:32px }
+    /* a finger needs a target, so every control keeps the same minimum here
+       as the rest of the app */
+    .rig-chip, .rig-seg .rig-chip { min-height:44px; padding:8px 14px }
+    .rig-x { width:44px; height:44px; font-size:19px }
+    .rig-back { min-height:44px; padding:9px 16px }
   }
-  @media (max-width: 560px) {
+  /* On a phone the controls would otherwise sit on top of the equipment. They
+     move to two rows along the bottom, the rig lifts clear of them, and the
+     camera presets and speed steps give way to dragging and pinching — which
+     is how anyone holding the device will reach for them anyway. */
+  @media (max-width: 620px) {
     .rig-wrap { padding:0 14px 32px }
-    .rig-view { height:min(58vh, 440px) }
-    .rig-ov.tl, .rig-ov.tr { left:10px; right:10px; top:10px }
-    .rig-ov.tr { justify-content:flex-end }
+    .rig-view { height:min(66vh, 520px) }
+    .rig-cam { --rig-nudge:-80px; --rig-fit:.42 }
+    .rig-cams, .rig-speeds { display:none }
+    .rig-ov { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none }
+    .rig-ov::-webkit-scrollbar { display:none }
+    /* three full-width rows: splitting them left and right pushed a control
+       off the edge of a 414 px screen */
+    .rig-ov.tl { top:auto; bottom:62px; left:8px; right:8px; justify-content:flex-start }
+    .rig-ov.tr { top:auto; bottom:114px; left:8px; right:8px; justify-content:flex-start }
+    .rig-ov.bc { bottom:10px; left:8px; right:8px; transform:none; justify-content:flex-start }
+    .rig-tour { bottom:170px }
+    .rig-info { max-height:64% }
   }
+  /* the smallest screens need the unit smaller again, or it is cropped */
+  @media (max-width: 400px) { .rig-cam { --rig-fit:.33 } }
 
   /* ── reduced motion: everything still works, nothing drifts ───────── */
   @media (prefers-reduced-motion: reduce) {
@@ -1790,7 +1843,7 @@
 
       <sc-if value="{{ rigIs2D }}">
         <div class="{{ rigFlowCls }}">
-          <svg viewBox="0 0 1000 570" preserveAspectRatio="xMidYMid meet" role="img"
+          <svg viewBox="0 0 1000 596" preserveAspectRatio="xMidYMid meet" role="img"
                aria-label="Process flow diagram of an atmospheric crude distillation unit">
             <sc-for list="{{ rigLines }}" as="ln" hint-placeholder-count="18">
               <path class="{{ ln.cls }}" d="{{ ln.d }}"></path>
@@ -1819,7 +1872,7 @@
           </sc-for>
         </div>
         <sc-if value="{{ rigIs3D }}">
-          <div class="rig-seg" role="group" aria-label="Camera" onClick="{{ rigCam }}">
+          <div class="rig-seg rig-cams" role="group" aria-label="Camera" onClick="{{ rigCam }}">
             <sc-for list="{{ rigCamBtns }}" as="cb" hint-placeholder-count="5">
               <button class="rig-chip" data-rc="{{ cb.k }}" data-on="{{ cb.on }}" aria-pressed="{{ cb.cur }}">{{ cb.label }}</button>
             </sc-for>
@@ -1842,7 +1895,7 @@
           <button class="rig-chip" onClick="{{ rigPlay }}">{{ rigPlayLabel }}</button>
           <button class="rig-chip" onClick="{{ rigRestart }}">&#8635; Restart</button>
         </div>
-        <div class="rig-seg" role="group" aria-label="Flow speed" onClick="{{ rigSpeed }}">
+        <div class="rig-seg rig-speeds" role="group" aria-label="Flow speed" onClick="{{ rigSpeed }}">
           <sc-for list="{{ rigSpeedBtns }}" as="sb" hint-placeholder-count="3">
             <button class="rig-chip" data-rs="{{ sb.k }}" data-on="{{ sb.on }}" aria-pressed="{{ sb.cur }}">{{ sb.label }}</button>
           </sc-for>
@@ -4470,12 +4523,12 @@ class Component extends DCLogic {
     const sel = rg.sel || null, hov = rg.hov || null, prod = rg.prod || null;
 
     // ── tower ────────────────────────────────────────────────────────────
-    this.rigCyl(parts, 'rig-shell', 0, (TOP + BOT) / 2, 0, R, BOT - TOP, lite ? 12 : 18);
+    this.rigCyl(parts, 'rig-shell', 0, (TOP + BOT) / 2, 0, R, BOT - TOP, lite ? 11 : 14);
     this.rigDisc(parts, 'rig-head', 0, TOP, 0, R * 2);
     this.rigDisc(parts, 'rig-head', 0, BOT, 0, R * 2);
-    this.rigCyl(parts, 'rig-skirt', 0, (BOT + G.SKIRT) / 2, 0, R * 0.92, G.SKIRT - BOT, lite ? 8 : 12);
+    this.rigCyl(parts, 'rig-skirt', 0, (BOT + G.SKIRT) / 2, 0, R * 0.92, G.SKIRT - BOT, lite ? 7 : 9);
     // trays: the internals, drawn over the working height
-    const nTray = lite ? 9 : 14;
+    const nTray = lite ? 8 : 11;
     for (let i = 0; i < nTray; i++){
       const y = TOP + 46 + (BOT - TOP - 96) * (i / (nTray - 1));
       this.rigDisc(parts, 'rig-tray', 0, y, 0, R * 1.82);
@@ -4503,13 +4556,13 @@ class Component extends DCLogic {
     this.rigPipe(parts, 'rig-pipe vap', 0, TOP, 0, -352, 0, 12, true);
     this.rigPipe(parts, 'rig-pipe vap', 0, -352, C.x - C.len / 2, -352, 0, 12, true);
     this.rigPipe(parts, 'rig-pipe vap', C.x, -352, C.x, C.y - C.r, 0, 12, false);
-    this.rigCylX(parts, 'rig-cond', C.x, C.y, 0, C.r, C.len, lite ? 7 : 10);
+    this.rigCylX(parts, 'rig-cond', C.x, C.y, 0, C.r, C.len, lite ? 6 : 8);
     for (let i = 0; i < (lite ? 3 : 5); i++)
       parts.push(this.rigPlane('rig-fin', 8, C.r * 2.3,
         'translate3d(' + (C.x - C.len / 2 + 18 + i * (C.len - 36) / (lite ? 2 : 4)) + 'px,' +
         C.y + 'px,0px)'));
     this.rigPipe(parts, 'rig-pipe cool', C.x, C.y + C.r, C.x, D.y - D.r, 0, 11, false);
-    this.rigCylX(parts, 'rig-drum', D.x, D.y, 0, D.r, D.len, lite ? 8 : 12);
+    this.rigCylX(parts, 'rig-drum', D.x, D.y, 0, D.r, D.len, lite ? 7 : 9);
     // reflux back to the top tray, and the two overhead products away
     this.rigPipe(parts, 'rig-pipe cool', D.x - D.len / 2, D.y, 0, D.y, 0, 11, true);
     this.rigPipe(parts, 'rig-pipe cool', 0, D.y, 0, TOP + 16, 0, 11, true);
@@ -4547,33 +4600,33 @@ class Component extends DCLogic {
             (-(i * secs / k)).toFixed(2) + 's' });
       }
     };
-    run('crude', -470, F.y + 26, F.x - F.w / 2, F.y + 26, 3, 3.0);
+    run('crude', -470, F.y + 26, F.x - F.w / 2, F.y + 26, 2, 3.0);
     run('hot',   F.x + F.w / 2, F.y - 20, -150, F.y - 20, 3, 2.6);
     run('hot',   -150, F.y - 20, -150, 150, 3, 2.2);
     run('hot',   -150, 150, -R, 150, 2, 1.4);
-    run('vap',   0, 200, 0, TOP + 20, 6, 4.2, 40);          // vapour up the tower
-    run('liq',   0, TOP + 30, 0, 210, 5, 5.0, 26);          // reflux down the tower
+    run('vap',   0, 200, 0, TOP + 20, 4, 4.2, 40);          // vapour up the tower
+    run('liq',   0, TOP + 30, 0, 210, 3, 5.0, 26);          // reflux down the tower
     run('vap',   0, TOP, 0, -352, 3, 2.0);
-    run('vap',   0, -352, C.x - C.len / 2, -352, 4, 3.0);
+    run('vap',   0, -352, C.x - C.len / 2, -352, 3, 3.0);
     run('cool',  C.x, C.y + C.r, C.x, D.y - D.r, 2, 1.6);
-    run('cool',  D.x - D.len / 2, D.y, 0, D.y, 4, 3.2);
+    run('cool',  D.x - D.len / 2, D.y, 0, D.y, 3, 3.2);
     run('cool',  0, D.y, 0, TOP + 16, 2, 1.5);
     run('res',   0, G.SKIRT, 0, 344, 2, 1.8);
-    run('res',   0, 344, 452, 344, 4, 3.6);
+    run('res',   0, 344, 452, 344, 3, 3.6);
     Component.CRUDE.forEach(c => {
       const d = DR[c[0]];
       if (!d || d.kind !== 'side') return;
-      run('draw f' + c[4], R, d.y, 452, d.y, 3, 3.2);
+      run('draw f' + c[4], R, d.y, 452, d.y, 2, 3.2);
     });
-    run('steam', -300, 268, -R * 0.9, 268, 3, 2.4);
+    run('steam', -300, 268, -R * 0.9, 268, 2, 2.4);
 
     // ── what the pointer can actually reach ──────────────────────────────
     // One billboarded plane per component, sized to its equipment and kept
     // clear of its neighbours so a click is never ambiguous.
     const HIT = {
-      crude:    [-455, F.y + 26,  86,  46],
+      crude:    [-468, F.y + 26, 104,  62],
       furnace:  [F.x,  F.y,      168, 150],
-      feed:     [-118, 150,      120,  46],
+      feed:     [-118, 150,      130,  62],
       tower:    [ -34, -186,      92,  62],
       trays:    [ -34,   40,      92, 128],
       sidedraw: [ 300,  -30,     190, 220],
@@ -4828,7 +4881,9 @@ class Component extends DCLogic {
     out.rigNodes = S.RIG.map(c => {
       const b = box(c[0]);
       return { k:c[0], x:b[0], y:b[1], w:b[2], h:b[3], rx:(c[0] === 'tower' ? 12 : 8),
-        tx:(b[0] + b[2] / 2), ty:(b[1] + b[3] / 2 + 4), cap:b[4],
+        tx:(b[0] + b[2] / 2),
+        // a tall vessel carries its name at the top; everything else centres it
+        ty:(c[0] === 'tower' ? b[1] + 22 : b[1] + b[3] / 2 + 4), cap:b[4],
         cls:'rig-n' + (sc.sel === c[0] ? ' on' : ''), name:c[1] };
     });
     const L = [];
