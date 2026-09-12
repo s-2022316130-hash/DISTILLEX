@@ -522,7 +522,9 @@ function suiteContrast() {
     ['light', overrideLight, ['color-bg', 'color-surface', 'dx-raised', 'dx-ctrl']],
     ['dark', darkRule, ['color-bg', 'color-surface', 'dx-raised', 'dx-ctrl']]]) {
     for (const role of ['dx-ok', 'dx-warn', 'dx-err', 'dx-info', 'dx-liquid', 'dx-vapour',
-                        'dx-violet', 'dx-magenta', 'dx-heat']) {
+                        'dx-violet', 'dx-magenta', 'dx-heat', 'dx-orange', 'dx-gold',
+                        'dx-red', 'dx-green',
+                        'dx-f1', 'dx-f2', 'dx-f3', 'dx-f4', 'dx-f5', 'dx-f6', 'dx-f7', 'dx-f8']) {
       const c = tok(block, role, block);
       if (!c) { ok(false, theme + ': ' + role + ' is defined'); continue; }
       let worst = 99, on = '';

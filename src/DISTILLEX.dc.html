@@ -80,6 +80,23 @@
     --dx-warn:    #8a4c04;
     --dx-err:     #b3123c;
     --dx-info:    #1d4ed8;
+    --dx-orange:  #b63d0b;
+    --dx-gold:    #935906;
+    --dx-red:     #b91c1c;
+    --dx-green:   #137638;
+
+    /* Crude-fraction ramp — a sequential thermal scale, coolest and lightest
+       at the top of the tower to hottest and heaviest at the sump. It is a
+       conceptual representation of the temperature gradient, not a reading of
+       any temperature this application computes. */
+    --dx-f1: #0c6880;  /* refinery gas   */
+    --dx-f2: #0f766e;  /* LPG            */
+    --dx-f3: #47720e;  /* naphtha        */
+    --dx-f4: #935906;  /* kerosene       */
+    --dx-f5: #a64c08;  /* diesel         */
+    --dx-f6: #b63d0b;  /* heavy gas oil  */
+    --dx-f7: #b91c1c;  /* fuel oil       */
+    --dx-f8: #a21b62;  /* residue        */
 
     --dx-glow-a: color-mix(in srgb, var(--color-accent) 34%, transparent);
     --dx-glow-v: color-mix(in srgb, var(--dx-vapour)  30%, transparent);
@@ -137,6 +154,19 @@
     --dx-warn:    #fbbf24;
     --dx-err:     #fb7185;
     --dx-info:    #7dd3fc;
+    --dx-orange:  #fb923c;
+    --dx-gold:    #fde047;
+    --dx-red:     #f87171;
+    --dx-green:   #4ade80;
+
+    --dx-f1: #67e8f9;
+    --dx-f2: #5eead4;
+    --dx-f3: #a3e635;
+    --dx-f4: #fde047;
+    --dx-f5: #fbbf24;
+    --dx-f6: #fb923c;
+    --dx-f7: #f87171;
+    --dx-f8: #e879a0;
 
     --dx-glow-a: color-mix(in srgb, var(--color-accent) 55%, transparent);
     --dx-glow-v: color-mix(in srgb, var(--dx-vapour)  45%, transparent);
@@ -656,6 +686,55 @@
     color:var(--dx-ink-accent); font-weight:700;
   }
 
+  /* ═══ crude-oil tower ═════════════════════════════════════════════════
+     Original artwork, drawn as SVG rather than photographed: it can be
+     exploded, animated and highlighted per stream, and it carries no
+     licensing question. The thermal ramp runs cool and light at the
+     overhead to hot and heavy at the sump. */
+  /* the runtime's interpolation spans are inert inside SVG; the mirror
+     tspan added by _tickSvgText is what actually paints */
+  svg text span.sc-interp { display:none }
+
+  .dx-crude { position:relative }
+  .dx-crude svg { width:100%; height:auto; display:block; overflow:visible }
+  .dx-band { transition: transform var(--dx-t-slow) var(--dx-ease),
+                         opacity var(--dx-t-base) var(--dx-ease);
+             cursor:pointer }
+  .dx-band .shell { transition: fill var(--dx-t-base) var(--dx-ease),
+                                stroke var(--dx-t-base) var(--dx-ease) }
+  .dx-band .draw  { transition: stroke-width var(--dx-t-base) var(--dx-ease),
+                                opacity var(--dx-t-base) var(--dx-ease) }
+  .dx-band .lab   { transition: opacity var(--dx-t-base) var(--dx-ease),
+                                transform var(--dx-t-base) var(--dx-ease) }
+  .dx-band.dim { opacity:.34 }
+  .dx-band.on  { opacity:1 }
+  .dx-band.on .draw { stroke-width:3.4 }
+  .dx-band.on .shell { fill-opacity:.5 }
+  .dx-band:focus-visible { outline:none }
+  .dx-band:focus-visible .shell { stroke-width:3 }
+
+  /* streams animate outward once the section arrives */
+  .dx-crude .draw { stroke-dasharray:200; stroke-dashoffset:200 }
+  .dx-crude.seen .draw { animation: dxDraw 900ms var(--dx-ease) both }
+  @keyframes dxDraw { to { stroke-dashoffset:0 } }
+  .dx-crude .lab { opacity:0 }
+  .dx-crude.seen .lab { animation: dxLabIn 520ms var(--dx-ease) both }
+  @keyframes dxLabIn { from { opacity:0; transform:translateX(-10px) } to { opacity:1; transform:none } }
+  /* the tower itself rises into place */
+  .dx-crude .tower { transform-origin:50% 100%; transform:scaleY(.82); opacity:0 }
+  .dx-crude.seen .tower { animation: dxRiseUp 900ms var(--dx-ease) both }
+  @keyframes dxRiseUp { to { transform:scaleY(1); opacity:1 } }
+  /* crude feed creeps in from the furnace */
+  .dx-crude .feed { stroke-dasharray:8 7; animation: dxFlowR 1.1s linear infinite }
+  .dx-crude .flame { animation: dxFlick 2.4s var(--dx-ease) infinite }
+  @keyframes dxFlick { 0%,100% { opacity:.55 } 50% { opacity:1 } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dx-crude .draw, .dx-crude .lab, .dx-crude .tower { animation:none !important;
+      stroke-dashoffset:0 !important; opacity:1 !important; transform:none !important }
+    .dx-crude .feed, .dx-crude .flame { animation:none !important }
+  }
+
   /* ═══ signature ═══════════════════════════════════════════════════════ */
   .dx-sig {
     margin-top: 26px; padding: 14px 0 20px;
@@ -820,6 +899,83 @@
   </div>
 
   <p style="margin-top:40px;font-size:11px;line-height:1.6;color:color-mix(in srgb,var(--color-text) 72%,transparent);max-width:88ch">This simulator is intended for education and conceptual engineering analysis. Results depend on the selected thermodynamic model and assumptions and should not be used as the sole basis for industrial process design.</p>
+  <!-- ══ from crude to products ═══════════════════════════════════════════
+       An original SVG of an atmospheric crude tower. It is an illustration
+       of the industrial process this simulator teaches the principles of;
+       none of it is computed by the engine, and the panel says so. -->
+  <section class="dx-reveal" style="margin-top:72px">
+    <div class="dx-head" style="margin-bottom:18px">
+      <div class="dx-head-l">
+        <div class="dx-kicker">From theory to industry</div>
+        <h2 class="dx-title" style="font-size:clamp(24px,3vw,34px)">From crude oil to products</h2>
+        <p class="dx-sub">The same stagewise separation you build in the simulator, at refinery scale. One tower, one feed, eight cuts &mdash; each condensing where the temperature matches its boiling range.</p>
+      </div>
+      <div class="dx-vp-btns dx-noprint" role="group" aria-label="Tower view" onClick="{{ setCrudeView }}">
+        <sc-for list="{{ crude.viewBtns }}" as="cb" hint-placeholder-count="2">
+          <button class="btn" data-cv="{{ cb.k }}" data-on="{{ cb.on }}" aria-pressed="{{ cb.cur }}">{{ cb.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div class="dx-side" style="gap:26px;align-items:center">
+      <div class="dx-well" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-width:0;align-self:start">
+        <div>
+          <div class="dx-kicker" style="color:{{ crude.info.tone }}">{{ crude.info.name }}</div>
+          <div class="dx-num" style="font-size:22px;font-weight:700;margin-top:3px">{{ crude.info.range }} &deg;C</div>
+        </div>
+        <p style="margin:0;font-size:12.5px;line-height:1.6;color:color-mix(in srgb,var(--color-text) 78%,transparent)">{{ crude.info.note }}</p>
+        <hr class="dx-rule">
+        <p style="margin:0;font-size:11px;line-height:1.55;color:color-mix(in srgb,var(--color-text) 66%,transparent)">{{ crude.hint }} Boiling ranges are the conventional approximate cut points for an atmospheric unit &mdash; they describe the industry, and are not computed by this simulator.</p>
+      </div>
+
+      <div class="dx-crude dx-reveal dx-lit" onPointerOver="{{ crudeOver }}" onPointerLeave="{{ crudeOut }}">
+        <svg viewBox="0 0 700 {{ crude.height }}" role="img" aria-label="Atmospheric crude-oil distillation tower, showing eight fractions drawn off from refinery gas at the overhead down to residue at the sump.">
+          <g class="tower" style="{{ crude.shellStyle }}">
+            <!-- shell -->
+            <rect x="{{ crude.towerX }}" y="{{ crude.top }}" width="{{ crude.towerW }}" height="{{ crude.shellH }}" rx="10"
+                  fill="color-mix(in srgb,var(--color-accent) 8%,transparent)"
+                  stroke="color-mix(in srgb,var(--color-accent) 42%,transparent)" stroke-width="1.5"></rect>
+          </g>
+          <!-- furnace and crude feed -->
+          <g>
+            <rect x="28" y="{{ crude.feedY }}" width="82" height="62" rx="8"
+                  fill="color-mix(in srgb,var(--dx-orange) 16%,transparent)"
+                  stroke="color-mix(in srgb,var(--dx-orange) 55%,transparent)" stroke-width="1.5"></rect>
+            <path class="flame" d="M48 {{ crude.feedY }} l13 32 l13 -32 l13 32 l13 -32" fill="none"
+                  stroke="var(--dx-orange)" stroke-width="2.2" stroke-linejoin="round" transform="translate(0,22)"></path>
+            <text x="69" y="{{ crude.height }}" text-anchor="middle" font-size="10.5" letter-spacing="1.4"
+                  fill="color-mix(in srgb,var(--color-text) 66%,transparent)" transform="translate(0,-64)">FURNACE</text>
+            <path class="feed" d="M110 {{ crude.feedY }} h126" fill="none" stroke="var(--dx-orange)"
+                  stroke-width="2.4" transform="translate(0,31)"></path>
+            <text x="173" y="{{ crude.feedY }}" text-anchor="middle" font-size="10" letter-spacing="1.2"
+                  fill="color-mix(in srgb,var(--color-text) 66%,transparent)" transform="translate(0,18)">CRUDE</text>
+          </g>
+          <!-- the eight cuts -->
+          <sc-for list="{{ crude.rows }}" as="fr" hint-placeholder-count="8">
+            <g class="{{ fr.cls }}" style="{{ fr.grp }}" data-ck="{{ fr.k }}" tabindex="0" role="button" aria-label="{{ fr.name }}">
+              <rect class="hit" x="{{ fr.x }}" y="{{ fr.y }}" width="{{ fr.hitW }}" height="{{ fr.h }}"
+                    fill="transparent" pointer-events="all"></rect>
+              <rect class="shell" x="{{ fr.x }}" y="{{ fr.y }}" width="{{ fr.w }}" height="{{ fr.h }}" rx="4"
+                    fill="{{ fr.tone }}" fill-opacity=".22" stroke="{{ fr.tone }}" stroke-width="1.2"></rect>
+              <sc-for list="{{ fr.trays }}" as="ty" hint-placeholder-count="3">
+                <line x1="{{ ty.x1 }}" y1="{{ ty.y }}" x2="{{ ty.x2 }}" y2="{{ ty.y }}" stroke="{{ fr.tone }}"
+                      stroke-width="1" opacity=".5"></line>
+              </sc-for>
+              <path class="draw" d="{{ fr.drawD }}" fill="none" stroke="{{ fr.tone }}" stroke-width="2.2"
+                    stroke-linecap="round" style="{{ fr.delay }}"></path>
+              <g class="lab" style="{{ fr.delay }}">
+                <text x="{{ fr.labX }}" y="{{ fr.mid }}" font-size="13" font-weight="600" fill="{{ fr.tone }}"
+                      transform="translate(0,-2)">{{ fr.name }}</text>
+                <text x="{{ fr.labX }}" y="{{ fr.mid }}" font-size="10.5" font-variant-numeric="tabular-nums"
+                      fill="color-mix(in srgb,var(--color-text) 66%,transparent)" transform="translate(0,13)">{{ fr.range }} &deg;C</text>
+              </g>
+            </g>
+          </sc-for>
+        </svg>
+      </div>
+    </div>
+  </section>
+
   <div class="dx-sig"><b>Shafin Ahamed Neon</b></div>
 </div>
 </div>
@@ -1826,6 +1982,22 @@ class Component extends DCLogic {
     Qc:'Condenser duty, Qc = V\u00b7\u03bb, using a composition-weighted latent heat. Sensible heat and sub-cooling are neglected.',
     Qr:'Reboiler duty, Qr = V\u0304\u00b7\u03bb. Heat losses and feed pre-heat are neglected.'
   };
+  /** The fractions a crude-oil atmospheric distillation unit draws off, top to
+   *  bottom. The boiling ranges are the conventional approximate cut points
+   *  quoted in unit-operations texts for an atmospheric tower — they describe
+   *  the industrial process this simulator teaches the principles of, and are
+   *  NOT computed by DISTILLEX. The section says so on screen. */
+  static CRUDE = [
+    ['gas',      'Refinery gas',   'below 20',  'C1–C4 overhead vapour — fuel gas for the refinery’s own furnaces.',            1],
+    ['lpg',      'LPG',            '20–70',       'Propane and butane, drawn from the overhead and compressed to liquid.',       2],
+    ['naphtha',  'Naphtha',        '70–140',      'Light distillate — reformer feed and the blendstock behind petrol.',            3],
+    ['kerosene', 'Kerosene',       '140–250',     'Jet fuel and paraffin. The first side draw with a real liquid product.',      4],
+    ['diesel',   'Diesel',         '250–300',     'Gas oil for compression-ignition engines and heating.',                       5],
+    ['gasoil',   'Heavy gas oil',  '300–350',     'Cracker feed — broken down further into lighter products downstream.',          6],
+    ['fueloil',  'Fuel oil',       '350–400',     'Heavy residual fuel for marine engines and industrial burners.',              7],
+    ['residue',  'Residue',        'above 400', 'Atmospheric bottoms — bitumen, or feed to a vacuum tower.',                     8]
+  ];
+
   static NAV = [['sim','Simulation'],['vle','VLE Explorer'],['mt','McCabe\u2013Thiele'],['column','Column'],['results','Results'],['sens','Sensitivity'],['theory','Theory'],['exam','Exam Mode'],['validate','Validation'],['about','About']];
   static EXPLAIN = [
     ['Feed enters the column','The feed stream F, at composition z\u1da0 and quality q, enters at the feed stage. Its quality decides how much of it joins the descending liquid and how much joins the rising vapour.'],
@@ -1877,6 +2049,7 @@ class Component extends DCLogic {
     F:100, zF:0.45, q:1.0, xD:0.96, xB:0.04, R:2.2, Nspec:12, DF:0.45,
     eff:0.70, reb:'partial', calcMode:'design',
     mode:'learning', colView:'stages', equip:'column', colVP:'front',
+    crudeView:'process', crudeHover:null,
     anim:999, hoverStage:null, tip:null, tipXY:[0,0],
     explaining:false, explainI:0, wiVar:'R', wiTo:3.2, whatIf:null,
     sens:{ind:'R',dep:'N',min:1.2,max:6,n:24}, exam:{i:0,reveal:'',input:''},
@@ -1987,6 +2160,53 @@ class Component extends DCLogic {
   }
 
   /** Reveal sections as they arrive. Observed once, then released. */
+  /** Make interpolated SVG labels visible.
+   *
+   *  The component runtime wraps every {{ }} interpolation in an HTML
+   *  <span class="sc-interp">. Inside an SVG <text> that span is not in the
+   *  SVG namespace, so the browser paints nothing: every numeric label on
+   *  every chart — the McCabe-Thiele axis ticks and stage numbers, the VLE
+   *  read-out, the stage-profile axes — has been invisible. Only literal
+   *  text in those elements ever showed.
+   *
+   *  The repair mirrors the element's text into one <tspan> that this code
+   *  owns and React does not know about, reading the desired string from
+   *  the spans and literal nodes and skipping the mirror itself. React
+   *  keeps updating its spans; this re-syncs after every render. Nothing
+   *  React owns is moved or removed, so reconciliation is untouched. */
+  _tickSvgText(){
+    const NS = 'http://www.w3.org/2000/svg';
+    const hosts = document.querySelectorAll('svg text');
+    for (const el of hosts){
+      let mirror = el.querySelector('[data-dxsvg]');
+      // An element with no interpolation renders its literal text perfectly
+      // well on its own and must be left completely alone — blanking its
+      // text nodes without giving it a mirror would erase it.
+      if (!mirror && !el.querySelector('span')) continue;
+      let want = '';
+      for (const n of el.childNodes){
+        if (n === mirror) continue;
+        if (n.nodeType === 3){
+          // A literal text node beside an interpolation renders on its own,
+          // which would print the units before the value. Its text is taken
+          // into the mirror once and the node is emptied; the original is
+          // remembered on the node so a later re-render cannot lose it.
+          if (n._dxlit === undefined) n._dxlit = n.data;
+          if (n.data !== '') n.data = '';
+          want += n._dxlit;
+        } else {
+          want += n.textContent;
+        }
+      }
+      if (!mirror){
+        mirror = document.createElementNS(NS, 'tspan');
+        mirror.setAttribute('data-dxsvg', '');
+        el.appendChild(mirror);
+      }
+      if (mirror.textContent !== want) mirror.textContent = want;
+    }
+  }
+
   /** Light the travelled part of every slider track. Reads the element's
    *  own min/max/value, so it needs no extra binding in the markup. */
   _tickFill(){
@@ -2018,7 +2238,7 @@ class Component extends DCLogic {
 
   _afterRender(){
     try {
-      this._tickView(); this._tickNums(); this._tickPill(); this._tickFill();
+      this._tickView(); this._tickNums(); this._tickPill(); this._tickFill(); this._tickSvgText();
       this._bindPointer(); this._tickReveal();
     } catch (e) { /* presentation only — never let it reach the engine */ }
   }
@@ -2620,6 +2840,68 @@ class Component extends DCLogic {
     const h=Component.SOLVE_KIND.find(k=>k[0].test(msg));
     return h ? h[1] : 'spec';
   }
+  /** Geometry for the crude-oil atmospheric tower on the landing page.
+   *
+   *  Illustration only. Nothing here is computed by the engine and nothing
+   *  here feeds it: the tower is a drawing of the industrial process whose
+   *  principles the simulator teaches, and the panel says so. The boiling
+   *  ranges are the conventional approximate cut points from the literature.
+   *
+   *  Two arrangements share one set of bands: assembled, where the bands
+   *  stack into a single shell, and exploded, where each band lifts and
+   *  fans out so the internals can be read separately. Switching between
+   *  them is a transform on each band, so it interpolates. */
+  crudeScene(s){
+    const F = Component.CRUDE;
+    const top = 74, bandH = 52, towerX = 236, towerW = 128;
+    const exploded = s.crudeView === 'exploded';
+    const hov = s.crudeHover || '';
+    const rows = F.map((f, i) => {
+      const [k, name, range, note, tone] = f;
+      const y = top + i * bandH;
+      const mid = y + bandH / 2;
+      // exploded: each band lifts away from the centre and steps outward,
+      // so the stack reads as separate sections rather than one vessel
+      const dy = exploded ? (i - (F.length - 1) / 2) * 17 : 0;
+      const dx = exploded ? 10 + i * 3 : 0;
+      const on = hov === k;
+      return {
+        k, name, range, note, tone: 'var(--dx-f' + tone + ')',
+        y: y.toFixed(1), mid: mid.toFixed(1), h: (bandH - 3).toFixed(1),
+        x: towerX, w: towerW,
+        // the draw line leaves the shell and runs out to its label
+        drawD: 'M' + (towerX + towerW) + ' ' + mid.toFixed(1) +
+               ' H' + (towerX + towerW + 78 + i * 9).toFixed(0),
+        labX: (towerX + towerW + 86 + i * 9).toFixed(0),
+        hitW: (towerW + 86 + i * 9 + 150).toFixed(0),
+        grp: 'transform:translate(' + dx + 'px,' + dy.toFixed(1) + 'px)',
+        cls: 'dx-band' + (on ? ' on' : '') + (hov && !on ? ' dim' : ''),
+        // trays inside the band — three per section, purely indicative
+        trays: [0.3, 0.5, 0.7].map(t => ({ y: (y + bandH * t).toFixed(1),
+          x1: (towerX + 12), x2: (towerX + towerW - 12) })),
+        delay: 'animation-delay:' + (120 + i * 90) + 'ms'
+      };
+    });
+    const last = rows[rows.length - 1];
+    return {
+      rows, exploded,
+      towerX, towerW, top,
+      botY: (top + F.length * bandH).toFixed(1),
+      shellH: (F.length * bandH).toFixed(1),
+      height: (top + F.length * bandH + 92).toFixed(0),
+      shellStyle: 'opacity:' + (exploded ? '0' : '1') + ';transition:opacity var(--dx-t-slow) var(--dx-ease)',
+      feedY: (top + F.length * bandH - 40).toFixed(1),
+      // the panel always reads something: the hovered cut, or the overhead
+      // as a resting state, so it is never an empty box
+      info: rows.find(r => r.k === hov) || rows[0],
+      hint: hov ? 'Tracing this cut through the tower.'
+                : 'Hover or focus any cut to trace it through the tower.',
+      viewBtns: [['process', 'Process view'], ['exploded', 'Exploded view']]
+        .map(([k, label]) => ({ k, label, on: (s.crudeView || 'process') === k ? '1' : '0',
+                                cur: (s.crudeView || 'process') === k ? 'true' : 'false' }))
+    };
+  }
+
   /** Builds the 3D column scene from a solved case.
    *
    *  Geometry only — every number here is read from the result the engine
@@ -2931,6 +3213,12 @@ class Component extends DCLogic {
   extras(s,r,hasR){
     const f=(v,d)=>this.f(v,d), S=Component, MX=(x)=>this.MX(x), MY=(y)=>this.MY(y);
     const out={};
+    // landing-page crude tower (illustration; see crudeScene)
+    out.crude = this.crudeScene(s);
+    out.setCrudeView = (e)=>{ const el=e.target.closest('[data-cv]'); if(el) this.setState({crudeView:el.dataset.cv}); };
+    out.crudeOver = (e)=>{ const el=e.target.closest('[data-ck]');
+      const k = el ? el.dataset.ck : null; if(k!==this.state.crudeHover) this.setState({crudeHover:k}); };
+    out.crudeOut = ()=>{ if(this.state.crudeHover) this.setState({crudeHover:null}); };
     // 3D column scene — geometry derived from the solved result
     out.scene = this.columnScene(s, r, hasR);
     out.vpCls = 'dx-stage-inner dx-vp-' + (s.colVP || 'front');
