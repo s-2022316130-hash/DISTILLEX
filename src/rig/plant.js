@@ -46,11 +46,11 @@ var PLANT = (function () {
     rail:     { col:[0.86,0.645,0.135], rgh:0.52, mtl:0.30, emi:0.04 },
     concrete: { col:[0.230,0.232,0.245], rgh:0.98, mtl:0.0,  emi:0.0 },
     deck:     { col:[0.115,0.126,0.152], rgh:1.0,  mtl:0.0,  emi:0.0, flag:1 },
-    fire:     { col:[0.300,0.292,0.282], rgh:0.95, mtl:0.02, emi:0.0 },
-    furnace:  { col:[0.250,0.228,0.208], rgh:0.95, mtl:0.05, emi:0.0 },
-    stack:    { col:[0.300,0.290,0.282], rgh:0.78, mtl:0.24, emi:0.0 },
+    fire:     { col:[0.215,0.209,0.200], rgh:0.95, mtl:0.02, emi:0.0 },
+    furnace:  { col:[0.165,0.150,0.136], rgh:0.95, mtl:0.05, emi:0.0 },
+    stack:    { col:[0.205,0.198,0.192], rgh:0.78, mtl:0.24, emi:0.0 },
     coil:     { col:[0.40,0.335,0.300], rgh:0.66, mtl:0.72, emi:0.0 },
-    tank:     { col:[0.415,0.430,0.455], rgh:0.88, mtl:0.10, emi:0.0 },
+    tank:     { col:[0.335,0.352,0.382], rgh:0.88, mtl:0.10, emi:0.0 },
     instr:    { col:[0.86,0.89,0.94], rgh:0.38, mtl:0.5,  emi:0.10 }
   };
 

@@ -114,11 +114,19 @@ _rigAdapt(gl, fps) {
   } else if (fps > 55 && st.tracers < 1) {
     st.tracers = 1;
   }
-  if (st.scale < 0.99 && st.tracers < 1) note = 'Tracers thinned and resolution reduced to hold the frame rate';
-  else if (st.scale < 0.99) note = 'Resolution reduced to hold the frame rate';
-  else if (st.tracers < 1) note = 'Tracers thinned to hold the frame rate';
+  if (st.scale < 0.99 && st.tracers < 1) note = 'Tracers + resolution reduced';
+  else if (st.scale < 0.99) note = 'Resolution reduced';
+  else if (st.tracers < 1) note = 'Tracers thinned';
   const w = document.getElementById('rig-degrade');
-  if (w) { w.hidden = !note; if (note) w.textContent = note; }
+  if (w) {
+    w.hidden = !note;
+    if (note) {
+      w.textContent = note;
+      w.title = 'This machine could not hold a usable frame rate at full quality, so the '
+              + 'scene is being drawn with ' + note.toLowerCase()
+              + '. It goes back up on its own when the frames come back.';
+    }
+  }
 }
 
 /** Pin the instrument tags to the equipment they belong to. Transform only,
@@ -211,7 +219,13 @@ _bindRigPointer(cv) {
       drag = p;
       return;
     }
+    // Picking renders the id buffer and reads a pixel back, which stalls the
+    // pipeline. Once per animation frame is far more often than a pointer
+    // needs; cap it by wall clock so a fast mouse cannot starve the scene.
     if (this._hoverRaf) return;
+    const now = performance.now();
+    if (now - (this._hoverAt || 0) < 70) return;
+    this._hoverAt = now;
     this._hoverRaf = requestAnimationFrame(() => {
       this._hoverRaf = 0;
       if (!this._gl) return;

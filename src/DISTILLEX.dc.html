@@ -1036,19 +1036,18 @@
     border: 1px solid var(--r-line2); box-shadow: var(--shadow-md);
   }
 
+  /* One row of shots, always. Wrapping them into a block put buttons over the
+     plant and under the frame-rate note; a single row that scrolls when it has
+     to is predictable at every width. */
   .rig-cams {
-    position: absolute; left: 14px; bottom: 14px; display: flex; flex-wrap: wrap; gap: 5px;
-    max-width: min(58%, 430px);
+    position: absolute; left: 0; right: 0; bottom: 12px;
+    display: flex; flex-wrap: nowrap; gap: 5px;
+    padding: 0 14px 2px; overflow-x: auto; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
-  /* In the split view each half is short, so the shots become one scrolling
-     row rather than a block of buttons over the plant. */
-  .rig-stage.v-split .rig-cams {
-    left: 0; right: 0; bottom: 8px; max-width: none; flex-wrap: nowrap;
-    overflow-x: auto; scrollbar-width: none; padding: 0 12px 2px;
-  }
-  .rig-stage.v-split .rig-cams::-webkit-scrollbar { display: none }
-  .rig-stage.v-split .rig-cam { flex: 0 0 auto }
-  .rig-stage.v-split .rig-hud { bottom: 42px }
+  .rig-cams::-webkit-scrollbar { display: none }
+  .rig-cam { flex: 0 0 auto }
+  .rig-hud { bottom: 46px }
   .rig-cam {
     appearance: none; border: 1px solid var(--r-line); border-radius: 999px;
     background: color-mix(in srgb, #050912 72%, transparent); color: var(--r-dim);
@@ -1061,7 +1060,7 @@
   .rig-cam.on { color: #061020; background: var(--r-cyan); border-color: transparent; font-weight: 650 }
 
   .rig-hud {
-    position: absolute; right: 14px; bottom: 14px; display: flex; gap: 8px;
+    position: absolute; right: 14px; display: flex; gap: 8px;
     align-items: flex-end; flex-direction: column;
     font-size: 10px; letter-spacing: .1em; color: var(--r-faint); text-transform: uppercase;
     max-width: 34%; text-align: right;
@@ -1387,10 +1386,8 @@
   @media (max-width: 620px) {
     .rig-figs { grid-template-columns: repeat(2, minmax(0,1fr)) }
     /* one scrolling row of shots, not a block of them over the plant */
-    .rig-cams { left: 0; right: 0; bottom: 8px; max-width: none; flex-wrap: nowrap;
-                overflow-x: auto; scrollbar-width: none; padding: 0 10px 2px; gap: 5px }
-    .rig-cams::-webkit-scrollbar { display: none }
-    .rig-cam { padding: 5px 9px; font-size: 10px; min-height: 26px; flex: 0 0 auto }
+    .rig-cams { bottom: 8px; padding: 0 10px 2px }
+    .rig-cam { padding: 5px 9px; font-size: 10px; min-height: 26px }
     .rig-hud { bottom: 42px; right: 10px; max-width: 130px; font-size: 9px }
     .rig-hud #rig-degrade { display: none }
     .rig-tour { bottom: 46px; padding: 11px 12px; gap: 10px }

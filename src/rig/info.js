@@ -162,8 +162,8 @@ var RIGINFO = (function () {
     function fit(r) { return r / 0.32; }
     var sideMid = P.sideY[1];
     return [
-      { key:'plant',     label:'Plant',     t:[-3, top * 0.46, 0],
-        yaw:-0.72, pitch:0.17, dist: fit(32) },
+      { key:'plant',     label:'Plant',     t:[-2, top * 0.50, 0],
+        yaw:-0.72, pitch:0.15, dist: fit(33) },
       { key:'tower',     label:'Column',    t:[0, sk + D.towerH * 0.5, 0],
         yaw:-0.40, pitch:0.06, dist: fit(25) },
       { key:'cutaway',   label:'Cutaway',   t:[0, sk + D.towerH * 0.5, 0],
