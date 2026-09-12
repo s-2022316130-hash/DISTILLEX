@@ -727,6 +727,34 @@
   .dx-cm-split .dx-note::before { width:11px }
   .dx-cm-split .dx-note.l::before { right:-13px }
   .dx-cm-split .dx-note.r::before { left:-13px }
+  .dx-why { display:inline-flex; width:14px; height:14px; margin-left:5px;
+            border:1px solid var(--color-divider); border-radius:50%;
+            align-items:center; justify-content:center; font-size:9px; font-style:normal;
+            line-height:1; cursor:help; vertical-align:middle; color:var(--dx-ink-accent);
+            transition:background var(--dx-t-base) var(--dx-ease),
+                       border-color var(--dx-t-base) var(--dx-ease) }
+  .dx-why:hover, .dx-why:focus-visible {
+            background:color-mix(in srgb, var(--color-accent) 22%, transparent);
+            border-color:var(--color-accent); outline:none }
+
+  /* ═══ McCabe–Thiele construction ═════════════════════════════ */
+  .dx-mtseg { transition: stroke-width var(--dx-t-base) var(--dx-ease) }
+  .dx-mtseg.fresh { filter: drop-shadow(0 0 5px currentColor) }
+  .dx-mtnode { cursor:crosshair }
+  .dx-mtnode .hit { fill:transparent }
+  .dx-mtnode .dot { fill:var(--color-bg); stroke:color-mix(in srgb, var(--color-text) 45%, transparent);
+                    stroke-width:1.4; transition:fill var(--dx-t-base) var(--dx-ease),
+                                                 stroke var(--dx-t-base) var(--dx-ease) }
+  .dx-mtnode.fresh .dot { stroke:var(--dx-gold); stroke-width:2 }
+  .dx-mtnode.on    .dot { fill:var(--dx-gold); stroke:var(--dx-gold); stroke-width:2 }
+  .dx-mttip rect { fill:var(--color-bg); stroke:var(--dx-gold); stroke-width:1.2;
+                   filter:drop-shadow(0 3px 10px rgba(0,0,0,.4)) }
+  .dx-mttip text { fill:var(--color-text) }
+  .dx-mttip text:first-of-type { fill:var(--dx-ink-accent) }
+  @media (prefers-reduced-motion: reduce) {
+    .dx-mtseg.fresh { filter:none }
+  }
+
   .dx-colkey { display:flex; flex-wrap:wrap; gap:12px; align-items:center;
                font-size:11px; letter-spacing:.04em;
                color:color-mix(in srgb, var(--color-text) 72%, transparent) }
@@ -1165,13 +1193,13 @@
             </div>
             <sc-if value="{{ isAlpha }}">
               <div class="field">
-                <label style="display:flex;justify-content:space-between"><span>Relative volatility α</span><span style="font-variant-numeric:tabular-nums">{{ v.alphaC }}</span></label>
+                <label style="display:flex;justify-content:space-between"><span>Relative volatility α<i class="dx-why" data-tip="alpha" tabindex="0" role="button" aria-label="What is relative volatility alpha?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.alphaC }}</span></label>
                 <input type="range" min="1.05" max="12" step="0.05" value="{{ v.alphaC }}" data-k="alphaC" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Relative volatility alpha">
               </div>
             </sc-if>
             <div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Activity-coefficient models (NRTL, Wilson, UNIQUAC) — planned.</div>
             <div class="field">
-              <label style="display:flex;justify-content:space-between;align-items:center"><span>Column pressure — kPa</span><span style="font-variant-numeric:tabular-nums">{{ v.P }}</span></label>
+              <label style="display:flex;justify-content:space-between;align-items:center"><span>Column pressure — kPa<i class="dx-why" data-tip="P" tabindex="0" role="button" aria-label="What is the column pressure?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.P }}</span></label>
               <input type="range" min="10" max="600" step="1" value="{{ v.P }}" data-k="P" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Column pressure, kPa">
             </div>
           </section>
@@ -1184,11 +1212,11 @@
               <div class="field"><label for="dx-Tf">Feed pressure — kPa</label><input class="input" id="dx-Tf" type="number" min="1" step="1" value="{{ v.P }}" disabled="{{ true }}"></div>
             </div>
             <div class="field">
-              <label style="display:flex;justify-content:space-between;align-items:center"><span>Composition z<sub>F</sub></span><span style="font-variant-numeric:tabular-nums">{{ v.zF }}</span></label>
+              <label style="display:flex;justify-content:space-between;align-items:center"><span>Composition z<sub>F</sub><i class="dx-why" data-tip="zF" tabindex="0" role="button" aria-label="What is the feed composition z_F?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.zF }}</span></label>
               <input type="range" min="0.02" max="0.98" step="0.005" value="{{ v.zF }}" data-k="zF" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Feed composition z_F, mole fraction">
             </div>
             <div class="field">
-              <label style="display:flex;justify-content:space-between;align-items:center"><span>Feed quality q</span><span style="font-variant-numeric:tabular-nums">{{ v.q }}</span></label>
+              <label style="display:flex;justify-content:space-between;align-items:center"><span>Feed quality q<i class="dx-why" data-tip="q" tabindex="0" role="button" aria-label="What is feed quality q?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.q }}</span></label>
               <input type="range" min="-0.5" max="1.5" step="0.01" value="{{ v.q }}" data-k="q" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Feed quality q">
               <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)"><span>{{ r.qPhase }}</span><span>T<sub>bubble</sub> {{ r.Tfeed }} °C</span></div>
             </div>
@@ -1212,31 +1240,31 @@
             <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ specNote }}</div>
             <sc-if value="{{ isDesign }}">
               <div class="field">
-                <label style="display:flex;justify-content:space-between;align-items:center"><span>Distillate x<sub>D</sub></span><span style="font-variant-numeric:tabular-nums">{{ v.xD }}</span></label>
+                <label style="display:flex;justify-content:space-between;align-items:center"><span>Distillate x<sub>D</sub><i class="dx-why" data-tip="xD" tabindex="0" role="button" aria-label="What is the distillate purity x_D?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.xD }}</span></label>
                 <input type="range" min="0.05" max="0.999" step="0.001" value="{{ v.xD }}" data-k="xD" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Distillate composition x_D, mole fraction">
               </div>
               <div class="field">
-                <label style="display:flex;justify-content:space-between;align-items:center"><span>Bottoms x<sub>B</sub></span><span style="font-variant-numeric:tabular-nums">{{ v.xB }}</span></label>
+                <label style="display:flex;justify-content:space-between;align-items:center"><span>Bottoms x<sub>B</sub><i class="dx-why" data-tip="xB" tabindex="0" role="button" aria-label="What is the bottoms composition x_B?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.xB }}</span></label>
                 <input type="range" min="0.001" max="0.95" step="0.001" value="{{ v.xB }}" data-k="xB" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Bottoms composition x_B, mole fraction">
               </div>
             </sc-if>
             <sc-if value="{{ isRating }}">
               <div class="field">
-                <label style="display:flex;justify-content:space-between;align-items:center"><span>Theoretical stages N (incl. reboiler)</span><span style="font-variant-numeric:tabular-nums">{{ v.Nspec }}</span></label>
+                <label style="display:flex;justify-content:space-between;align-items:center"><span>Theoretical stages N (incl. reboiler)<i class="dx-why" data-tip="N" tabindex="0" role="button" aria-label="What is the stage count N?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.Nspec }}</span></label>
                 <input type="range" min="3" max="60" step="1" value="{{ v.Nspec }}" data-k="Nspec" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Theoretical stages N, including the reboiler">
               </div>
               <div class="field">
-                <label style="display:flex;justify-content:space-between;align-items:center"><span>Distillate cut D/F</span><span style="font-variant-numeric:tabular-nums">{{ v.DF }}</span></label>
+                <label style="display:flex;justify-content:space-between;align-items:center"><span>Distillate cut D/F<i class="dx-why" data-tip="DF" tabindex="0" role="button" aria-label="What is the distillate cut D over F?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.DF }}</span></label>
                 <input type="range" min="0.05" max="0.95" step="0.005" value="{{ v.DF }}" data-k="DF" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Distillate cut D over F">
               </div>
             </sc-if>
             <div class="field">
-              <label style="display:flex;justify-content:space-between;align-items:center"><span>Reflux ratio R = L/D <i data-tip="R" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" style="display:inline-flex;width:14px;height:14px;border:1px solid var(--color-divider);align-items:center;justify-content:center;font-size:9px;font-style:normal;cursor:help;vertical-align:middle">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.R }}</span></label>
+              <label style="display:flex;justify-content:space-between;align-items:center"><span>Reflux ratio R = L/D <i class="dx-why" data-tip="R" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" >i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.R }}</span></label>
               <input type="range" min="0.1" max="12" step="0.05" value="{{ v.R }}" data-k="R" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Reflux ratio R">
-              <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)"><span>R<sub>min</sub> = {{ r.Rmin }} <i data-tip="Rmin" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" style="display:inline-flex;width:13px;height:13px;border:1px solid var(--color-divider);align-items:center;justify-content:center;font-size:9px;font-style:normal;cursor:help;vertical-align:middle">i</i></span><span>R/R<sub>min</sub> = {{ r.Rratio }}</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)"><span>R<sub>min</sub> = {{ r.Rmin }} <i class="dx-why" data-tip="Rmin" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" >i</i></span><span>R/R<sub>min</sub> = {{ r.Rratio }}</span></div>
             </div>
             <div class="field">
-              <label style="display:flex;justify-content:space-between;align-items:center"><span>Overall tray efficiency <i data-tip="eff" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" style="display:inline-flex;width:14px;height:14px;border:1px solid var(--color-divider);align-items:center;justify-content:center;font-size:9px;font-style:normal;cursor:help;vertical-align:middle">i</i></span><span style="font-variant-numeric:tabular-nums">{{ r.effPct }}%</span></label>
+              <label style="display:flex;justify-content:space-between;align-items:center"><span>Overall tray efficiency <i class="dx-why" data-tip="eff" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" >i</i></span><span style="font-variant-numeric:tabular-nums">{{ r.effPct }}%</span></label>
               <input type="range" min="0.2" max="1" step="0.01" value="{{ v.eff }}" data-k="eff" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Overall tray efficiency">
             </div>
           </section>
@@ -1614,7 +1642,7 @@
             </div>
             <sc-if value="{{ isAlpha }}">
               <div class="field">
-                <label style="display:flex;justify-content:space-between"><span>Relative volatility α</span><span style="font-variant-numeric:tabular-nums">{{ v.alphaC }}</span></label>
+                <label style="display:flex;justify-content:space-between"><span>Relative volatility α<i class="dx-why" data-tip="alpha" tabindex="0" role="button" aria-label="What is relative volatility alpha?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.alphaC }}</span></label>
                 <input type="range" min="1.05" max="12" step="0.05" value="{{ v.alphaC }}" data-k="alphaC" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Relative volatility alpha">
               </div>
             </sc-if>
@@ -1734,23 +1762,23 @@
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <h6 style="margin:0;color:var(--dx-ink-accent)">Construction inputs</h6>
             <div class="field">
-              <label style="display:flex;justify-content:space-between"><span>Distillate x<sub>D</sub></span><span style="font-variant-numeric:tabular-nums">{{ v.xD }}</span></label>
+              <label style="display:flex;justify-content:space-between"><span>Distillate x<sub>D</sub><i class="dx-why" data-tip="xD" tabindex="0" role="button" aria-label="What is the distillate purity x_D?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.xD }}</span></label>
               <input type="range" min="0.05" max="0.999" step="0.001" value="{{ v.xD }}" data-k="xD" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Distillate composition x_D, mole fraction">
             </div>
             <div class="field">
-              <label style="display:flex;justify-content:space-between"><span>Bottoms x<sub>B</sub></span><span style="font-variant-numeric:tabular-nums">{{ v.xB }}</span></label>
+              <label style="display:flex;justify-content:space-between"><span>Bottoms x<sub>B</sub><i class="dx-why" data-tip="xB" tabindex="0" role="button" aria-label="What is the bottoms composition x_B?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.xB }}</span></label>
               <input type="range" min="0.001" max="0.95" step="0.001" value="{{ v.xB }}" data-k="xB" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Bottoms composition x_B, mole fraction">
             </div>
             <div class="field">
-              <label style="display:flex;justify-content:space-between"><span>Feed z<sub>F</sub></span><span style="font-variant-numeric:tabular-nums">{{ v.zF }}</span></label>
+              <label style="display:flex;justify-content:space-between"><span>Feed z<sub>F</sub><i class="dx-why" data-tip="zF" tabindex="0" role="button" aria-label="What is the feed composition z_F?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.zF }}</span></label>
               <input type="range" min="0.02" max="0.98" step="0.005" value="{{ v.zF }}" data-k="zF" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Feed composition z_F, mole fraction">
             </div>
             <div class="field">
-              <label style="display:flex;justify-content:space-between"><span>Reflux ratio R</span><span style="font-variant-numeric:tabular-nums">{{ v.R }}</span></label>
+              <label style="display:flex;justify-content:space-between"><span>Reflux ratio R<i class="dx-why" data-tip="R" tabindex="0" role="button" aria-label="What is the reflux ratio R?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.R }}</span></label>
               <input type="range" min="0.1" max="12" step="0.05" value="{{ v.R }}" data-k="R" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Reflux ratio R">
             </div>
             <div class="field">
-              <label style="display:flex;justify-content:space-between"><span>Feed quality q</span><span style="font-variant-numeric:tabular-nums">{{ v.q }}</span></label>
+              <label style="display:flex;justify-content:space-between"><span>Feed quality q<i class="dx-why" data-tip="q" tabindex="0" role="button" aria-label="What is feed quality q?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.q }}</span></label>
               <input type="range" min="-0.5" max="1.5" step="0.01" value="{{ v.q }}" data-k="q" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Feed quality q">
               <div style="font-size:11px;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ r.qPhase }}</div>
             </div>
@@ -1766,6 +1794,7 @@
               <button class="btn btn-secondary" onClick="{{ stepAll }}" style="flex:1">All</button>
             </div>
             <div style="font-size:12px;font-variant-numeric:tabular-nums">Stages drawn: {{ shownStages }}</div>
+            <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 70%,transparent)">Point at any drawn step on the diagram to read that stage.</div>
             <p style="margin:0;font-size:12.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mtStepInfo }}</p>
           </section>
           <section class="card blueprint" style="padding:14px;gap:4px">
@@ -1796,11 +1825,27 @@
                 <line x1="{{ rectLine.x1 }}" y1="{{ rectLine.y1 }}" x2="{{ rectLine.x2 }}" y2="{{ rectLine.y2 }}" stroke="var(--color-accent-800)" stroke-width="1.8"></line>
                 <line x1="{{ stripLine.x1 }}" y1="{{ stripLine.y1 }}" x2="{{ stripLine.x2 }}" y2="{{ stripLine.y2 }}" stroke="var(--color-accent-800)" stroke-width="1.8"></line>
                 <sc-for list="{{ mtSegs }}" as="g" hint-placeholder-count="10">
-                  <line x1="{{ g.x1 }}" y1="{{ g.y1 }}" x2="{{ g.x2 }}" y2="{{ g.y2 }}" stroke="{{ g.c }}" stroke-width="1.2"></line>
+                  <line class="{{ g.cls }}" x1="{{ g.x1 }}" y1="{{ g.y1 }}" x2="{{ g.x2 }}" y2="{{ g.y2 }}" stroke="{{ g.c }}" stroke-width="{{ g.w }}"></line>
                 </sc-for>
                 <sc-for list="{{ mtMarks }}" as="m" hint-placeholder-count="6">
                   <text x="{{ m.x }}" y="{{ m.y }}" text-anchor="end" font-size="9.5" font-variant-numeric="tabular-nums" fill="{{ m.fill }}">{{ m.n }}</text>
                 </sc-for>
+                <g onMouseLeave="{{ mtOut }}">
+                  <sc-for list="{{ mtNodes }}" as="nd" hint-placeholder-count="8">
+                    <g class="{{ nd.cls }}" data-n="{{ nd.n }}" onMouseEnter="{{ mtIn }}">
+                      <circle class="hit" cx="{{ nd.cx }}" cy="{{ nd.cy }}" r="11"></circle>
+                      <circle class="dot" cx="{{ nd.cx }}" cy="{{ nd.cy }}" r="3.1"></circle>
+                    </g>
+                  </sc-for>
+                </g>
+                <sc-if value="{{ mtTipOn }}">
+                  <g class="dx-mttip" pointer-events="none">
+                    <rect x="{{ mtTip.x }}" y="{{ mtTip.y }}" width="146" height="50" rx="4"></rect>
+                    <text x="{{ mtTip.tx }}" y="{{ mtTip.y }}" dy="15" font-size="10" font-family="var(--font-heading)" letter-spacing=".05em">{{ mtTip.l1 }}</text>
+                    <text x="{{ mtTip.tx }}" y="{{ mtTip.y }}" dy="30" font-size="10.5" font-variant-numeric="tabular-nums">{{ mtTip.l2 }}</text>
+                    <text x="{{ mtTip.tx }}" y="{{ mtTip.y }}" dy="43" font-size="10.5" font-variant-numeric="tabular-nums">{{ mtTip.l3 }}</text>
+                  </g>
+                </sc-if>
                 <sc-for list="{{ mtPoints }}" as="p" hint-placeholder-count="3">
                   <g data-k="{{ p.k }}" onPointerDown="{{ mtDown }}" style="cursor:ew-resize">
                     <rect x="{{ p.cx }}" y="{{ p.cy }}" width="11" height="11" transform="translate(-5.5,-5.5)" fill="var(--color-bg)" stroke="var(--color-accent)" stroke-width="1.8"></rect>
@@ -2166,7 +2211,15 @@ class Component extends DCLogic {
     Nmin:'Minimum theoretical stages at total reflux, from the Fenske equation using a geometric-mean relative volatility.',
     eff:'Overall column efficiency = theoretical trays / actual trays. The reboiler is an equilibrium stage and is not converted to a tray.',
     Qc:'Condenser duty, Qc = V\u00b7\u03bb, using a composition-weighted latent heat. Sensible heat and sub-cooling are neglected.',
-    Qr:'Reboiler duty, Qr = V\u0304\u00b7\u03bb. Heat losses and feed pre-heat are neglected.'
+    Qr:'Reboiler duty, Qr = V\u0304\u00b7\u03bb. Heat losses and feed pre-heat are neglected.',
+    zF:'Mole fraction of the more volatile component in the feed. It fixes where the q-line starts on the diagonal, and with the two product purities it fixes the split through the component balance.',
+    xD:'Mole fraction of the more volatile component in the distillate. Raising it steepens the demand on the rectifying section: more stages, or more reflux, or both.',
+    xB:'Mole fraction of the more volatile component in the bottoms. Lowering it puts the extra work on the stripping section and on the reboiler.',
+    N:'Number of theoretical stages the column is assumed to have, the reboiler included when it is a partial (kettle) reboiler. In rating mode this is what you fix and the purities are solved for.',
+    DF:'Distillate cut D/F: the fraction of the feed withdrawn overhead. Together with the stage count it fixes the case in rating mode.',
+    P:'Column pressure. It moves the boiling temperatures and, through them, the relative volatility \u2014 lower pressure usually makes a separation easier but the condenser colder.',
+    alpha:'Relative volatility \u03b1 = (y_A/x_A)/(y_B/x_B). It measures how far the equilibrium curve bulges from the diagonal: \u03b1 near 1 means a hard separation.',
+    reb:'A partial (kettle) reboiler brings its liquid and vapour to equilibrium, so it counts as one theoretical stage. A total reboiler does not.'
   };
   /** The fractions a crude-oil atmospheric distillation unit draws off, top to
    *  bottom. The boiling ranges are the conventional approximate cut points
@@ -2236,7 +2289,7 @@ class Component extends DCLogic {
     eff:0.70, reb:'partial', calcMode:'design',
     mode:'learning', colView:'stages', equip:'column', colVP:'front', colMode:'3d',
     crudeView:'process', crudeHover:null,
-    anim:999, hoverStage:null, pinStage:null, tip:null, tipXY:[0,0],
+    anim:999, hoverStage:null, pinStage:null, mtHover:null, tip:null, tipXY:[0,0],
     explaining:false, explainI:0, wiVar:'R', wiTo:3.2, whatIf:null,
     sens:{ind:'R',dep:'N',min:1.2,max:6,n:24}, exam:{i:0,reveal:'',input:''},
     theoryOpen:'t1', toast:'', vleShow:'xy', mtDrag:null, vleHover:null,
@@ -3573,16 +3626,38 @@ class Component extends DCLogic {
       out.stripLine={x1:MX(r.xB),y1:MY(r.xB),x2:MX(r.xInt),y2:MY(r.yInt)};
       out.qLine={x1:MX(r.zF),y1:MY(r.zF),x2:MX(r.xInt),y2:MY(r.yInt)};
       out.rminLine={x1:MX(r.xD),y1:MY(r.xD),x2:MX(r.pinch.x),y2:MY(r.pinch.y)};
-      const segs=[], marks=[]; let prev=r.xD;
+      const segs=[], marks=[], nodes=[]; let prev=r.xD;
       r.stages.forEach(st=>{
-        segs.push({x1:MX(prev),y1:MY(st.y),x2:MX(st.x),y2:MY(st.y),c:st.rect?'var(--dx-vapour)':'var(--dx-liquid)'});
-        segs.push({x1:MX(st.x),y1:MY(st.y),x2:MX(st.x),y2:MY(st.yn),c:st.rect?'var(--dx-vapour)':'var(--dx-liquid)'});
+        const c = st.rect?'var(--dx-vapour)':'var(--dx-liquid)';
+        segs.push({n:st.n,x1:MX(prev),y1:MY(st.y),x2:MX(st.x),y2:MY(st.y),c});
+        segs.push({n:st.n,x1:MX(st.x),y1:MY(st.y),x2:MX(st.x),y2:MY(st.yn),c});
         marks.push({x:(MX(st.x)-5).toFixed(1),y:(MY(st.y)-5).toFixed(1),n:st.n,feed:st.n===r.feedStage});
+        nodes.push({n:st.n,cx:MX(st.x).toFixed(1),cy:MY(st.y).toFixed(1)});
         prev=st.x;
       });
       const shown=Math.max(0,Math.min(r.stages.length,s.anim));
-      out.mtSegs=segs.slice(0,shown*2);
+      // the step just drawn is emphasised, so the eye follows the
+      // construction instead of hunting for what changed
+      const freshN = shown>0 ? r.stages[shown-1].n : null;
+      out.mtSegs=segs.slice(0,shown*2).map(g=>({x1:g.x1,y1:g.y1,x2:g.x2,y2:g.y2,c:g.c,
+        cls:'dx-mtseg'+(g.n===freshN?' fresh':''), w:(g.n===freshN?2.8:1.3)}));
       out.mtMarks=marks.slice(0,shown).map(m=>({x:m.x,y:m.y,n:m.n,fill:m.feed?'var(--dx-magenta)':'color-mix(in srgb,var(--color-text) 62%,transparent)'}));
+      // one hit target per drawn stage corner, so the construction can be
+      // interrogated as well as watched
+      const hovN = s.mtHover===null||s.mtHover===undefined ? null : Math.round(s.mtHover);
+      out.mtNodes=nodes.slice(0,shown).map(nd=>({n:String(nd.n),cx:nd.cx,cy:nd.cy,
+        cls:'dx-mtnode'+(nd.n===hovN?' on':'')+(nd.n===freshN?' fresh':'')}));
+      const hv = hovN===null ? null : r.stages.find(a=>Math.round(a.n)===hovN);
+      out.mtTipOn = !!hv;
+      if(hv){
+        const cx=MX(hv.x), cy=MY(hv.y), flip=cx>300;
+        out.mtTip={ x:(flip?cx-150:cx+12).toFixed(1), y:Math.min(388,Math.max(24,cy-34)).toFixed(1),
+          tx:(flip?cx-142:cx+20).toFixed(1),
+          l1:'Stage '+hv.n+(Math.round(hv.n)===Math.round(this.num(r.feedStage))?' \u00b7 feed':'')+
+             ' \u00b7 '+(hv.rect?'rectifying':'stripping'),
+          l2:'x '+hv.x.toFixed(4)+'  \u00b7  y '+hv.y.toFixed(4),
+          l3:'T '+hv.T.toFixed(1)+' \u00b0C  \u00b7  \u03b1 '+hv.a.toFixed(3) };
+      } else out.mtTip={x:0,y:0,tx:0,l1:'',l2:'',l3:''};
       out.mtPoints=[{cx:MX(r.xD),cy:MY(r.xD),k:'xD',label:'x_D'},{cx:MX(r.zF),cy:MY(r.zF),k:'zF',label:'z_F'},{cx:MX(r.xB),cy:MY(r.xB),k:'xB',label:'x_B'}]
         .map(p=>Object.assign(p,{r:s.mtDrag===p.k?7:5}));
       out.mtStepInfo = shown>0&&shown<=r.stages.length
@@ -3595,10 +3670,14 @@ class Component extends DCLogic {
       out.shownStages=String(Math.min(shown,r.stages.length))+' / '+r.stages.length;
     } else {
       out.mtOk=false; out.mtSegs=[]; out.mtMarks=[]; out.mtPoints=[]; out.mtSummary=[];
+      out.mtNodes=[]; out.mtTipOn=false; out.mtTip={x:0,y:0,tx:0,l1:'',l2:'',l3:''};
       out.rectLine={x1:0,y1:0,x2:0,y2:0}; out.stripLine={x1:0,y1:0,x2:0,y2:0};
       out.qLine={x1:0,y1:0,x2:0,y2:0}; out.rminLine={x1:0,y1:0,x2:0,y2:0};
       out.mtStepInfo='Resolve the input errors above to build the diagram.'; out.shownStages='\u2014';
     }
+    out.mtIn=(e)=>{const n=+e.currentTarget.dataset.n;
+      if(this.state.mtHover!==n) this.setState({mtHover:n});};
+    out.mtOut=()=>{ if(this.state.mtHover!==null) this.setState({mtHover:null}); };
     out.mtDown=(e)=>this.setState({mtDrag:e.currentTarget.dataset.k});
     out.mtUp=()=>this.setState({mtDrag:null});
     out.mtMove=(e)=>{
