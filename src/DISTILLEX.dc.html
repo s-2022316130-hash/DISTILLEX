@@ -323,10 +323,12 @@
   .dx-vp-front { transform: none }
   .dx-vp-iso   { transform: rotateX(16deg) rotateY(-22deg) rotateZ(1deg) scale(.92) }
   .dx-vp-side  { transform: rotateY(-58deg) scale(.9) }
-  .dx-vp-top   { transform: rotateX(62deg) scale(.86) }
+  .dx-vp-top   { transform: rotateX(82deg) scale(.74) }
   .dx-vp-xpl   { transform: rotateX(20deg) rotateY(-18deg) scale(.88) }
   /* Exploded pulls the annotation plane away from the vessel plane. */
   .dx-vp-xpl .dx-layer-notes { transform: translateZ(120px) }
+  /* callouts are unreadable edge-on, so they step aside in those two views */
+  .dx-vp-side .dx-layer-notes, .dx-vp-top .dx-layer-notes { opacity:0 }
   .dx-vp-xpl .dx-layer-flow  { transform: translateZ(56px) }
   .dx-layer-notes, .dx-layer-flow { transition: transform var(--dx-t-slow) var(--dx-ease) }
   .dx-stage-grid {
@@ -356,6 +358,97 @@
   .dx-in { animation: dxIn var(--dx-t-slow) var(--dx-ease) both }
   .dx-in-1 { animation-delay: 40ms } .dx-in-2 { animation-delay: 90ms }
   .dx-in-3 { animation-delay: 140ms } .dx-in-4 { animation-delay: 190ms }
+
+  /* ═══ the column itself ═══════════════════════════════════════════════
+     A real 3D assembly, not a picture of one: the vessel is a ring of
+     vertical slats at a fixed radius, and every tray is a horizontal plane
+     rotated flat. That means perspective does the work — trays read as thin
+     ellipses head-on and open into full discs as the view rotates, which is
+     exactly how a cutaway of a real column behaves. */
+  .dx-col { position:relative; transform-style:preserve-3d; margin:0 auto; }
+  .dx-col-mid { position:absolute; left:50%; top:0; transform-style:preserve-3d; }
+
+  .dx-slat {
+    position:absolute; left:0; top:0; transform-origin:50% 50%;
+    background:linear-gradient(90deg,
+      color-mix(in srgb, var(--color-accent) 15%, transparent),
+      color-mix(in srgb, var(--color-accent) 3%, transparent) 45%,
+      color-mix(in srgb, var(--color-accent) 15%, transparent));
+    border-top:1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+    border-bottom:1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+    backface-visibility:visible;
+  }
+  /* The shell carries the temperature profile: cool overhead, warm sump.
+     It is a reading of Ttop/Tbot, not decoration — the gradient stops are
+     set from the solved values. */
+  .dx-therm {
+    position:absolute; left:0; top:0; pointer-events:none; border-radius:3px;
+    opacity:.34; transform:translateZ(-1px);
+  }
+  .dx-dark .dx-therm { opacity:.24 }
+
+  .dx-tray {
+    position:absolute; border-radius:50%; transform-style:preserve-3d;
+    border:1.5px solid color-mix(in srgb, var(--dx-liquid) 85%, transparent);
+    background:radial-gradient(circle at 50% 50%,
+      color-mix(in srgb, var(--dx-liquid) 55%, transparent),
+      color-mix(in srgb, var(--dx-liquid) 26%, transparent) 72%, transparent);
+    box-shadow:0 0 10px color-mix(in srgb, var(--dx-liquid) 22%, transparent);
+    transition:background var(--dx-t-slow) var(--dx-ease), border-color var(--dx-t-base) var(--dx-ease);
+  }
+  .dx-tray.feed {
+    border-color:var(--dx-violet);
+    background:radial-gradient(circle at 50% 50%,
+      color-mix(in srgb, var(--dx-violet) 42%, transparent),
+      color-mix(in srgb, var(--dx-violet) 14%, transparent) 72%, transparent);
+    box-shadow:0 0 14px color-mix(in srgb, var(--dx-violet) 40%, transparent);
+  }
+  .dx-tray.hot { border-color:color-mix(in srgb, var(--dx-warn) 70%, transparent) }
+
+  /* Traffic. Two populations moving in opposite directions: vapour up,
+     liquid down. The outer node places the particle in space, the inner
+     node animates, so the animation never clobbers the depth transform. */
+  .dx-p { position:absolute; transform-style:preserve-3d; pointer-events:none }
+  .dx-p i {
+    display:block; border-radius:50%;
+    animation-timing-function:linear; animation-iteration-count:infinite;
+  }
+  .dx-p.up i   { background:var(--dx-vapour); animation-name:dxUp;
+                 box-shadow:0 0 6px color-mix(in srgb, var(--dx-vapour) 70%, transparent) }
+  .dx-p.down i { background:var(--dx-liquid); animation-name:dxDown }
+  @keyframes dxUp   { 0% { transform:translateY(0); opacity:0 } 12%,80% { opacity:.95 } 100% { transform:translateY(-56px); opacity:0 } }
+  @keyframes dxDown { 0% { transform:translateY(0); opacity:0 } 12%,80% { opacity:.8 }  100% { transform:translateY(56px); opacity:0 } }
+  /* paused state: traffic holds still rather than vanishing */
+  .dx-col.paused .dx-p i { animation-play-state:paused; opacity:.55 }
+
+  /* Annotation plane — callouts sit in front of the vessel and pull away
+     in the exploded view. */
+  .dx-note {
+    position:absolute; font-size:10.5px; letter-spacing:.06em; line-height:1.35;
+    text-transform:uppercase; font-weight:600; white-space:nowrap;
+    color:color-mix(in srgb, var(--color-text) 74%, transparent);
+  }
+  .dx-note b { display:block; font-size:12px; letter-spacing:-.01em; text-transform:none;
+               font-variant-numeric:tabular-nums; color:var(--color-text) }
+  .dx-note::before {
+    content:''; position:absolute; top:6px; width:22px; height:1px;
+    background:color-mix(in srgb, var(--color-text) 34%, transparent);
+  }
+  .dx-note.l { text-align:right } .dx-note.l::before { right:-26px }
+  .dx-note.r::before { left:-26px }
+
+  /* Vessel heads and the two drums, drawn as flat plates on the mid plane. */
+  .dx-cap {
+    position:absolute; border-radius:50%;
+    border:1px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
+    background:color-mix(in srgb, var(--color-accent) 16%, transparent);
+  }
+  .dx-vp-btns { display:flex; gap:2px; background:var(--color-surface);
+                border-radius:var(--dx-r-sm); padding:2px }
+  .dx-vp-btns .btn { min-height:28px; font-size:11.5px; padding:3px 9px; border-color:transparent;
+                     background:transparent; letter-spacing:.02em }
+  .dx-vp-btns .btn[data-on='1'] { background:var(--dx-raised); box-shadow:var(--shadow-sm);
+                                  color:var(--dx-ink-accent); font-weight:600 }
 
   /* ═══ existing motion, retained ═══════════════════════════════════════ */
   @keyframes dxRise { from { transform: translateY(10px); opacity: 0 } 25% { opacity: 1 } 75% { opacity: 1 } to { transform: translateY(-26px); opacity: 0 } }
@@ -634,65 +727,61 @@
         <div style="display:flex;flex-direction:column;gap:14px">
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-              <h6 style="margin:0;color:var(--dx-ink-accent)">Fractionating column</h6>
-              <span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ r.colCaption }}</span>
-              <button class="btn btn-secondary dx-noprint" onClick="{{ explainToggle }}" style="margin-left:auto;min-height:30px">{{ explainLabel }}</button>
-            </div>
-            <div style="display:grid;grid-template-columns:minmax(0,1fr);justify-items:center">
-              <svg viewBox="0 0 420 560" style="width:100%;max-width:520px;height:auto" role="img" aria-label="Interactive distillation column schematic">
-                <defs>
-                  <marker id="dxArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                    <path d="M0 0 L10 5 L0 10 z" fill="var(--color-accent)"></path>
-                  </marker>
-                </defs>
-                <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1">
-                  <path d="M0 40 H420 M0 140 H420 M0 240 H420 M0 340 H420 M0 440 H420 M0 540 H420 M40 0 V560 M140 0 V560 M240 0 V560 M340 0 V560"></path>
-                </g>
-                <rect x="150" y="70" width="120" height="400" fill="none" stroke="var(--color-accent)" stroke-width="1.6"></rect>
-                <path d="M150 70 Q210 46 270 70" fill="none" stroke="var(--color-accent)" stroke-width="1.6"></path>
-                <path d="M150 470 Q210 494 270 470" fill="none" stroke="var(--color-accent)" stroke-width="1.6"></path>
-                <sc-for list="{{ trays }}" as="t" hint-placeholder-count="10">
-                  <g data-n="{{ t.n }}" onMouseEnter="{{ trayIn }}" onMouseLeave="{{ trayOut }}" style="cursor:crosshair">
-                    <rect x="150" y="{{ t.top }}" width="120" height="{{ t.h }}" fill="{{ t.fill }}" stroke="none"></rect>
-                    <line x1="158" y1="{{ t.y }}" x2="262" y2="{{ t.y }}" stroke="{{ t.stroke }}" stroke-width="{{ t.w }}"></line>
-                    <text x="146" y="{{ t.ty }}" text-anchor="end" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)" font-family="var(--font-body)">{{ t.label }}</text>
-                  </g>
-                </sc-for>
-                <g stroke="var(--color-accent)" stroke-width="1.5" fill="none" marker-end="url(#dxArrow)">
-                  <path d="M60 {{ r.feedY }} H150" style="{{ r.flowAnim }}"></path>
-                  <path d="M210 70 V40 H330 V96"></path>
-                  <path d="M330 128 V168 H366"></path>
-                  <path d="M210 470 V510 H86 V446"></path>
-                  <path d="M46 400 H86"></path>
-                </g>
-                <rect x="300" y="96" width="60" height="32" fill="none" stroke="var(--color-accent)" stroke-width="1.5"></rect>
-                <path d="M306 104 l12 8 l-12 8 M324 104 l12 8 l-12 8" fill="none" stroke="var(--color-accent)" stroke-width="1.2"></path>
-                <text x="330" y="90" text-anchor="middle" font-size="10" font-family="var(--font-heading)" letter-spacing="1" fill="var(--color-text)">CONDENSER</text>
-                <path d="M330 128 V150 H262" fill="none" stroke="var(--color-accent)" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#dxArrow)"></path>
-                <text x="300" y="146" text-anchor="end" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">reflux L = {{ r.L }}</text>
-                <ellipse cx="86" cy="426" rx="26" ry="12" fill="none" stroke="var(--color-accent)" stroke-width="1.5"></ellipse>
-                <path d="M60 426 V386 M112 426 V386 M60 386 H112" fill="none" stroke="var(--color-accent)" stroke-width="1.5"></path>
-                <path d="M68 404 q9 -10 18 0 q9 10 18 0" fill="none" stroke="var(--color-accent)" stroke-width="1.2"></path>
-                <text x="86" y="374" text-anchor="middle" font-size="10" font-family="var(--font-heading)" letter-spacing="1" fill="var(--color-text)">REBOILER</text>
-                <path d="M112 400 H150" fill="none" stroke="var(--color-accent)" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#dxArrow)"></path>
-                <text x="366" y="168" font-size="11" font-family="var(--font-heading)" fill="var(--color-text)">DISTILLATE</text>
-                <text x="366" y="182" font-size="10" fill="color-mix(in srgb,var(--color-text) 65%,transparent)">D = {{ r.D }} kmol/h</text>
-                <text x="366" y="195" font-size="10" fill="color-mix(in srgb,var(--color-text) 65%,transparent)">x_D = {{ r.xD }}</text>
-                <text x="46" y="392" text-anchor="start" font-size="11" font-family="var(--font-heading)" fill="var(--color-text)">Q_R</text>
-                <text x="14" y="{{ r.feedYt }}" font-size="11" font-family="var(--font-heading)" fill="var(--color-text)">FEED</text>
-                <text x="14" y="{{ r.feedYt2 }}" font-size="10" fill="color-mix(in srgb,var(--color-text) 65%,transparent)">F = {{ r.F }} · z = {{ r.zF }}</text>
-                <text x="14" y="530" font-size="11" font-family="var(--font-heading)" fill="var(--color-text)">BOTTOMS</text>
-                <text x="14" y="544" font-size="10" fill="color-mix(in srgb,var(--color-text) 65%,transparent)">B = {{ r.B }} · x_B = {{ r.xB }}</text>
-                <g>
-                  <sc-for list="{{ bubbles }}" as="b" hint-placeholder-count="6">
-                    <circle cx="{{ b.cx }}" cy="{{ b.cy }}" r="{{ b.r }}" fill="{{ b.fill }}" style="{{ b.style }}"></circle>
+            <div class="dx-head" style="padding:0">
+              <div class="dx-head-l">
+                <div class="dx-kicker">Fractionating column</div>
+                <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                  <span class="dx-num" style="font-size:13px">{{ scene.caption }}</span>
+                  <span class="dx-dot live" aria-hidden="true"></span>
+                  <span class="dx-num" style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ scene.thermLabel }}</span>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <div class="dx-vp-btns dx-noprint" role="group" aria-label="Column viewpoint" onClick="{{ setVP }}">
+                  <sc-for list="{{ vpBtns }}" as="b" hint-placeholder-count="5">
+                    <button class="btn" data-vp="{{ b.k }}" data-on="{{ b.on }}" aria-pressed="{{ b.cur }}">{{ b.label }}</button>
                   </sc-for>
-                </g>
-                <text x="278" y="86" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">vapour ↑ V = {{ r.V }}</text>
-                <text x="278" y="462" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">liquid ↓ L̄ = {{ r.Lb }}</text>
-              </svg>
+                </div>
+                <button class="btn btn-secondary dx-noprint" onClick="{{ explainToggle }}" style="min-height:30px">{{ explainLabel }}</button>
+              </div>
             </div>
+            <div class="dx-stage" style="height:462px" role="img" aria-label="Three-dimensional schematic of the distillation column. {{ scene.caption }}. {{ scene.thermLabel }}.">
+              <i class="dx-stage-grid" aria-hidden="true"></i>
+              <sc-if value="{{ scene.empty }}">
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:24px">
+                  <span class="dx-dot warn" aria-hidden="true"></span>
+                  <div style="font-size:13.5px;font-weight:600">{{ scene.emptyMsg }}</div>
+                  <div style="font-size:12px;color:color-mix(in srgb,var(--color-text) 70%,transparent);max-width:34ch;line-height:1.5">{{ scene.emptyHint }}</div>
+                </div>
+              </sc-if>
+              <div class="{{ vpCls }}" style="position:absolute;inset:0;display:grid;place-items:center">
+                <div class="dx-col" style="width:{{ scene.W }}px;height:{{ scene.H }}px">
+                  <div class="dx-col-mid" style="height:{{ scene.H }}px">
+                    <sc-for list="{{ scene.slats }}" as="sl" hint-placeholder-count="16">
+                      <i class="dx-slat" style="{{ sl.style }}"></i>
+                    </sc-for>
+                    <i class="dx-therm" style="{{ scene.thermStyle }}"></i>
+                    <sc-for list="{{ scene.caps }}" as="cp" hint-placeholder-count="2">
+                      <i class="dx-cap" style="{{ cp.style }}"></i>
+                    </sc-for>
+                    <sc-for list="{{ scene.trays }}" as="tr2" hint-placeholder-count="12">
+                      <i class="{{ tr2.cls }}" style="{{ tr2.style }}"></i>
+                    </sc-for>
+                    <div class="dx-layer-flow" style="position:absolute;inset:0;transform-style:preserve-3d">
+                      <sc-for list="{{ scene.parts }}" as="p" hint-placeholder-count="18">
+                        <span class="{{ p.cls }}" style="{{ p.style }}"><i style="{{ p.dot }}"></i></span>
+                      </sc-for>
+                    </div>
+                    <div class="dx-layer-notes" style="position:absolute;inset:0;transform-style:preserve-3d">
+                      <sc-for list="{{ scene.notes }}" as="nt" hint-placeholder-count="5">
+                        <span class="{{ nt.cls }}" style="{{ nt.style }}">{{ nt.k }}<b>{{ nt.v }}</b></span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p style="margin:0;font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Stage positions, feed stage and the end temperatures are read from the solved case. The rising and falling traffic depicts counter-current flow and scales with the internal vapour and liquid rates — it is a visual aid, not a hydraulic calculation.</p>
             <sc-if value="{{ hover }}">
               <div class="blueprint" style="padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:6px;font-size:12px;font-variant-numeric:tabular-nums;background:var(--color-surface)">
                 <sc-for list="{{ hoverRows }}" as="h" hint-placeholder-count="6">
@@ -1525,7 +1614,7 @@ class Component extends DCLogic {
     view:(this.props||{}).startView||'landing', mixKey:(this.props||{}).defaultMixture||'bt', model:'raoult', P:101.325, alphaC:2.45,
     F:100, zF:0.45, q:1.0, xD:0.96, xB:0.04, R:2.2, Nspec:12, DF:0.45,
     eff:0.70, reb:'partial', calcMode:'design',
-    mode:'learning', theme:'light', colView:'stages', equip:'column',
+    mode:'learning', theme:'light', colView:'stages', equip:'column', colVP:'front',
     anim:999, hoverStage:null, tip:null, tipXY:[0,0],
     explaining:false, explainI:0, wiVar:'R', wiTo:3.2, whatIf:null,
     sens:{ind:'R',dep:'N',min:1.2,max:6,n:24}, exam:{i:0,reveal:'',input:''},
@@ -2117,6 +2206,118 @@ class Component extends DCLogic {
     const h=Component.SOLVE_KIND.find(k=>k[0].test(msg));
     return h ? h[1] : 'spec';
   }
+  /** Builds the 3D column scene from a solved case.
+   *
+   *  Geometry only — every number here is read from the result the engine
+   *  already produced (stage count, feed stage, the per-stage x/y/T profile,
+   *  the internal flows) and turned into placements. Nothing is computed
+   *  about the process here, and nothing here feeds back into the engine.
+   *
+   *  The traffic is an educational depiction of counter-current flow, not a
+   *  hydraulic simulation: particle counts and speeds are scaled from L and V
+   *  so that more reflux visibly means more traffic, but they carry no
+   *  quantitative meaning and the interface says so. */
+  columnScene(s, r, ok){
+    const H = 384, RAD = 46, SLATS = 16;
+    const top = 18, bot = H - 16;                    // usable vessel span
+    const scene = { H, RAD, W: RAD * 2, slats: [], trays: [], parts: [], caps: [], notes: [] };
+
+    // vessel wall — a ring of slats at a fixed radius
+    const w = (2 * Math.PI * RAD) / SLATS + 1.5;
+    for (let i = 0; i < SLATS; i++){
+      scene.slats.push({ style:
+        'width:' + w.toFixed(2) + 'px;height:' + H + 'px;margin-left:' + (-w / 2).toFixed(2) + 'px;' +
+        'transform:rotateY(' + (i * (360 / SLATS)).toFixed(2) + 'deg) translateZ(' + RAD + 'px)' });
+    }
+    // thermal wash over the shell, stops taken from the solved end temperatures
+    const tt = ok ? this.num(r.Ttop) : NaN, tb = ok ? this.num(r.Tbot) : NaN;
+    scene.thermStyle =
+      'width:' + (RAD * 2) + 'px;height:' + H + 'px;margin-left:' + (-RAD) + 'px;' +
+      'background:linear-gradient(180deg,' +
+      'color-mix(in srgb,var(--dx-vapour) 26%,transparent),' +
+      'color-mix(in srgb,var(--dx-warn) ' + (isFinite(tb) && isFinite(tt) ?
+        Math.max(8, Math.min(40, Math.round((tb - tt) * 1.1))) : 18) + '%,transparent))';
+    scene.thermLabel = (isFinite(tt) && isFinite(tb))
+      ? this.f(tt, 1) + ' °C overhead → ' + this.f(tb, 1) + ' °C sump' : '';
+
+    // heads
+    scene.caps.push({ style:'width:' + (RAD * 2) + 'px;height:' + (RAD * 0.5) + 'px;margin-left:' + (-RAD) +
+      'px;top:' + (top - RAD * 0.25) + 'px;transform:translateZ(0)' });
+    scene.caps.push({ style:'width:' + (RAD * 2) + 'px;height:' + (RAD * 0.5) + 'px;margin-left:' + (-RAD) +
+      'px;top:' + (bot - RAD * 0.25) + 'px;transform:translateZ(0)' });
+
+    if (!ok || !r.stages || !r.stages.length) {
+      scene.empty = true;
+      scene.caption = '';
+      scene.emptyMsg = ok ? 'No stage profile for this case.'
+        : 'The column cannot be drawn until the specification solves.';
+      scene.emptyHint = 'Adjust the inputs on the left — the reason is reported above.';
+      return scene;
+    }
+
+    const st = r.stages, N = st.length;
+    const feed = Math.round(this.num(r.feedStage));
+    // draw at most 34 trays so a 60-stage column stays legible; the label
+    // always states the real count
+    const shown = Math.min(N, 34);
+    const pick = i => st[Math.min(N - 1, Math.round(i * (N - 1) / Math.max(1, shown - 1)))];
+    for (let i = 0; i < shown; i++){
+      const a = pick(i);
+      const y = top + 14 + (bot - top - 28) * (i / Math.max(1, shown - 1));
+      const d = RAD * 1.74;
+      const isFeed = Math.round(a.n) === feed;
+      // tray tint follows the liquid composition on that stage: rich in the
+      // light component near the top, lean at the sump
+      const x = Math.max(0, Math.min(1, this.num(a.x)));
+      scene.trays.push({
+        cls: 'dx-tray' + (isFeed ? ' feed' : ''),
+        style:'width:' + d.toFixed(1) + 'px;height:' + d.toFixed(1) + 'px;left:' + (-d / 2).toFixed(1) +
+          'px;top:' + (-d / 2).toFixed(1) + 'px;transform:translateY(' + y.toFixed(1) + 'px) rotateX(90deg);' +
+          (isFeed ? '' : 'background:radial-gradient(circle at 50% 50%,' +
+            'color-mix(in srgb,var(--dx-liquid) ' + (30 + Math.round(x * 38)) + '%,transparent),' +
+            'color-mix(in srgb,var(--dx-liquid) 16%,transparent) 72%,transparent);') });
+    }
+
+    // counter-current traffic, density scaled from the internal flows
+    const V = this.num(r.V), L = this.num(r.L);
+    const nUp = Math.max(5, Math.min(16, Math.round(6 + (isFinite(V) ? V : 0) / 26)));
+    const nDn = Math.max(4, Math.min(14, Math.round(4 + (isFinite(L) ? L : 0) / 26)));
+    const speed = v => Math.max(1.1, Math.min(4.6, 4.6 - v / 70));
+    for (let i = 0; i < nUp; i++){
+      const ang = (i / nUp) * Math.PI * 2, rr = RAD * 0.62;
+      scene.parts.push({ cls:'dx-p up',
+        style:'left:' + (Math.cos(ang) * rr).toFixed(1) + 'px;top:' + (top + 40 + (i * 37) % (bot - top - 80)).toFixed(1) +
+          'px;transform:translateZ(' + (Math.sin(ang) * rr).toFixed(1) + 'px)',
+        dot:'width:4px;height:4px;animation-duration:' + speed(V).toFixed(2) +
+          's;animation-delay:' + (i * 0.21).toFixed(2) + 's' });
+    }
+    for (let i = 0; i < nDn; i++){
+      const ang = (i / nDn) * Math.PI * 2 + 0.4, rr = RAD * 0.78;
+      scene.parts.push({ cls:'dx-p down',
+        style:'left:' + (Math.cos(ang) * rr).toFixed(1) + 'px;top:' + (top + 24 + (i * 41) % (bot - top - 80)).toFixed(1) +
+          'px;transform:translateZ(' + (Math.sin(ang) * rr).toFixed(1) + 'px)',
+        dot:'width:3px;height:3px;animation-duration:' + speed(L).toFixed(2) +
+          's;animation-delay:' + (i * 0.27).toFixed(2) + 's' });
+    }
+
+    const f = (v, d) => this.f(v, d);
+    scene.notes = [
+      { cls:'dx-note r', style:'left:' + (RAD + 30) + 'px;top:' + (top - 4) + 'px',
+        k:'Distillate', v:'x_D ' + f(r.xD, 4) + ' · ' + f(r.D, 1) + ' kmol/h' },
+      { cls:'dx-note r', style:'left:' + (RAD + 30) + 'px;top:' + (top + 44) + 'px',
+        k:'Reflux', v:'R ' + f(r.R, 2) + ' · L ' + f(r.L, 1) + ' kmol/h' },
+      { cls:'dx-note l', style:'right:' + (RAD + 30) + 'px;top:' + (top + 12 + (bot - top - 28) *
+        Math.max(0, Math.min(1, (feed - 1) / Math.max(1, N - 1)))).toFixed(0) + 'px',
+        k:'Feed · stage ' + f(feed, 0), v:'z_F ' + f(r.zF, 3) + ' · q ' + f(r.q, 2) },
+      { cls:'dx-note l', style:'right:' + (RAD + 30) + 'px;top:' + (bot - 34) + 'px',
+        k:'Boil-up', v:'V̄ ' + f(r.Vb, 1) + ' kmol/h' },
+      { cls:'dx-note r', style:'left:' + (RAD + 30) + 'px;top:' + (bot - 10) + 'px',
+        k:'Bottoms', v:'x_B ' + f(r.xB, 4) + ' · ' + f(r.B, 1) + ' kmol/h' }
+    ];
+    scene.caption = f(r.N, 0) + ' theoretical stages · feed on ' + f(feed, 0) +
+      (shown < N ? ' · showing ' + shown : '');
+    return scene;
+  }
   /** Live self-validation. Each row recomputes something the engine claims and
    *  checks it against a closed form, an identity, or the engine's own internal
    *  consistency — never against a value transcribed from a reference. Built
@@ -2313,6 +2514,15 @@ class Component extends DCLogic {
   extras(s,r,hasR){
     const f=(v,d)=>this.f(v,d), S=Component, MX=(x)=>this.MX(x), MY=(y)=>this.MY(y);
     const out={};
+    // 3D column scene — geometry derived from the solved result
+    out.scene = this.columnScene(s, r, hasR);
+    out.vpCls = 'dx-stage-inner dx-vp-' + (s.colVP || 'front');
+    out.colPaused = s.explaining ? '' : '';
+    out.vpBtns = [['front','Front'],['iso','Isometric'],['side','Side'],['top','Top'],['xpl','Exploded']]
+      .map(([k,label])=>({k,label,on:(s.colVP||'front')===k?'1':'0',
+        cur:(s.colVP||'front')===k?'true':'false'}));
+    out.setVP = (e)=>{ const el=e.target.closest('[data-vp]'); if(el) this.setState({colVP:el.dataset.vp}); };
+
     // When validation rejected the mixture data itself (malformed custom
     // component, unknown mixture key) the equilibrium table cannot be built:
     // compsOf/curve/alphaAt/tempAt would dereference missing records and throw
