@@ -342,7 +342,10 @@
   .btn:focus-visible { outline: none; box-shadow: var(--dx-ring) }
 
   .btn-primary {
-    background: linear-gradient(180deg,
+    /* the solid colour is both a fallback and what a contrast audit reads:
+       a gradient alone computes backgroundColor as transparent */
+    background-color: var(--dx-ink-accent);
+    background-image: linear-gradient(180deg,
       color-mix(in srgb, var(--dx-ink-accent) 88%, #fff 12%), var(--dx-ink-accent));
     border-color: color-mix(in srgb, var(--dx-ink-accent) 70%, #000);
     box-shadow: var(--shadow-sm), 0 0 0 0 var(--dx-glow-a);
@@ -377,7 +380,8 @@
   .seg-opt { transition: background var(--dx-t-fast) var(--dx-ease),
                          color var(--dx-t-fast) var(--dx-ease) }
   .seg-opt:has(input:checked) {
-    background: linear-gradient(180deg,
+    background-color: var(--dx-ink-accent);
+    background-image: linear-gradient(180deg,
       color-mix(in srgb, var(--dx-ink-accent) 88%, #fff 12%), var(--dx-ink-accent));
     box-shadow: var(--shadow-sm), 0 0 16px -4px var(--dx-glow-a);
   }
@@ -486,6 +490,33 @@
     color:color-mix(in srgb, var(--color-text) 76%, transparent);
     animation: dxIn 280ms var(--dx-ease) both;
   }
+
+  /* ═══ theory topics ═══════════════════════════════════════════════════
+     A list of layers rather than a stack of boxes: the open topic lights
+     its leading edge and lifts off the page, the rest stay quiet. */
+  .dx-topic { position:relative; overflow:hidden }
+  .dx-topic::before {
+    content:''; position:absolute; left:0; top:0; bottom:0; width:2px;
+    background:linear-gradient(180deg, var(--dx-vapour), var(--color-accent));
+    transform:scaleY(0); transform-origin:top;
+    transition:transform var(--dx-t-base) var(--dx-ease);
+  }
+  .dx-topic.open::before { transform:scaleY(1) }
+  .dx-topic.open {
+    background: linear-gradient(90deg,
+      color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 55%),
+      color-mix(in srgb, var(--dx-raised) 80%, transparent);
+    border-color: color-mix(in srgb, var(--color-accent) 34%, var(--dx-hairline));
+    box-shadow: var(--shadow-sm);
+  }
+  .dx-chev {
+    width:8px; height:8px; flex:none; align-self:center;
+    border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
+    opacity:.5; transform:rotate(-45deg);
+    transition:transform var(--dx-t-base) var(--dx-spring), opacity var(--dx-t-fast) var(--dx-ease);
+  }
+  .dx-topic.open .dx-chev { transform:rotate(45deg); opacity:1 }
+  .dx-topic:hover .dx-chev { opacity:.9 }
 
   /* ═══ tables ══════════════════════════════════════════════════════════ */
   .table thead th {
@@ -648,6 +679,12 @@
                   margin-inline:-4px; padding-inline:4px }
     .dx-navwrap::-webkit-scrollbar { display:none }
     .dx-navwrap .btn { flex:none; scroll-snap-align:center }
+    /* the action row becomes a rail too, so the header stays two rows deep
+       on a phone instead of four */
+    .dx-actions { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
+                  margin-inline:-4px; padding-inline:4px; width:100% }
+    .dx-actions::-webkit-scrollbar { display:none }
+    .dx-actions > * { flex:none }
     .dx-navpill { display:none }
     .dx-navbtn[data-on='1'] { background: color-mix(in srgb, var(--color-accent) 20%, transparent) }
     /* The hero stage is sized by aspect-ratio, so it must keep its own
@@ -784,7 +821,7 @@
         <button class="btn dx-navbtn" data-v="{{ it.k }}" data-on="{{ it.on }}" aria-current="{{ it.cur }}" onClick="{{ go }}" style="{{ it.style }}">{{ it.label }}</button>
       </sc-for>
     </nav>
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+    <div class="dx-actions" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
       <select class="input" value="{{ v.mode }}" data-k="mode" onChange="{{ setStr }}" style="width:auto;min-height:32px;font-size:12px" aria-label="Interface detail level">
         <option value="learning">Learning mode</option>
         <option value="engineering">Engineering mode</option>
@@ -794,7 +831,7 @@
       <button class="btn btn-secondary" onClick="{{ saveCfg }}" title="Save configuration as JSON" style="min-height:32px">Save</button>
       <button class="btn btn-secondary" onClick="{{ loadClick }}" title="Load a saved configuration" style="min-height:32px">Load</button>
       <button class="btn btn-secondary" data-v="results" onClick="{{ go }}" title="Export results" style="min-height:32px">Export</button>
-      <button class="btn btn-secondary" onClick="{{ toggleTheme }}" title="Toggle dark mode" style="min-height:32px;width:34px;padding:0">{{ themeIcon }}</button>
+      <button class="btn btn-secondary" onClick="{{ toggleTheme }}" title="Switch to {{ themeLabel }}" aria-label="Switch to {{ themeLabel }}" style="min-height:32px;width:34px;padding:0">{{ themeIcon }}</button>
       <input type="file" accept="application/json" ref="{{ fileRef }}" onChange="{{ loadCfg }}" style="display:none">
     </div>
   </header>
@@ -1397,7 +1434,7 @@
             <sc-if value="{{ mtOk }}">
               <g>
                 <line x1="{{ rminLine.x1 }}" y1="{{ rminLine.y1 }}" x2="{{ rminLine.x2 }}" y2="{{ rminLine.y2 }}" stroke="color-mix(in srgb,var(--color-text) 40%,transparent)" stroke-width="1" stroke-dasharray="2 4"></line>
-                <line x1="{{ qLine.x1 }}" y1="{{ qLine.y1 }}" x2="{{ qLine.x2 }}" y2="{{ qLine.y2 }}" stroke="var(--color-accent-700)" stroke-width="1.6" stroke-dasharray="7 4"></line>
+                <line x1="{{ qLine.x1 }}" y1="{{ qLine.y1 }}" x2="{{ qLine.x2 }}" y2="{{ qLine.y2 }}" stroke="var(--dx-magenta)" stroke-width="1.8" stroke-dasharray="7 4"></line>
                 <line x1="{{ rectLine.x1 }}" y1="{{ rectLine.y1 }}" x2="{{ rectLine.x2 }}" y2="{{ rectLine.y2 }}" stroke="var(--color-accent-800)" stroke-width="1.8"></line>
                 <line x1="{{ stripLine.x1 }}" y1="{{ stripLine.y1 }}" x2="{{ stripLine.x2 }}" y2="{{ stripLine.y2 }}" stroke="var(--color-accent-800)" stroke-width="1.8"></line>
                 <sc-for list="{{ mtSegs }}" as="g" hint-placeholder-count="10">
@@ -1558,14 +1595,13 @@
           <p style="max-width:76ch;font-size:14px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Twenty topics, each written against the same equations the simulator solves. Numbers quoted in the simulator can be traced back to the relationships described here.</p>
         </div>
         <sc-for list="{{ theoryItems }}" as="t" hint-placeholder-count="20">
-          <div class="blueprint" style="padding:4px 14px">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <button data-k="{{ t.k }}" onClick="{{ setTheory }}" style="{{ t.headStyle }}">
-              <span style="font-size:12px;font-variant-numeric:tabular-nums;color:var(--dx-ink-accent)">{{ t.no }}</span>
-              <span>{{ t.title }}</span>
+          <div class="{{ t.cls }}" style="padding:2px 16px">
+            <button data-k="{{ t.k }}" onClick="{{ setTheory }}" aria-expanded="{{ t.open }}" style="{{ t.headStyle }}">
+              <span class="dx-num" style="font-size:12px;color:var(--dx-ink-accent);min-width:20px">{{ t.no }}</span>
+              <span style="flex:1">{{ t.title }}</span>
+              <i class="dx-chev" aria-hidden="true"></i>
             </button>
             <p style="{{ t.bodyStyle }}">{{ t.body }}</p>
-            <div style="height:6px"></div>
           </div>
         </sc-for>
       </div>
@@ -2941,14 +2977,14 @@ class Component extends DCLogic {
       out.rminLine={x1:MX(r.xD),y1:MY(r.xD),x2:MX(r.pinch.x),y2:MY(r.pinch.y)};
       const segs=[], marks=[]; let prev=r.xD;
       r.stages.forEach(st=>{
-        segs.push({x1:MX(prev),y1:MY(st.y),x2:MX(st.x),y2:MY(st.y),c:st.rect?'var(--color-accent)':'var(--color-accent-700)'});
-        segs.push({x1:MX(st.x),y1:MY(st.y),x2:MX(st.x),y2:MY(st.yn),c:st.rect?'var(--color-accent)':'var(--color-accent-700)'});
+        segs.push({x1:MX(prev),y1:MY(st.y),x2:MX(st.x),y2:MY(st.y),c:st.rect?'var(--dx-vapour)':'var(--dx-liquid)'});
+        segs.push({x1:MX(st.x),y1:MY(st.y),x2:MX(st.x),y2:MY(st.yn),c:st.rect?'var(--dx-vapour)':'var(--dx-liquid)'});
         marks.push({x:(MX(st.x)-5).toFixed(1),y:(MY(st.y)-5).toFixed(1),n:st.n,feed:st.n===r.feedStage});
         prev=st.x;
       });
       const shown=Math.max(0,Math.min(r.stages.length,s.anim));
       out.mtSegs=segs.slice(0,shown*2);
-      out.mtMarks=marks.slice(0,shown).map(m=>({x:m.x,y:m.y,n:m.n,fill:m.feed?'var(--color-accent)':'color-mix(in srgb,var(--color-text) 60%,transparent)'}));
+      out.mtMarks=marks.slice(0,shown).map(m=>({x:m.x,y:m.y,n:m.n,fill:m.feed?'var(--dx-magenta)':'color-mix(in srgb,var(--color-text) 62%,transparent)'}));
       out.mtPoints=[{cx:MX(r.xD),cy:MY(r.xD),k:'xD',label:'x_D'},{cx:MX(r.zF),cy:MY(r.zF),k:'zF',label:'z_F'},{cx:MX(r.xB),cy:MY(r.xB),k:'xB',label:'x_B'}]
         .map(p=>Object.assign(p,{r:s.mtDrag===p.k?7:5}));
       out.mtStepInfo = shown>0&&shown<=r.stages.length
@@ -3123,8 +3159,11 @@ class Component extends DCLogic {
 
     // ---- theory ----
     out.theoryItems=S.THEORY.map(t=>({k:t[0],title:t[1],body:t[2],open:s.theoryOpen===t[0],
-      bodyStyle:'margin:0;font-size:13.5px;line-height:1.6;max-width:82ch;display:'+(s.theoryOpen===t[0]?'block':'none'),
-      headStyle:'display:flex;gap:10px;align-items:baseline;cursor:pointer;padding:9px 0;border:0;background:transparent;width:100%;text-align:left;font-family:var(--font-heading);font-size:19px;color:'+(s.theoryOpen===t[0]?'var(--dx-ink-accent)':'var(--color-text)'),
+      open:(s.theoryOpen===t[0]?'true':'false'),
+      cls:'blueprint dx-topic'+(s.theoryOpen===t[0]?' open':''),
+      bodyStyle:'margin:0 0 4px;font-size:13.5px;line-height:1.65;max-width:82ch;display:'+(s.theoryOpen===t[0]?'block':'none')+
+        (s.theoryOpen===t[0]?';animation:dxIn 340ms var(--dx-ease) both':''),
+      headStyle:'display:flex;gap:12px;align-items:baseline;cursor:pointer;padding:11px 0;border:0;background:transparent;width:100%;text-align:left;font-family:var(--font-heading);font-size:19px;transition:color var(--dx-t-fast) var(--dx-ease);color:'+(s.theoryOpen===t[0]?'var(--dx-ink-accent)':'var(--color-text)'),
       no:String(S.THEORY.indexOf(t)+1).padStart(2,'0')}));
     out.setTheory=(e)=>this.setState({theoryOpen:e.currentTarget.dataset.k});
 

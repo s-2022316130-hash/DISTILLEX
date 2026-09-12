@@ -5,7 +5,7 @@ equilibrium, McCabe–Thiele stage construction, column operation, stage profile
 studies, theory and an exam mode. Everything is computed in the browser — no server, no build
 step, no account, no telemetry, no stored data.
 
-**Live entry point:** `index.html` (self-contained, ~570 KB, works offline by double-click).
+**Live entry point:** `index.html` (self-contained, ~572 KB, works offline by double-click).
 
 ---
 
