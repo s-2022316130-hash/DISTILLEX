@@ -341,6 +341,32 @@
     -webkit-mask-image: radial-gradient(120% 90% at 50% 40%, #000 35%, transparent 78%);
   }
 
+  /* ═══ progressive disclosure ══════════════════════════════════════════
+     Native <details>, so it is keyboard-reachable and announced without any
+     script. Used to move the standing explanations off the first screen
+     while keeping every word of them one click away. */
+  .dx-dis { border-top:1px solid var(--dx-hairline); margin-top:2px }
+  .dx-dis > summary {
+    list-style:none; cursor:pointer; padding:7px 0 6px;
+    display:flex; align-items:center; gap:7px;
+    font-size:11.5px; font-weight:600; letter-spacing:.02em;
+    color:var(--dx-ink-accent);
+  }
+  .dx-dis > summary::-webkit-details-marker { display:none }
+  .dx-dis > summary::before {
+    content:''; width:7px; height:7px; flex:none;
+    border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
+    transform:rotate(-45deg) translate(-1px,-1px);
+    transition:transform var(--dx-t-base) var(--dx-ease);
+  }
+  .dx-dis[open] > summary::before { transform:rotate(45deg) translate(-2px,-2px) }
+  .dx-dis > summary:focus-visible { outline:none; box-shadow:var(--dx-glow); border-radius:var(--dx-r-sm) }
+  .dx-dis > .dx-dis-b {
+    font-size:11.5px; line-height:1.55; padding:0 0 9px;
+    color:color-mix(in srgb, var(--color-text) 74%, transparent);
+    animation:dxIn var(--dx-t-base) var(--dx-ease) both;
+  }
+
   /* ═══ footer ══════════════════════════════════════════════════════════ */
   .dx-sig {
     margin-top: 26px; padding: 14px 0 20px;
@@ -529,29 +555,33 @@
       </div>
       <div style="margin-top:22px;font-size:12px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Runs entirely client-side · Ideal VLE (Raoult) and constant-volatility models · No account, no server</div>
     </div>
-    <div class="blueprint" style="padding:20px;aspect-ratio:1/1;display:grid;place-items:center">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <svg viewBox="0 0 300 300" style="width:100%;height:auto" aria-label="Schematic of a fractionating column with equilibrium diagram">
-        <g stroke="var(--color-divider)" stroke-width="1">
-          <path d="M20 20 H280 M20 280 H280 M20 20 V280 M280 20 V280" fill="none"></path>
-          <path d="M20 150 H280 M150 20 V280" stroke-dasharray="3 5"></path>
-        </g>
-        <g stroke="var(--color-accent)" fill="none" stroke-width="1.5">
-          <rect x="118" y="52" width="64" height="196"></rect>
-          <path d="M150 52 V32 H228 V78" ></path>
-          <rect x="208" y="78" width="40" height="24"></rect>
-          <path d="M228 102 V132 H262" ></path>
-          <path d="M150 248 V268 H72 V222"></path>
-          <ellipse cx="72" cy="212" rx="20" ry="10"></ellipse>
-          <path d="M52 212 V186 M92 212 V186 M52 186 H92"></path>
-          <path d="M40 150 H118"></path>
-        </g>
-        <g stroke="color-mix(in srgb,var(--color-accent) 45%,transparent)" stroke-width="1">
-          <path d="M126 72 H174 M126 96 H174 M126 120 H174 M126 144 H174 M126 168 H174 M126 192 H174 M126 216 H174"></path>
-        </g>
-        <path d="M20 280 C 90 160, 160 96, 280 20" fill="none" stroke="var(--color-accent)" stroke-width="1.5" opacity=".45"></path>
-        <text x="26" y="40" font-family="var(--font-heading)" font-size="11" fill="var(--color-accent)" letter-spacing="1.5">FIG. 01 — RECTIFICATION</text>
-      </svg>
+    <div class="dx-stage" style="aspect-ratio:1/1;display:grid;place-items:center" role="img" aria-label="Three-dimensional cutaway of a fractionating column showing its trays, the feed stage and counter-current vapour and liquid traffic.">
+      <i class="dx-stage-grid" aria-hidden="true"></i>
+      <div class="dx-stage-inner dx-vp-iso" style="position:absolute;inset:0;display:grid;place-items:center">
+        <div class="dx-col" style="width:{{ scene.W }}px;height:{{ scene.H }}px">
+          <div class="dx-col-mid" style="height:{{ scene.H }}px">
+            <sc-for list="{{ scene.slats }}" as="sl" hint-placeholder-count="16">
+              <i class="dx-slat" style="{{ sl.style }}"></i>
+            </sc-for>
+            <i class="dx-therm" style="{{ scene.thermStyle }}"></i>
+            <sc-for list="{{ scene.caps }}" as="cp" hint-placeholder-count="2">
+              <i class="dx-cap" style="{{ cp.style }}"></i>
+            </sc-for>
+            <sc-for list="{{ scene.trays }}" as="tr2" hint-placeholder-count="12">
+              <i class="{{ tr2.cls }}" style="{{ tr2.style }}"></i>
+            </sc-for>
+            <div class="dx-layer-flow" style="position:absolute;inset:0;transform-style:preserve-3d">
+              <sc-for list="{{ scene.parts }}" as="p" hint-placeholder-count="18">
+                <span class="{{ p.cls }}" style="{{ p.style }}"><i style="{{ p.dot }}"></i></span>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="position:absolute;left:18px;bottom:16px;display:flex;align-items:center;gap:8px">
+        <span class="dx-dot live" aria-hidden="true"></span>
+        <span class="dx-num" style="font-size:11px;letter-spacing:.05em;color:color-mix(in srgb,var(--color-text) 74%,transparent)">{{ scene.caption }}</span>
+      </div>
     </div>
   </div>
 
@@ -637,7 +667,7 @@
                 </sc-for>
               </select>
             </div>
-            <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ r.mixNote }}</div>
+            <details class="dx-dis"><summary>About this mixture</summary><div class="dx-dis-b">{{ r.mixNote }}</div></details>
             <div class="field">
               <label>Thermodynamic model</label>
               <div class="seg" style="width:100%">
@@ -904,12 +934,12 @@
             <div class="field">
               <label>Internals</label>
               <div class="input" style="display:flex;align-items:center;background:transparent;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Trays — stagewise model</div>
-              <div style="font-size:11.5px;line-height:1.5;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Fixed, not a choice: the stage calculation is internals-agnostic and the tray column is the only case this model completes. Packed columns are not modelled — no HETP, packed height or transfer-unit (HTU/NTU) calculation is performed — so no selector is offered rather than one that changes nothing.</div>
+              <details class="dx-dis"><summary>Why there is no choice here</summary><div class="dx-dis-b">The stage calculation is internals-agnostic and the tray column is the only case this model completes. Packed columns are not modelled — no HETP, packed height or transfer-unit (HTU/NTU) calculation is performed — so no selector is offered rather than one that changes nothing.</div></details>
             </div>
             <div class="field">
               <label>Condenser</label>
               <div class="input" style="display:flex;align-items:center;background:transparent;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Total condenser — y₁ = x_D</div>
-              <div style="font-size:11.5px;line-height:1.5;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Fixed, not a choice: only the total condenser is implemented. A partial condenser would add one equilibrium stage, and that is not modelled — so no selector is offered rather than one that changes nothing.</div>
+              <details class="dx-dis"><summary>Why there is no choice here</summary><div class="dx-dis-b">Only the total condenser is implemented. A partial condenser would add one equilibrium stage, and that is not modelled — so no selector is offered rather than one that changes nothing.</div></details>
             </div>
             <div class="field">
               <label for="dx-reb">Reboiler</label>
@@ -1016,7 +1046,7 @@
                 <input type="range" min="1.05" max="12" step="0.05" value="{{ v.alphaC }}" data-k="alphaC" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Relative volatility alpha">
               </div>
             </sc-if>
-            <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ r.mixNote }}</div>
+            <details class="dx-dis"><summary>About this mixture</summary><div class="dx-dis-b">{{ r.mixNote }}</div></details>
           </section>
 
           <sc-if value="{{ isCustom }}">
