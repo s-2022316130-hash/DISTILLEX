@@ -705,6 +705,50 @@ function suiteCDU() {
    quantity, they must not invent one when there is no result, and the
    geometry they hand the renderer must be well formed. Everything here is
    structural — no reference values.                                       */
+function suiteStandalone() {
+  const out = path.join(__dirname, '..', 'examples', 'crude-unit.html');
+  ok(fs.existsSync(out), 'examples/crude-unit.html exists');
+  if (!fs.existsSync(out)) return;
+  const html = fs.readFileSync(out, 'utf8');
+
+  // in sync with its sources, by the same resolver the application build uses
+  let sync = true, why = '';
+  try { execFileSync('python3', [path.join(__dirname, 'standalone.py'), '--check'], { stdio:'pipe' }); }
+  catch (e) { sync = false; why = String((e.stdout || '') + (e.stderr || '')).trim(); }
+  ok(sync, 'examples/crude-unit.html is reproducible from src/standalone/', why);
+
+  // self-contained: the whole point of the file
+  ok(!/<script[^>]+\ssrc=/i.test(html), 'the example loads no external script');
+  ok(!/<link[^>]+stylesheet/i.test(html), 'the example loads no external stylesheet');
+  ok(!/@import/.test(html), 'the example imports no external stylesheet');
+  const urls = html.match(/https?:\/\/[^\s"'()<>]+/g) || [];
+  const fetched = urls.filter(u => !/^https?:\/\/(www\.)?(w3\.org|github\.com|claude)/.test(u));
+  ok(fetched.length === 0, 'the example requests nothing over the network',
+     fetched.slice(0, 3).join(' '));
+  ok(!/@include/.test(html), 'every include was resolved');
+
+  // every module the page needs is present, exactly once
+  ['var GLM =', 'var GEO =', 'var PLANT =', 'var RIGGL =', 'var CDU =',
+   'var RIGINFO =', 'var RIG2D =', 'var APP ='].forEach(decl => {
+    const n = html.split(decl).length - 1;
+    ok(n === 1, 'the example declares ' + decl.slice(4, -2) + ' exactly once', 'found ' + n);
+  });
+
+  // the honesty rules the page is built on must still be in it
+  ok(html.indexOf('never claims convergence') >= 0 || html.indexOf('did not report') >= 0 ||
+     html.indexOf('reports convergence') >= 0,
+     'the example still documents that convergence is reported, not asserted');
+  ok(html.indexOf('has been validated against a real unit') >= 0 ||
+     html.indexOf('validated against a real unit') >= 0,
+     'the example still carries the not-validated notice');
+  ok(/var DASH = '(\u2014|\\u2014)'/.test(html),
+     'the example still has one em dash standing for every missing number');
+
+  // and it must be a plausible size: a truncated write is the likely failure
+  const kb = Buffer.byteLength(html) / 1024;
+  ok(kb > 150 && kb < 900, 'the example is a sane size', kb.toFixed(0) + ' KB');
+}
+
 function suiteRig() {
   const { GEO, GLM, PLANT, RIG2D, RIGINFO, CDU } = load().modules;
   const r = CDU.run(CDU.baseCase());
@@ -937,6 +981,7 @@ const SUITES = {
   validation: suiteValidation, 'save-load': suiteSaveLoad,
   disclosures: suiteDisclosures, contrast: suiteContrast,
   headers: suiteHeaders, build: suiteBuild, cdu: suiteCDU, rig: suiteRig,
+  standalone: suiteStandalone,
 };
 
 function main() {

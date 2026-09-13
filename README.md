@@ -24,6 +24,9 @@ so the offline copy still links.
 ├── index.html      ← the deployable application (all CSS, fonts, runtime inlined)
 ├── src/            ← editable source
 │   ├── DISTILLEX.dc.html    the application source (markup + binary engine + page)
+│   ├── standalone/          the crude unit as a self-contained page
+│   │   ├── page.html          markup and stylesheet
+│   │   └── ui.js              the interface, without a framework
 │   ├── rig/                 the industrial crude unit, as separate modules
 │   │   ├── engine.js          the crude-unit simulation — the only thing that computes
 │   │   ├── glmath.js          vectors, matrices and the camera spring
@@ -36,8 +39,12 @@ so the offline copy still links.
 │   │   └── vm.js              the view model — formats, never calculates
 │   ├── support.js           component runtime
 │   └── _ds/…                design-system tokens and stylesheet
+├── examples/
+│   ├── crude-unit.html      the industrial simulator alone, in one file
+│   └── README.md            how to adapt it to another process
 ├── tools/
 │   ├── build.py             regenerates index.html from src/ (see below)
+│   ├── standalone.py        regenerates examples/crude-unit.html from src/
 │   ├── engine.js            loads the calculation engine out of src/ for testing
 │   └── test.js              the regression suite (see Validation)
 ├── vercel.json
@@ -231,6 +238,16 @@ is only one piece of state. Line weights and tracer densities follow the compute
 the thermal ramp is anchored to a fixed 30–380 °C scale so that a colour means the same
 temperature from one run to the next.
 
+### Taking it somewhere else
+
+`examples/crude-unit.html` is the industrial page on its own: one file, no
+build step, no dependencies, no network request. It is generated from
+`src/standalone/` plus the same `src/rig/` modules, by the same `@include`
+resolver, so it cannot drift from the application — `tools/standalone.py
+--check` and the `standalone` suite both assert that. `examples/README.md`
+documents the result-object contract, which is what a different process would
+have to produce; everything downstream reads that, not the physics.
+
 ### Rendering
 
 WebGL 1 with `ANGLE_instanced_arrays`, ten instanced mesh groups and hardware multisampling; the
@@ -298,7 +315,7 @@ node tools/test.js --list     # list the suites
 node tools/test.js thermo     # run selected suites
 ```
 
-563 checks in fourteen suites, standard library only, no dependencies. The suite loads the
+582 checks in fifteen suites, standard library only, no dependencies. The suite loads the
 application straight out of `src/DISTILLEX.dc.html` — resolving the same `@include` directives
 the build resolves — so it tests exactly the code the page ships.
 
@@ -317,6 +334,7 @@ the build resolves — so it tests exactly the code the page ships.
 | `headers` | the deployed security headers, and every CSP allowance still being one the shipped runtime demonstrably needs |
 | `build` | `index.html` must be reproducible from `src/` |
 | `cdu` | the crude-unit engine: vapour pressure at every cut's own normal boiling point, Rachford–Rice residuals, phase recombination, the Kremser closed forms, exact material closure, a monotone temperature profile, and every direction the physics must move in — furnace, reflux, pressure, assay, steam and scale — plus the operating points that must be refused |
+| `standalone` | `examples/crude-unit.html` is reproducible from `src/standalone/`, loads no external script or stylesheet, requests nothing over the network, declares each module exactly once, and still carries the not-validated notice |
 | `rig` | the presentation layers: every mesh well formed, every plant object naming a mesh the renderer builds, nothing modelled below the paving, every `pick` id carrying an information record, every tour stop naming a camera that exists, the flow sheet summing to the charge with no two labels colliding, the thermal scale fixed across runs, and the view model inventing nothing before a run or after a refusal |
 
 The `contrast` suite checks the palette and how the source uses it, which is what can be
