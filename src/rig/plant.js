@@ -41,33 +41,35 @@ var PLANT = (function () {
     shell:    { col:[0.60,0.645,0.715], rgh:0.30, mtl:0.90, emi:0.0 },
     insul:    { col:[0.775,0.760,0.730], rgh:0.92, mtl:0.03, emi:0.0 },
     head:     { col:[0.545,0.595,0.680], rgh:0.24, mtl:0.94, emi:0.0 },
-    struct:   { col:[0.225,0.258,0.330], rgh:0.62, mtl:0.55, emi:0.0 },
-    grate:    { col:[0.300,0.335,0.405], rgh:0.78, mtl:0.52, emi:0.0 },
+    struct:   { col:[0.225,0.258,0.330], rgh:0.62, mtl:0.55, emi:0.0,
+                light:{ col:[0.300,0.338,0.418] } },
+    grate:    { col:[0.300,0.335,0.405], rgh:0.78, mtl:0.52, emi:0.0,
+                light:{ col:[0.372,0.406,0.470] } },
     rail:     { col:[0.86,0.645,0.135], rgh:0.52, mtl:0.30, emi:0.04 },
-    concrete: { col:[0.230,0.232,0.245], rgh:0.98, mtl:0.0,  emi:0.0 },
-    deck:     { col:[0.115,0.126,0.152], rgh:1.0,  mtl:0.0,  emi:0.0, flag:1 },
-    fire:     { col:[0.215,0.209,0.200], rgh:0.95, mtl:0.02, emi:0.0 },
-    furnace:  { col:[0.165,0.150,0.136], rgh:0.95, mtl:0.05, emi:0.0 },
-    stack:    { col:[0.205,0.198,0.192], rgh:0.78, mtl:0.24, emi:0.0 },
+    concrete: { col:[0.230,0.232,0.245], rgh:0.98, mtl:0.0,  emi:0.0,
+                light:{ col:[0.480,0.492,0.520] } },
+    // The paving is the one surface that must change albedo outright: a deck
+    // dark enough to sit under a night sky is a black hole under a bright one.
+    deck:     { col:[0.115,0.126,0.152], rgh:1.0,  mtl:0.0,  emi:0.0, flag:1,
+                light:{ col:[0.330,0.356,0.398] } },
+    // Refractory casing reads almost black at night and mid-grey by day: the
+    // same paint, but the eye judges it against a completely different ground.
+    fire:     { col:[0.215,0.209,0.200], rgh:0.95, mtl:0.02, emi:0.0,
+                light:{ col:[0.330,0.320,0.306] } },
+    furnace:  { col:[0.165,0.150,0.136], rgh:0.95, mtl:0.05, emi:0.0,
+                light:{ col:[0.272,0.250,0.228] } },
+    stack:    { col:[0.205,0.198,0.192], rgh:0.78, mtl:0.24, emi:0.0,
+                light:{ col:[0.330,0.322,0.312] } },
     coil:     { col:[0.40,0.335,0.300], rgh:0.66, mtl:0.72, emi:0.0 },
-    tank:     { col:[0.335,0.352,0.382], rgh:0.88, mtl:0.10, emi:0.0 },
+    tank:     { col:[0.335,0.352,0.382], rgh:0.88, mtl:0.10, emi:0.0,
+                light:{ col:[0.560,0.578,0.606] } },
     instr:    { col:[0.86,0.89,0.94], rgh:0.38, mtl:0.5,  emi:0.10 }
   };
 
-  /* ── stream colours: what a line carries, not what it is made of ────── */
-  var STREAM = {
-    crude:   [0.72,0.42,0.16],
-    hot:     [0.95,0.44,0.14],
-    vapour:  [0.28,0.82,0.95],
-    reflux:  [0.42,0.86,0.82],
-    gas:     [0.55,0.92,0.98],
-    naphtha: [0.72,0.90,0.28],
-    kerosene:[0.98,0.82,0.22],
-    diesel:  [0.98,0.62,0.20],
-    gasoil:  [0.95,0.44,0.22],
-    residue: [0.90,0.36,0.48],
-    steam:   [0.72,0.80,0.92]
-  };
+  /* ── stream colours ───────────────────────────────────────────────────
+     What a line carries, not what it is made of. The values live in theme.js
+     in both themes and are read fresh on every build, so a pipe keeps its
+     identity when the lights come on. */
 
   /* Where the cutaway wedge points.
      cylArc() keeps the arc centred on its local +X, so the missing wedge is
@@ -86,10 +88,20 @@ var PLANT = (function () {
 
   function build() {
     var objs = [], streams = [], anchors = {}, m;
+    var STREAM = THEME.get().streamLin;
 
-    function add(mesh, mat, mtx, pick, tint) {
+    /** `tintKey` names a stream in theme.js when the object is coloured by
+     *  what it carries rather than by what it is made of; retheme() uses it
+     *  to re-tint the object without rebuilding the geometry. */
+    function add(mesh, mat, mtx, pick, tint, tintKey) {
       objs.push({ mesh: mesh, mat: mat, m: mtx, pick: pick || '',
+                  tintKey: tintKey || (tint ? tintOf(tint) : null),
                   col: tint || mat.col });
+    }
+    /** Which stream a tint came from, so no call site has to name it twice. */
+    function tintOf(tint) {
+      for (var k in STREAM) if (STREAM.hasOwnProperty(k) && STREAM[k] === tint) return k;
+      return null;
     }
     function cylBetween(a, b, r, mat, pick, tint, capped) {
       var d = [b[0]-a[0], b[1]-a[1], b[2]-a[2]];
@@ -106,7 +118,7 @@ var PLANT = (function () {
         cylBetween(pts[i], pts[i+1], r, MAT.shell, pick, tint, false);
       for (i = 1; i < pts.length - 1; i++)
         add('sphere', MAT.shell, M.trs(M.m4(), pts[i][0], pts[i][1], pts[i][2], r, r, r), pick, tint);
-      if (key) streams.push({ key: key, pts: pts, r: r, col: tint });
+      if (key) streams.push({ key: key, pts: pts, r: r, col: tint, tintKey: tintOf(tint) });
       return pts;
     }
     /** A raised-face flange: the collar that says a nozzle is a nozzle. */
@@ -556,6 +568,31 @@ var PLANT = (function () {
              sideY: sideY, sideKeys: sideKeys, trays: trays };
   }
 
-  return { build: build, MAT: MAT, STREAM: STREAM };
+  /** Re-colour a built plant for another theme, in place.
+   *
+   *  Geometry, transforms and pick ids never change — only the colour each
+   *  object is drawn in — so switching themes costs one buffer upload per
+   *  mesh group rather than a rebuild. An object is either tinted by the
+   *  stream it carries or coloured by the material it is made of, and both
+   *  sources have a daylight variant.
+   */
+  function retheme(P, mode) {
+    if (!P || !P.objects) return P;
+    var t = THEME.of(mode || THEME.mode()), lin = t.streamLin, isLight = t.name === 'light';
+    for (var i = 0; i < P.objects.length; i++) {
+      var ob = P.objects[i];
+      if (ob.tintKey && lin[ob.tintKey]) { ob.col = lin[ob.tintKey]; continue; }
+      var m = ob.mat;
+      ob.col = (isLight && m && m.light && m.light.col) ? m.light.col : (m ? m.col : ob.col);
+    }
+    for (i = 0; i < P.streams.length; i++) {
+      var sm = P.streams[i];
+      if (sm.tintKey && lin[sm.tintKey]) sm.col = lin[sm.tintKey];
+    }
+    return P;
+  }
+
+  return { build: build, MAT: MAT, retheme: retheme,
+           get STREAM() { return THEME.get().streamLin; } };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = PLANT;

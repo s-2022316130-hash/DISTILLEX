@@ -874,17 +874,13 @@ function suiteRig() {
   ok(sel.pipes.filter(q => q.pick !== 'furnace').every(q => q.op < 0.5),
      'everything else is dimmed when something is selected');
 
-  // ── the simulator's own palette ──────────────────────────────────────
-  // The rig page is a dark instrument surround whatever the app theme, so it
-  // carries its own tokens and the `contrast` suite's palette does not cover
-  // them. Every text tone must clear WCAG 1.4.3 (4.5:1) on every surface it
-  // can appear over.
+  // ── the simulator's own palette, in both themes ──────────────────────
+  // The rig carries its own tokens whatever the application theme is, so the
+  // `contrast` suite's palette does not cover them. Everything is checked
+  // against theme.js, which is the single source the scene, the flow sheet
+  // and the stylesheets all read from.
   {
-    const rigCss = source.slice(source.indexOf('.dx-rig {'), source.indexOf('.dx-rig {') + 1400);
-    const tok = n => {
-      const m = new RegExp('--r-' + n + ':\\s*(#[0-9a-fA-F]{6})').exec(rigCss);
-      return m && m[1];
-    };
+    const { THEME } = load().modules;
     const lum = h => {
       const v = h.slice(1).match(/../g).map(x => parseInt(x, 16) / 255)
                  .map(c => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
@@ -894,17 +890,107 @@ function suiteRig() {
       const x = lum(a), y = lum(b);
       return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
     };
-    const surfaces = ['l0', 'l1', 'l2', 'l3'].map(n => [n, tok(n)]);
-    const texts = ['ink', 'dim', 'faint', 'cyan', 'viol', 'mag', 'amber',
-                   'orange', 'red', 'green'].map(n => [n, tok(n)]);
-    ok(surfaces.every(q => q[1]) && texts.every(q => q[1]),
-       'every rig colour token is a hex literal the suite can read');
-    texts.forEach(([tn, tv]) => surfaces.forEach(([sn, sv]) => {
-      if (!tv || !sv) return;
-      ok(ratio(tv, sv) >= 4.5,
-         'rig --r-' + tn + ' on --r-' + sn + ' clears 4.5:1',
-         ratio(tv, sv).toFixed(2) + ':1');
-    }));
+
+    THEME.modes.forEach(mode => {
+      const t = THEME.of(mode), U = t.ui;
+      const surfaces = ['floor', 'rail', 'panel', 'ctrl', 'ctrl2'];
+      const texts = ['ink', 'ink2', 'ink3', 'accent', 'ok', 'warn', 'err', 'busy', 'viol'];
+
+      // 1. text must clear WCAG 1.4.3 on every surface it can appear over
+      texts.forEach(tn => surfaces.forEach(sn => {
+        ok(ratio(U[tn], U[sn]) >= 4.5,
+           mode + ': ' + tn + ' on ' + sn + ' clears 4.5:1',
+           ratio(U[tn], U[sn]).toFixed(2) + ':1');
+      }));
+      // text sitting ON the accent
+      ok(ratio(U.onAccent, U.accent) >= 4.5, mode + ': text on the accent clears 4.5:1',
+         ratio(U.onAccent, U.accent).toFixed(2) + ':1');
+
+      // 2. process streams are graphics, so 1.4.11's 3:1 is the bar — and they
+      //    must clear it against the ground AND the panel
+      Object.keys(t.stream).forEach(k => {
+        const a = ratio(t.stream[k], U.floor), b = ratio(t.stream[k], U.panel);
+        ok(Math.min(a, b) >= 3.0, mode + ': stream ' + k + ' clears 3:1 on both surfaces',
+           a.toFixed(2) + ' / ' + b.toFixed(2));
+      });
+
+      // 3. no two streams may collide, or the flow sheet stops being readable
+      const keys = Object.keys(t.stream);
+      for (let a = 0; a < keys.length; a++) for (let b = a + 1; b < keys.length; b++) {
+        const d = Math.abs(lum(t.stream[keys[a]]) - lum(t.stream[keys[b]]));
+        const rgbA = t.stream[keys[a]], rgbB = t.stream[keys[b]];
+        ok(rgbA !== rgbB, mode + ': ' + keys[a] + ' and ' + keys[b] + ' are different colours');
+        void d;
+      }
+
+      // 4. the accent must stay OUT of the process ramp, or a control reads
+      //    as a stream
+      Object.keys(t.stream).forEach(k => {
+        ok(t.stream[k] !== U.accent,
+           mode + ': the interface accent is not also the ' + k + ' stream');
+      });
+
+      // 5. the thermal ramp must actually vary, and clamp at both ends
+      const cold = THEME.heat(30, 30, 380, mode), hot = THEME.heat(380, 30, 380, mode);
+      ok(cold !== hot, mode + ': the thermal ramp varies end to end');
+      ok(THEME.heat(-99, 30, 380, mode) === cold, mode + ': the thermal ramp clamps below');
+      ok(THEME.heat(999, 30, 380, mode) === hot, mode + ': the thermal ramp clamps above');
+
+      // 6. the 3D environment has to be complete, or the scene renders unlit
+      ['skyTop', 'skyHorizon', 'skyGlow', 'fog', 'keyC', 'fill', 'backC', 'rim', 'deck']
+        .forEach(n => ok(/^#[0-9a-f]{6}$/i.test(t.env[n]),
+                         mode + ': env.' + n + ' is a hex colour', String(t.env[n])));
+      ok(t.envLin && t.envLin.fog && t.envLin.fog.length === 3,
+         mode + ': the environment has linear-space mirrors for the shaders');
+      ok(t.env.expo > 0.5 && t.env.expo < 2, mode + ': exposure is sane', String(t.env.expo));
+    });
+
+    // 7. daylight needs a STRONGER key and a WEAKER sky fill than night, or
+    //    the form flattens into a chalky bath of ambient light
+    ok(THEME.of('light').env.keyI > THEME.of('dark').env.keyI,
+       'the daylight key light is stronger than the night one');
+    ok(THEME.of('light').env.skyFill < THEME.of('dark').env.skyFill,
+       'the daylight sky fill is weaker than the night one');
+    ok(THEME.of('light').env.expo < THEME.of('dark').env.expo,
+       'daylight uses less exposure, because the same albedo catches more light');
+    ok(THEME.of('light').env.rimI < THEME.of('dark').env.rimI,
+       'the rim light is turned down in daylight, where it reads as a halo');
+
+    // 8. hue is held constant between the themes: a stream must not change
+    //    identity when the lights come on
+    const hueOf = h => {
+      const v = h.slice(1).match(/../g).map(x => parseInt(x, 16) / 255);
+      const mx = Math.max.apply(null, v), mn = Math.min.apply(null, v);
+      if (mx === mn) return 0;
+      let d = mx - mn, deg;
+      if (mx === v[0]) deg = ((v[1] - v[2]) / d) % 6;
+      else if (mx === v[1]) deg = (v[2] - v[0]) / d + 2;
+      else deg = (v[0] - v[1]) / d + 4;
+      return ((deg * 60) + 360) % 360;
+    };
+    Object.keys(THEME.of('dark').stream).forEach(k => {
+      const a = hueOf(THEME.of('dark').stream[k]), b = hueOf(THEME.of('light').stream[k]);
+      let gap = Math.abs(a - b); if (gap > 180) gap = 360 - gap;
+      ok(gap <= 22, 'stream ' + k + ' keeps its hue between the themes',
+         a.toFixed(0) + ' vs ' + b.toFixed(0) + ' deg');
+    });
+
+    // 9. the stylesheets must not drift from theme.js
+    [['src/standalone/page.html', 'the standalone page'],
+     ['src/DISTILLEX.dc.html', 'the application']].forEach(([rel, what]) => {
+      const css = fs.readFileSync(path.join(__dirname, '..', rel), 'utf8');
+      THEME.modes.forEach(mode => {
+        const t = THEME.of(mode);
+        ['ink', 'ink2', 'ink3', 'accent'].forEach(k => {
+          ok(css.indexOf(t.ui[k]) >= 0,
+             what + ' carries the ' + mode + ' ' + k + ' token', t.ui[k]);
+        });
+        ['diesel', 'residue', 'gas'].forEach(k => {
+          ok(css.indexOf(t.stream[k]) >= 0,
+             what + ' carries the ' + mode + ' ' + k + ' stream colour', t.stream[k]);
+        });
+      });
+    });
   }
 
   // ── the view model ───────────────────────────────────────────────────

@@ -5,7 +5,7 @@ equilibrium, McCabe–Thiele stage construction, column operation, stage profile
 studies, theory and an exam mode. Everything is computed in the browser — no server, no build
 step, no account, no telemetry, no stored data.
 
-**Live entry point:** `index.html` (self-contained, ~927 KB, works offline by double-click).
+**Live entry point:** `index.html` (self-contained, ~945 KB, works offline by double-click).
 
 Alongside the binary simulator there is an **industrial crude unit** at
 `/industrial-distillation` — an interactive, educational visualisation of an atmospheric
@@ -238,6 +238,44 @@ is only one piece of state. Line weights and tracer densities follow the compute
 the thermal ramp is anchored to a fixed 30–380 °C scale so that a colour means the same
 temperature from one run to the next.
 
+### The design system
+
+`src/rig/theme.js` holds every colour the simulator uses, in two themes, and
+every other layer reads from it: the WebGL scene, the flow sheet, the charts
+and the interface. Nothing downstream owns a colour of its own.
+
+Everything was designed in OKLCH and converted. **Hue is held constant between
+the themes** — only lightness and chroma move — so nothing changes identity
+when the lights come on: diesel is the same orange, darker. Two stream
+families keep a product from being mistaken for a utility:
+
+- **Products** run as a sequential ramp, cold to hot, which is also the order
+  of boiling point and roughly how a jar of each cut actually looks: wet gas a
+  colourless vapour, naphtha pale straw, kerosene amber, diesel orange-brown,
+  gas oil dark amber, residue nearly black-red. Lightness ramps *down* as the
+  cut gets heavier — a flat lightness across the warm gamut cannot hold chroma
+  and collapses diesel, gas oil and residue into one washed salmon.
+- **Utilities** are cool or neutral. Crude is deliberately the dullest line on
+  the plot, because it is the one stream not yet separated into anything.
+
+The interface accent is indigo, deliberately outside the process ramp, so a
+control can never be mistaken for a stream.
+
+Light mode is not a filter over the dark one. The 3D scene is re-lit: a
+brighter environment wants a **stronger** key and a **weaker** sky fill than a
+dark one, or the form flattens into a chalky bath of ambient light, plus a
+lower exposure because the same albedo catches far more light. The paving
+changes albedo outright, the rim light is turned down to a fifth (on a bright
+background it reads as a halo), the apron staining inverts — a dark deck is
+stained lighter by traffic, a bright one darker — and the flow tracers switch
+from additive to alpha blending, because additive is invisible on white.
+
+The `rig` suite checks all of it in both themes: every text tone against every
+surface it can appear over (WCAG 1.4.3, 4.5:1), every stream against the
+ground and the panel (1.4.11, 3:1), that no two streams collide, that the
+accent is not also a stream, that hue survives the theme switch, and that both
+stylesheets still carry the exact values `theme.js` generates.
+
 ### Taking it somewhere else
 
 `examples/crude-unit.html` is the industrial page on its own: one file, no
@@ -315,7 +353,7 @@ node tools/test.js --list     # list the suites
 node tools/test.js thermo     # run selected suites
 ```
 
-582 checks in fifteen suites, standard library only, no dependencies. The suite loads the
+858 checks in fifteen suites, standard library only, no dependencies. The suite loads the
 application straight out of `src/DISTILLEX.dc.html` — resolving the same `@include` directives
 the build resolves — so it tests exactly the code the page ships.
 
@@ -335,7 +373,7 @@ the build resolves — so it tests exactly the code the page ships.
 | `build` | `index.html` must be reproducible from `src/` |
 | `cdu` | the crude-unit engine: vapour pressure at every cut's own normal boiling point, Rachford–Rice residuals, phase recombination, the Kremser closed forms, exact material closure, a monotone temperature profile, and every direction the physics must move in — furnace, reflux, pressure, assay, steam and scale — plus the operating points that must be refused |
 | `standalone` | `examples/crude-unit.html` is reproducible from `src/standalone/`, loads no external script or stylesheet, requests nothing over the network, declares each module exactly once, and still carries the not-validated notice |
-| `rig` | the presentation layers: every mesh well formed, every plant object naming a mesh the renderer builds, nothing modelled below the paving, every `pick` id carrying an information record, every tour stop naming a camera that exists, the flow sheet summing to the charge with no two labels colliding, the thermal scale fixed across runs, and the view model inventing nothing before a run or after a refusal |
+| `rig` | the palette, in both themes — every text tone against every surface (4.5:1), every stream against the ground and the panel (3:1), no two streams colliding, the accent outside the process ramp, hue constant across the switch, the lighting rigs' invariants, and both stylesheets carrying the exact values `theme.js` generates — plus the presentation layers: every mesh well formed, every plant object naming a mesh the renderer builds, nothing modelled below the paving, every `pick` id carrying an information record, every tour stop naming a camera that exists, the flow sheet summing to the charge with no two labels colliding, the thermal scale fixed across runs, and the view model inventing nothing before a run or after a refusal |
 
 The `contrast` suite checks the palette and how the source uses it, which is what can be
 verified without a browser; it does not walk the rendered page. The per-view sweep that found

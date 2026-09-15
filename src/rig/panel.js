@@ -33,6 +33,18 @@ _rigPrewarm() {
 
 /** Build the scene the first time the page is shown, and tear it down when it
  *  is left. Called from _afterRender, so it runs after the canvas exists. */
+/** Keep the scene's lighting in step with the application's theme switch.
+ *  Called on every render pass; it only does work when the theme actually
+ *  changed, so it costs a string comparison the rest of the time. */
+_rigTheme() {
+  const want = this.state.theme === 'light' ? 'light' : 'dark';
+  if (this._themeNow === want) return false;
+  this._themeNow = want;
+  THEME.set(want);
+  if (this._gl) this._gl.setTheme(want);
+  return true;
+}
+
 _rigMount() {
   const on = this.state.view === 'rig';
   if (!on) { this._rigUnmount(); this._rigPrewarm(); return; }
@@ -40,9 +52,12 @@ _rigMount() {
   if (!cv || cv._dxBound) { return; }
   cv._dxBound = true;
   let gl = null;
+  const mode = this.state.theme === 'light' ? 'light' : 'dark';
+  THEME.set(mode);
+  this._themeNow = mode;
   try {
     this._plant = PLANT.build();
-    gl = RIGGL.create(cv, this._plant, { maxDpr: 2 });
+    gl = RIGGL.create(cv, this._plant, { maxDpr: 2, theme: mode });
   } catch (err) {
     this._glFail = (err && err.message) || 'WebGL is unavailable';
     this.setRig({ gl3d: false, view: '2d' });

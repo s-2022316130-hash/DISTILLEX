@@ -58,7 +58,8 @@ var RIGGL = (function () {
     'uniform vec3 uEye; uniform vec3 uFog; uniform float uFogD;',
     'uniform vec3 uKey; uniform vec3 uKeyC; uniform vec3 uFill; uniform vec3 uRim;',
     'uniform vec3 uBack; uniform vec3 uBackC; uniform vec3 uSkyT; uniform vec3 uSkyH;',
-    'uniform float uExpo;',
+    'uniform float uExpo; uniform float uSkyFill; uniform float uAO;',
+    'uniform float uFogCap; uniform float uApron; uniform float uJoint;',
     'void main(){',
     '  vec3 N = normalize(vN);',
     '  vec3 V = normalize(uEye - vW);',
@@ -75,8 +76,8 @@ var RIGGL = (function () {
     '    float joint = 1.0 - smoothstep(0.0, 0.055, min(g.x, g.y));',
     '    float rad = length(vW.xz);',
     '    float apron = 1.0 - smoothstep(12.0, 52.0, rad);',
-    '    base = mix(base, base * 1.65, apron * 0.55);',
-    '    base = mix(base, base * 0.42, joint * 0.7);',
+    '    base = mix(base, base * uApron, apron * 0.55);',
+    '    base = mix(base, base * uJoint, joint * 0.7);',
     '  }',
     '  vec3 L = normalize(uKey);',
     '  float ndl = max(dot(N,L), 0.0);',
@@ -85,7 +86,7 @@ var RIGGL = (function () {
     // the sky is the fill: cool from above, warmer near the horizon, which is
     // what actually distinguishes painted steel from insulation outdoors
     '  vec3 sky = mix(uSkyH, uSkyT, clamp(N.y * 0.5 + 0.5, 0.0, 1.0));',
-    '  vec3 amb = uFill * (0.72 + 0.28 * N.y) + sky * 0.75;',
+    '  vec3 amb = uFill * (0.72 + 0.28 * N.y) + sky * uSkyFill;',
     '  float bdl = max(dot(N, normalize(uBack)), 0.0);',
     '  vec3 diff = base * (uKeyC * wrap + amb + uBackC * bdl * 0.42);',
     '  vec3 H = normalize(L + V);',
@@ -98,12 +99,12 @@ var RIGGL = (function () {
     '  vec3 env = sky * fres * (0.10 + 0.90 * metal) * (1.0 - rough * 0.7) * 2.1;',
     '  vec3 rimC = uRim * pow(1.0 - max(dot(N,V), 0.0), 3.2) * (0.22 + 0.50 * metal);',
     // contact darkening near the ground, standing in for occlusion
-    '  float ao = clamp(0.56 + 0.44 * smoothstep(0.0, 11.0, vW.y), 0.0, 1.0);',
+    '  float ao = clamp(uAO + (1.0 - uAO) * smoothstep(0.0, 11.0, vW.y), 0.0, 1.0);',
     '  vec3 col = (diff * ao + specC + env + rimC) * uExpo + base * vFx.y;',
     '  col *= mix(1.0, 0.30, clamp(vFx.z, 0.0, 1.0));',   // de-emphasis
     '  float d = length(uEye - vW);',
     '  float f = 1.0 - exp(-pow(max(d - 46.0, 0.0) * uFogD, 1.30));',
-    '  col = mix(col, uFog, clamp(f, 0.0, flag > 0.5 ? 0.94 : 0.62));',
+    '  col = mix(col, uFog, clamp(f, 0.0, flag > 0.5 ? min(0.96, uFogCap + 0.32) : uFogCap));',
     '  gl_FragColor = vec4(col, 1.0);',
     '}'
   ].join('\n');
@@ -116,14 +117,15 @@ var RIGGL = (function () {
   var SKY_FS = [
     'precision highp float;',
     'varying vec2 vUv; uniform vec3 uTop; uniform vec3 uHorizon; uniform vec3 uGlow;',
+    'uniform float uGlowI;',
     'void main(){',
     '  float t = pow(clamp(vUv.y, 0.0, 1.0), 1.25);',
     '  vec3 c = mix(uHorizon, uTop, t);',
     // a soft warm pool low and left, where the heater stands
     '  float d = distance(vUv, vec2(0.26, 0.16));',
-    '  c += uGlow * exp(-d * d * 9.0) * 0.55;',
+    '  c += uGlow * exp(-d * d * 9.0) * 0.55 * uGlowI;',
     '  float d2 = distance(vUv, vec2(0.78, 0.72));',
-    '  c += vec3(0.06, 0.16, 0.26) * exp(-d2 * d2 * 7.0) * 0.5;',
+    '  c += mix(uHorizon, uTop, 0.5) * exp(-d2 * d2 * 7.0) * 0.30 * uGlowI;',
     '  gl_FragColor = vec4(c, 1.0);',
     '}'
   ].join('\n');
@@ -423,10 +425,41 @@ var RIGGL = (function () {
       // cost is the dominant term in this scene, so backing-store size is the
       // one lever that actually buys frames.
       scale: 1,
-      fog: [0.055, 0.068, 0.115], expo: 1.18,
-      skyTop: [0.026, 0.034, 0.068], skyHorizon: [0.085, 0.102, 0.158],
-      skyGlow: [0.20, 0.10, 0.03]
+      light: null,          // the lighting rig, filled in by setTheme()
+      theme: 'dark'
     };
+
+    /** Point the whole rig at one of theme.js's environments. Night and day
+     *  differ only in these numbers — there is no second code path — so a new
+     *  environment is a data change, not a rendering change. */
+    function setTheme(mode) {
+      var t = THEME.of(mode), e = t.env, L = t.envLin;
+      st.theme = t.name;
+      st.light = {
+        fog: L.fog, fogD: e.fogD, fogCap: e.fogCap,
+        key: e.key,
+        keyC: L.keyC.map(function (v) { return v * e.keyI; }),
+        fill: L.fill.map(function (v) { return v * e.fillI; }),
+        back: e.back,
+        backC: L.backC.map(function (v) { return v * e.backI; }),
+        rim: L.rim.map(function (v) { return v * e.rimI; }),
+        skyTop: L.skyTop, skyHorizon: L.skyHorizon, skyGlow: L.skyGlow,
+        expo: e.expo, skyFill: e.skyFill, ao: e.ao,
+        glowI: t.name === 'dark' ? 1.0 : 0.55,
+        // A dark deck is stained lighter by traffic; a bright one is stained
+        // darker. The sign of this term has to follow the ground it is on.
+        apron: t.name === 'dark' ? 1.65 : 0.86,
+        joint: t.name === 'dark' ? 0.42 : 0.80
+      };
+      // the flow tracers read as light on a dark ground and as ink on a bright
+      // one, which means a different blend function, not just a tint
+      st.traceAdd = t.sheet.traceBlend === 'add';
+      st.traceCol = THEME.lin(t.sheet.tracer);
+      st.traceOp = t.sheet.tracerOp;
+      if (PLANT.retheme) PLANT.retheme(plant, mode);
+      refresh();
+      return st.light;
+    }
     var VP = M.m4(), P = M.m4(), V = M.m4();
 
     function dimFor(pick) {
@@ -484,9 +517,11 @@ var RIGGL = (function () {
           var u = ((t * sp.speed + q / n) % 1 + 1) % 1;
           var p = pointAt(stm, u);
           trPos[trN*3] = p[0]; trPos[trN*3+1] = p[1]; trPos[trN*3+2] = p[2];
-          var c = sp.col || stm.col || [1,1,1];
+          // In daylight a tracer is a dark bead running along a bright pipe;
+          // at night it is a spark. Same particle, opposite polarity.
+          var c = st.traceAdd ? (sp.col || stm.col || [1,1,1]) : st.traceCol;
           trCol[trN*4] = c[0]; trCol[trN*4+1] = c[1]; trCol[trN*4+2] = c[2];
-          trCol[trN*4+3] = 0.95 * dim;
+          trCol[trN*4+3] = st.traceOp * dim;
           trSize[trN] = (sp.size || 1) * 22;
           trN++;
           if (trN >= MAXTR) break;
@@ -510,17 +545,25 @@ var RIGGL = (function () {
       gl.uniformMatrix4fv(uniLoc(prog, 'uVP'), false, VP);
       gl.uniform3fv(uniLoc(prog, 'uEye'), e);
       if (!forPick) {
-        gl.uniform3fv(uniLoc(prog, 'uFog'), st.fog);
-        gl.uniform1f(uniLoc(prog, 'uFogD'), 0.0030);
-        gl.uniform3fv(uniLoc(prog, 'uKey'), [0.46, 0.78, 0.44]);
-        gl.uniform3fv(uniLoc(prog, 'uKeyC'), [1.52, 1.44, 1.32]);
-        gl.uniform3fv(uniLoc(prog, 'uFill'), [0.335, 0.415, 0.575]);
-        gl.uniform3fv(uniLoc(prog, 'uRim'), [0.30, 0.62, 0.92]);
-        gl.uniform3fv(uniLoc(prog, 'uBack'), [-0.62, 0.30, -0.72]);
-        gl.uniform3fv(uniLoc(prog, 'uBackC'), [0.20, 0.30, 0.52]);
-        gl.uniform3fv(uniLoc(prog, 'uSkyT'), st.skyTop);
-        gl.uniform3fv(uniLoc(prog, 'uSkyH'), st.skyHorizon);
-        gl.uniform1f(uniLoc(prog, 'uExpo'), st.expo);
+        // Every term comes from theme.js. Night and day are the same rig with
+        // different values in it, not two code paths.
+        var L = st.light;
+        gl.uniform3fv(uniLoc(prog, 'uFog'), L.fog);
+        gl.uniform1f(uniLoc(prog, 'uFogD'), L.fogD);
+        gl.uniform1f(uniLoc(prog, 'uFogCap'), L.fogCap);
+        gl.uniform3fv(uniLoc(prog, 'uKey'), L.key);
+        gl.uniform3fv(uniLoc(prog, 'uKeyC'), L.keyC);
+        gl.uniform3fv(uniLoc(prog, 'uFill'), L.fill);
+        gl.uniform3fv(uniLoc(prog, 'uRim'), L.rim);
+        gl.uniform3fv(uniLoc(prog, 'uBack'), L.back);
+        gl.uniform3fv(uniLoc(prog, 'uBackC'), L.backC);
+        gl.uniform3fv(uniLoc(prog, 'uSkyT'), L.skyTop);
+        gl.uniform3fv(uniLoc(prog, 'uSkyH'), L.skyHorizon);
+        gl.uniform1f(uniLoc(prog, 'uExpo'), L.expo);
+        gl.uniform1f(uniLoc(prog, 'uSkyFill'), L.skyFill);
+        gl.uniform1f(uniLoc(prog, 'uAO'), L.ao);
+        gl.uniform1f(uniLoc(prog, 'uApron'), L.apron);
+        gl.uniform1f(uniLoc(prog, 'uJoint'), L.joint);
       }
       var useInst = !!inst;
       for (var gi = 0; gi < G.length; gi++) {
@@ -565,15 +608,16 @@ var RIGGL = (function () {
       gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);
       gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK);
       gl.disable(gl.BLEND);
-      gl.clearColor(st.fog[0], st.fog[1], st.fog[2], 1);
+      gl.clearColor(st.light.fog[0], st.light.fog[1], st.light.fog[2], 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       // graded sky first, at the far plane, so the scene sits in an
       // atmosphere rather than on a flat field
       gl.useProgram(progSky);
       gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
-      gl.uniform3fv(uniLoc(progSky, 'uTop'), st.skyTop);
-      gl.uniform3fv(uniLoc(progSky, 'uHorizon'), st.skyHorizon);
-      gl.uniform3fv(uniLoc(progSky, 'uGlow'), st.skyGlow);
+      gl.uniform3fv(uniLoc(progSky, 'uTop'), st.light.skyTop);
+      gl.uniform3fv(uniLoc(progSky, 'uHorizon'), st.light.skyHorizon);
+      gl.uniform3fv(uniLoc(progSky, 'uGlow'), st.light.skyGlow);
+      gl.uniform1f(uniLoc(progSky, 'uGlowI'), st.light.glowI);
       var aSky = attrLoc(progSky, 'aP');
       gl.bindBuffer(gl.ARRAY_BUFFER, skyVb);
       gl.enableVertexAttribArray(aSky); gl.vertexAttribPointer(aSky, 2, gl.FLOAT, false, 0, 0);
@@ -598,7 +642,9 @@ var RIGGL = (function () {
           gl.enableVertexAttribArray(ac); gl.vertexAttribPointer(ac, 4, gl.FLOAT, false, 0, 0);
           gl.bindBuffer(gl.ARRAY_BUFFER, trSb);
           gl.enableVertexAttribArray(as); gl.vertexAttribPointer(as, 1, gl.FLOAT, false, 0, 0);
-          gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+          gl.enable(gl.BLEND);
+          if (st.traceAdd) gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+          else gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
           gl.depthMask(false);
           gl.drawArrays(gl.POINTS, 0, trN);
           gl.depthMask(true);
@@ -640,8 +686,11 @@ var RIGGL = (function () {
                y: (1 - (tmp[1] * 0.5 + 0.5)) * canvas.clientHeight, d: tmp[2] };
     }
 
+    setTheme(opts.theme || THEME.mode());
+
     return {
       gl: gl, cam: cam, state: st, render: render, pickAt: pickAt,
+      setTheme: setTheme,
       toScreen: toScreen, refresh: refresh, setFlow: setFlow,
       instanced: !!inst, groups: G.length,
       tris: G.reduce(function (a, g) { return a + g.geo.count / 3 * g.n; }, 0),

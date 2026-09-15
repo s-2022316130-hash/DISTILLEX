@@ -43,13 +43,9 @@ var RIG2D = (function () {
      bottom. Fixed by the plant layout, not by the operating point. */
   var DRAWF = { kerosene: 0.760, diesel: 0.575, gasoil: 0.395 };
 
-  /* Colours mirror plant.js STREAM, expressed for CSS. */
-  var COL = {
-    crude:  'rgb(150,160,178)', hot: 'rgb(255,150,64)',  vapour:'rgb(140,205,255)',
-    reflux: 'rgb(130,180,235)', gas: 'rgb(120,235,220)', naphtha:'rgb(255,215,120)',
-    kerosene:'rgb(255,190,80)', diesel:'rgb(250,158,51)', gasoil:'rgb(242,112,56)',
-    residue:'rgb(230,92,122)',  steam:'rgb(184,204,235)'
-  };
+  /* Colours come from theme.js, in whichever theme is current, so the flow
+     sheet and the 3D scene can never disagree about what diesel looks like. */
+  function col() { return THEME.get().stream; }
 
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function fmt(v, d) { return (+v).toFixed(d); }
@@ -78,22 +74,9 @@ var RIG2D = (function () {
     return clamp(2.4 / Math.pow(Math.max(0.02, tph / Math.max(1e-6, ref)), 0.5), 0.6, 7);
   }
 
-  /** Tower wall tint for a temperature: cool indigo at the overhead, through
-   *  amber, to a hot red at the sump. */
-  function heat(t, lo, hi) {
-    var u = clamp((t - lo) / Math.max(1e-6, hi - lo), 0, 1);
-    var stops = [[0.00, 74, 104, 190], [0.32, 96, 190, 214], [0.58, 232, 190, 96],
-                 [0.80, 238, 132, 58], [1.00, 226, 74, 82]];
-    for (var i = 1; i < stops.length; i++) {
-      if (u <= stops[i][0]) {
-        var a = stops[i-1], b = stops[i], w = (u - a[0]) / (b[0] - a[0]);
-        return 'rgb(' + Math.round(a[1]+(b[1]-a[1])*w) + ',' +
-                        Math.round(a[2]+(b[2]-a[2])*w) + ',' +
-                        Math.round(a[3]+(b[3]-a[3])*w) + ')';
-      }
-    }
-    return 'rgb(226,74,82)';
-  }
+  /** Tower wall tint for a temperature. The ramp lives in theme.js so the
+   *  tower bands, the stage dots and the profile chart all tell one story. */
+  function heat(t, lo, hi) { return THEME.heat(t, lo, hi); }
 
   /**
    * Build the diagram.
@@ -104,6 +87,7 @@ var RIG2D = (function () {
    *   anim  — false to freeze the tracers (reduced motion, or paused)
    */
   function build(r, mode, sel, prod, anim) {
+    var C = col(), SH = THEME.get().sheet;
     var ref = r ? r.feed.mass : 1200;
     var byKey = {}, q, k, s;
     if (r) for (q = 0; q < r.products.length; q++) byKey[r.products[q].key] = r.products[q];
@@ -136,24 +120,24 @@ var RIG2D = (function () {
     var fMass = r ? r.feed.mass : 0;
     // crude in, through the heater, to the flash zone
     pipe('crude', 'M20 ' + (G.furY + 74) + ' H' + (G.furX + 18) + ' V' + (G.furY + G.furH - 10),
-         COL.crude, fMass);
+         C.crude, fMass);
     pipe('feed', 'M' + (G.furX + G.furW) + ' ' + (G.furY + 22) +
                  ' H' + (G.furX + G.furW + 46) + ' V' + feedY + ' H' + G.towerX,
-         COL.hot, fMass);
+         C.hot, fMass);
     // overhead to the condenser, condensate to the drum
     pipe('overhead', 'M' + cx + ' ' + G.towerY + ' V26 H' + (G.condX + G.condW / 2) + ' V' + G.condY,
-         COL.vapour, r ? ovMass(byKey) : 0);
+         C.vapour, r ? ovMass(byKey) : 0);
     pipe('condenser', 'M' + (G.condX + G.condW / 2) + ' ' + (G.condY + G.condH) +
-                      ' V' + G.drumY, COL.reflux, r ? ovMass(byKey) : 0);
+                      ' V' + G.drumY, C.reflux, r ? ovMass(byKey) : 0);
     // reflux back over the top of the tower
     pipe('reflux', 'M' + G.drumX + ' ' + (G.drumY + G.drumH / 2) +
                    ' H' + (G.towerX - 42) + ' V' + (G.towerY + 24) + ' H' + G.towerX,
-         COL.reflux, r ? r.internals.Ltop * r.feed.M / 1000 : 0);
+         C.reflux, r ? r.internals.Ltop * r.feed.M / 1000 : 0);
     // stripping steam into the base
     pipe('steam', 'M' + (G.towerX - 130) + ' ' + (sumpY - 26) + ' H' + G.towerX,
-         COL.steam, r ? r.steam.mass : 0);
+         C.steam, r ? r.steam.mass : 0);
 
-    function rundown(key, d) { pipe('product-' + key, d, COL[key],
+    function rundown(key, d) { pipe('product-' + key, d, C[key],
                                     byKey[key] ? byKey[key].mass : 0); }
     rundown('gas', 'M' + (G.drumX + G.drumW) + ' ' + (G.drumY + 9) +
                    ' H' + (G.railX - 24) + ' V' + LABY.gas + ' H' + G.railX);
@@ -168,17 +152,17 @@ var RIG2D = (function () {
       // shell to stripper, stripper to the rundown rail
       pipe('sidedraw', 'M' + (G.towerX + G.towerW) + ' ' + drawY +
                        ' H' + (G.stripX + G.stripW / 2) + ' V' + sTop,
-           COL[k], byKey[k] ? byKey[k].mass : 0);
+           C[k], byKey[k] ? byKey[k].mass : 0);
       // stripped vapour back to the tower, one tray above the draw
       pipe('sidedraw', 'M' + (G.stripX + G.stripW / 2) + ' ' + sTop +
                        ' V' + (drawY - 20) + ' H' + (G.towerX + G.towerW),
-           COL.vapour, byKey[k] ? byKey[k].mass * 0.06 : 0, true);
+           C.vapour, byKey[k] ? byKey[k].mass * 0.06 : 0, true);
       rundown(k, 'M' + (G.stripX + G.stripW / 2) + ' ' + sBot +
                  ' V' + (sBot + 16 + s * 5) + ' H' + (G.railX - 60 + s * 18) +
                  ' V' + LABY[k] + ' H' + G.railX);
       blocks.push(mkBlock('sidedraw', G.stripX, sTop, G.stripW, G.stripH, '', '', 5));
       tags.push({ x: G.stripX + G.stripW / 2, y: sTop + G.stripH / 2 + 3, size: 8,
-                  anchor: 'middle', op: 0.85 * dim('sidedraw'), col: COL[k],
+                  anchor: 'middle', op: 0.85 * dim('sidedraw'), col: C[k],
                   text: 'ST-' + (s + 1) });
     }
     rundown('residue', 'M' + cx + ' ' + sumpY + ' V' + G.baseY +
@@ -201,6 +185,7 @@ var RIG2D = (function () {
     }
     var tower = mkBlock('tower', G.towerX, G.towerY, G.towerW, G.towerH, '', '', 12);
     tower.hollow = true;
+    tower.fill = SH.shell;
 
     /* ── the rest of the equipment ───────────────────────────────────── */
     blocks.push(mkBlock('furnace', G.furX, G.furY, G.furW, G.furH, 'FIRED HEATER',
@@ -255,7 +240,7 @@ var RIG2D = (function () {
       var p3 = byKey[k];
       out.push({
         key: k, pick: 'product-' + k, x: G.labX, y: LABY[k],
-        col: COL[k], name: p3 ? p3.name : k,
+        col: C[k], name: p3 ? p3.name : k,
         rate: p3 ? (p3.mass >= 100 ? fmt(p3.mass, 0) : fmt(p3.mass, 1)) : '—',
         pct: p3 ? fmt(p3.pct, 1) + ' % of charge' : '',
         cut: p3 && p3.mass > 0.05 ? fmt(p3.tbp5, 0) + '–' + fmt(p3.tbp95, 0) + ' °C' : '',
@@ -279,10 +264,12 @@ var RIG2D = (function () {
 
     return { w: W, h: H, blocks: blocks, tower: tower, bands: bands, trays: trays,
              pipes: pipes, tags: tags, out: out, temps: temps, legend: legend,
-             thermal: thermal, flowMode: flowMode, hasLegend: !!legend };
+             thermal: thermal, flowMode: flowMode, hasLegend: !!legend,
+             theme: THEME.mode(), sheet: SH };
   }
 
-  return { build: build, COL: COL, heat: heat, gauge: gauge, pace: pace,
-           G: G, T_LO: T_LO, T_HI: T_HI };
+  return { build: build, heat: heat, gauge: gauge, pace: pace,
+           G: G, T_LO: T_LO, T_HI: T_HI,
+           get COL() { return THEME.get().stream; } };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = RIG2D;

@@ -810,7 +810,9 @@
     background:radial-gradient(110% 110% at 46% 6%, #0d1730, #05070f 74%);
     border-right:1px solid var(--dx-hairline);
     display:grid; place-items:center; padding:14px 6px;
-    --r-line2:rgba(185,198,230,.22); --r-cyan:#5ed6ff;
+    --r-line2:rgba(185,198,230,.22); --r-cyan:#7d95ff; --r-ink:#e9edf7;
+    --r-dim:#9aa5ba; --r-faint:#7d879b; --r-l2:#151c2b; --r-l3:#1d2940;
+    --r-l0:#0a0e17;
   }
   .dx-gate-v svg { width:100%; height:100%; max-height:380px }
   .dx-gate-v::after {
@@ -899,31 +901,69 @@
      chrome is deliberately quiet — thin rules, small caps, one accent per
      state — so that the only saturated colour on screen belongs to a
      process stream. ═══════════════════════════════════════════════════ */
+  /* The simulator follows the application's own light/dark switch. Both sets
+     below are generated in src/rig/theme.js and checked by the `theme` suite;
+     hue is held constant between them, so nothing on the page changes
+     identity when the lights come on — only its lightness. The token NAMES
+     are unchanged from the dark-only version, so every rule beneath this
+     block kept working untouched. */
   .dx-rig {
-    --r-ink:   #e8edf9;
-    --r-dim:   #8b97b2;
-    /* The quietest text tone still has to be readable: #5d6883 cleared only
-       3.0:1 on the control surface. This clears 4.7:1 on every one of the four
-       backgrounds below, which is what the `rig` suite now asserts. */
-    --r-faint: #7987aa;
-    --r-l0:    #05070f;
-    --r-l1:    #090d18;
-    --r-l2:    #0e1424;
-    --r-l3:    #141c31;
-    --r-line:  color-mix(in srgb, #b9c6e6 13%, transparent);
-    --r-line2: color-mix(in srgb, #b9c6e6 22%, transparent);
-    --r-cyan:  #5ed6ff;
-    --r-viol:  #a48bff;
-    --r-mag:   #f472d0;
-    --r-amber: #ffc457;
-    --r-orange:#ff8a4c;
-    --r-red:   #ff6b7f;
-    --r-green: #58e0a6;
+    /* daylight */
+    --r-ink:   #191e29;
+    --r-dim:   #4f5767;
+    --r-faint: #5c6578;
+    --r-l0:    #f0f3f8;
+    --r-l1:    #fbfcff;
+    --r-l2:    #ffffff;
+    --r-l3:    #edf0f6;
+    --r-line:  #d6d9e0;
+    --r-line2: #c0c4cd;
+    --r-cyan:  #4454df;   /* the interface accent, not a process colour */
+    --r-on:    #ffffff;
+    --r-viol:  #7a4aba;
+    --r-mag:   #b63039;
+    --r-amber: #8b6000;
+    --r-orange:#c64900;
+    --r-red:   #b63039;
+    --r-green: #007d4d;
+    --r-glass: rgba(255,255,255,.82);
+    --r-scrim: radial-gradient(130% 100% at 50% 0%, #e9eef7 0%, #dbe2ee 74%);
+    --r-lift:  0 1px 2px rgba(31,41,72,.06), 0 10px 24px rgba(31,41,72,.07);
+    --r-lift3: 0 2px 4px rgba(31,41,72,.06), 0 22px 52px rgba(31,41,72,.12);
+    --p-gas:#009185; --p-naphtha:#9e8400; --p-kerosene:#ab7600;
+    --p-diesel:#aa5600; --p-gasoil:#b33600; --p-residue:#ba003a;
     position: fixed; inset: 0; z-index: 40;
     display: flex; flex-direction: column;
     background: var(--r-l0); color: var(--r-ink);
     font-feature-settings: 'tnum' 1, 'cv01' 1;
     animation: rigIn var(--dx-t-view) var(--dx-ease) both;
+    transition: background var(--dx-t-base) var(--dx-ease), color var(--dx-t-base) var(--dx-ease);
+  }
+  .dx-rig.dx-dark {
+    /* night */
+    --r-ink:   #f1f3f8;
+    --r-dim:   #b0b6c2;
+    --r-faint: #9098a9;
+    --r-l0:    #090c13;
+    --r-l1:    #10141c;
+    --r-l2:    #171b24;
+    --r-l3:    #2a2f3a;
+    --r-line:  #303540;
+    --r-line2: #474d59;
+    --r-cyan:  #7d95ff;
+    --r-on:    #090f1c;
+    --r-viol:  #c9acff;
+    --r-mag:   #ffa09c;
+    --r-amber: #f2b036;
+    --r-orange:#ff763b;
+    --r-red:   #ffa09c;
+    --r-green: #58da98;
+    --r-glass: rgba(9,12,19,.78);
+    --r-scrim: radial-gradient(130% 100% at 50% 0%, #0d1526 0%, #05070d 72%);
+    --r-lift:  inset 0 1px 0 rgba(255,255,255,.06), 0 12px 28px rgba(0,0,0,.45);
+    --r-lift3: inset 0 1px 0 rgba(255,255,255,.07), 0 24px 60px rgba(0,0,0,.6);
+    --p-gas:#3ae3d3; --p-naphtha:#f1cd2e; --p-kerosene:#f8ae00;
+    --p-diesel:#fa8927; --p-gasoil:#f16b40; --p-residue:#e84d64;
   }
   @keyframes rigIn { from { opacity: 0 } to { opacity: 1 } }
 
@@ -949,7 +989,16 @@
   }
   .rig-back:hover { color: var(--r-ink); border-color: var(--r-line2); background: var(--r-l3) }
   .rig-bar .sp { margin-left: auto }
-  .rig-tools { display: flex; align-items: center; gap: 10px; min-width: 0 }
+  /* The control row can never push the page wider than the viewport: it
+     scrolls sideways instead, at every width. */
+  .rig-tools { display: flex; align-items: center; gap: 10px;
+               min-width: 0; flex: 0 1 auto; overflow-x: auto; overflow-y: hidden;
+               scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 1px }
+  .rig-tools::-webkit-scrollbar { display: none }
+  .rig-tools > * { flex: 0 0 auto }
+  .rig-rule { width: 1px; height: 22px; background: var(--r-line); flex: 0 0 auto }
+  .rig-theme { width: 34px; padding: 0; justify-content: center }
+  .rig-theme svg { width: 15px; height: 15px }
 
   /* segmented switches, used for both the view and the mode */
   .rig-segs { display: inline-flex; padding: 2px; gap: 2px; border-radius: 9px;
@@ -962,8 +1011,8 @@
   }
   .rig-seg:hover { color: var(--r-ink) }
   .rig-seg.on {
-    color: #061020; font-weight: 650;
-    background: linear-gradient(180deg, var(--r-cyan), #38b6e8);
+    color: var(--r-on); font-weight: 650;
+    background: var(--r-cyan);
     box-shadow: 0 1px 10px color-mix(in srgb, var(--r-cyan) 40%, transparent);
   }
 
@@ -1001,7 +1050,7 @@
 
   /* ── the stage ────────────────────────────────────────────────────── */
   .rig-stage { position: relative; min-width: 0; min-height: 0; display: grid;
-               background: radial-gradient(120% 90% at 50% 0%, #0b1426, #04060d 70%) }
+               background: var(--r-scrim) }
   .rig-stage.v-split { grid-template-rows: 1fr 1fr }
   /* Side by side only when each half is still wide enough to be worth
      looking at; below that the two views stack. */
@@ -1021,7 +1070,7 @@
     transform: translate3d(-999px,-999px,0); transition: opacity 180ms linear;
     display: flex; align-items: center; gap: 6px; padding: 3px 8px;
     font-size: 10px; letter-spacing: .06em; border-radius: 6px;
-    background: color-mix(in srgb, #050912 78%, transparent);
+    background: var(--r-glass);
     border: 1px solid var(--r-line2); color: var(--r-ink);
     backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
     white-space: nowrap; pointer-events: none;
@@ -1032,7 +1081,7 @@
   #rig-hover {
     position: absolute; top: 0; left: 0; will-change: transform; pointer-events: none;
     padding: 4px 10px; font-size: 11.5px; border-radius: 7px; white-space: nowrap;
-    background: color-mix(in srgb, #050912 86%, transparent);
+    background: var(--r-glass);
     border: 1px solid var(--r-line2); box-shadow: var(--shadow-md);
   }
 
@@ -1050,14 +1099,14 @@
   .rig-hud { bottom: 46px }
   .rig-cam {
     appearance: none; border: 1px solid var(--r-line); border-radius: 999px;
-    background: color-mix(in srgb, #050912 72%, transparent); color: var(--r-dim);
+    background: var(--r-glass); color: var(--r-dim);
     font: inherit; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase;
     padding: 6px 11px; min-height: 28px; cursor: pointer;
     backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
     transition: color var(--dx-t-fast), border-color var(--dx-t-fast), background var(--dx-t-fast);
   }
   .rig-cam:hover { color: var(--r-ink); border-color: var(--r-line2) }
-  .rig-cam.on { color: #061020; background: var(--r-cyan); border-color: transparent; font-weight: 650 }
+  .rig-cam.on { color: var(--r-on); background: var(--r-cyan); border-color: transparent; font-weight: 650 }
 
   .rig-hud {
     position: absolute; right: 14px; display: flex; gap: 8px;
@@ -1068,7 +1117,7 @@
   .rig-hud .r { display: flex; gap: 10px; align-items: center }
   .rig-hud #rig-degrade { line-height: 1.4; max-width: 100% }
   .rig-hud button { appearance: none; border: 1px solid var(--r-line); border-radius: 7px;
-    background: color-mix(in srgb,#050912 72%,transparent); color: var(--r-dim);
+    background: var(--r-glass); color: var(--r-dim);
     font: inherit; font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
     padding: 5px 10px; min-height: 28px; cursor: pointer }
   .rig-hud button:hover { color: var(--r-ink) }
@@ -1077,10 +1126,10 @@
   .rig-info {
     position: absolute; left: 14px; top: 14px; width: min(330px, calc(100% - 28px));
     border-radius: 13px; border: 1px solid var(--r-line2);
-    background: linear-gradient(180deg, color-mix(in srgb,#0c1424 92%,transparent),
-                                        color-mix(in srgb,#070b16 94%,transparent));
+    background: linear-gradient(180deg, var(--r-glass),
+                                        var(--r-glass));
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 20px 50px rgba(0,0,0,.55);
+    box-shadow: var(--r-lift3);
     padding: 14px 15px 13px; display: flex; flex-direction: column; gap: 9px;
     animation: rigCard 260ms var(--dx-spring) both;
     /* never taller than the viewport it floats in — in the split view that is
@@ -1110,10 +1159,10 @@
     position: absolute; left: 50%; transform: translateX(-50%); bottom: 58px;
     width: min(560px, calc(100% - 32px));
     border-radius: 13px; border: 1px solid color-mix(in srgb, var(--r-viol) 40%, transparent);
-    background: linear-gradient(180deg, color-mix(in srgb,#140f2c 92%,transparent),
-                                        color-mix(in srgb,#090713 94%,transparent));
+    background: linear-gradient(180deg, var(--r-glass),
+                                        var(--r-glass));
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 18px 46px rgba(0,0,0,.5);
+    box-shadow: var(--r-lift3);
     padding: 13px 15px; display: flex; gap: 13px; align-items: flex-start;
     animation: rigCard 300ms var(--dx-spring) both;
   }
@@ -1157,12 +1206,12 @@
   .rig-f input[type=range]::-moz-range-progress { height: 3px; border-radius: 3px; background: var(--r-cyan) }
   .rig-f input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; margin-top: -5.5px;
-    background: #eaf6ff; border: 2px solid #0a1120;
+    background: var(--r-l2); border: 3px solid var(--r-cyan);
     box-shadow: 0 0 0 1px var(--r-cyan), 0 0 12px color-mix(in srgb,var(--r-cyan) 55%,transparent);
     transition: transform var(--dx-t-fast);
   }
   .rig-f input[type=range]::-moz-range-thumb {
-    width: 14px; height: 14px; border-radius: 50%; background: #eaf6ff; border: 2px solid #0a1120;
+    width: 14px; height: 14px; border-radius: 50%; background: var(--r-l2); border: 3px solid var(--r-cyan);
     box-shadow: 0 0 0 1px var(--r-cyan);
   }
   .rig-f input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.18) }
@@ -1192,8 +1241,8 @@
   .rig-go {
     appearance: none; border: 0; cursor: pointer; font: inherit; width: 100%;
     min-height: 46px; border-radius: 10px; font-size: 13.5px; font-weight: 650;
-    letter-spacing: .09em; text-transform: uppercase; color: #04121e;
-    background: linear-gradient(180deg, #7fe1ff, #2aa9dd);
+    letter-spacing: .09em; text-transform: uppercase; color: var(--r-on);
+    background: var(--r-cyan);
     box-shadow: 0 8px 26px color-mix(in srgb, var(--r-cyan) 30%, transparent);
     transition: transform var(--dx-t-fast), box-shadow var(--dx-t-fast), filter var(--dx-t-fast);
   }
@@ -1201,7 +1250,7 @@
                   box-shadow: 0 12px 32px color-mix(in srgb, var(--r-cyan) 40%, transparent) }
   .rig-go:active { transform: translateY(0) }
   .rig-go[disabled] { opacity: .55; cursor: progress; transform: none }
-  .rig-go.dirty { background: linear-gradient(180deg, var(--r-amber), #e39a22);
+  .rig-go.dirty { background: var(--r-amber);
                   box-shadow: 0 8px 26px color-mix(in srgb, var(--r-amber) 30%, transparent) }
   .rig-mini { display: flex; gap: 7px }
   .rig-mini button {
@@ -1217,13 +1266,18 @@
              display: flex; flex-direction: column; gap: 11px }
   .rig-h { font-size: 10.5px; letter-spacing: .15em; text-transform: uppercase;
            color: var(--r-faint); font-weight: 650 }
-  .rig-figs { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px }
-  .rig-fig { padding: 10px 11px; border-radius: 9px; background: var(--r-l2);
-             border: 1px solid var(--r-line); border-top-width: 2px;
+  /* One hairline grid, no cards. A coloured rule down the side of a tile is
+     decoration pretending to be information; the numeral carries the colour. */
+  .rig-figs { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1px;
+              background: var(--r-line); border: 1px solid var(--r-line);
+              border-radius: 10px; overflow: hidden }
+  .rig-fig { padding: 12px; background: var(--r-l2);
              display: flex; flex-direction: column; gap: 2px; min-width: 0 }
-  .rig-fig .k { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--r-faint); line-height: 1.3 }
-  .rig-fig .n { font-size: 21px; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums }
-  .rig-fig .u { font-size: 9.5px; color: var(--r-faint) }
+  .rig-fig .k { font-size: 9px; letter-spacing: .13em; text-transform: uppercase; font-weight: 600;
+                color: var(--r-faint); line-height: 1.3; margin-top: 3px }
+  .rig-fig .n { font-size: 22px; font-weight: 680; line-height: 1.1; letter-spacing: -.02em;
+                font-variant-numeric: tabular-nums }
+  .rig-fig .u { font-size: 9px; color: var(--r-faint); letter-spacing: .06em }
 
   .rig-row { display: flex; align-items: baseline; gap: 10px; font-size: 12px;
              padding: 5px 0; border-bottom: 1px dashed var(--r-line) }
@@ -1267,44 +1321,50 @@
     display: flex; flex-direction: column; gap: 3px; position: relative;
     transition: background var(--dx-t-fast);
   }
-  .rig-prod::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 2px;
-                      background: var(--pc, var(--r-faint)); opacity: .8 }
+  .rig-prod.on::after { content: ''; position: absolute; inset: auto 0 0 0; height: 2px;
+                        background: var(--pc) }
   .rig-prod:hover { background: var(--r-l2) }
   .rig-prod.on { background: var(--r-l3) }
-  .rig-prod.on::before { opacity: 1; box-shadow: 0 0 14px var(--pc) }
-  .rig-prod .nm { font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
-                  color: var(--r-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-  .rig-prod .n { font-size: 20px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums;
-                 color: var(--pc) }
-  .rig-prod .d { font-size: 10.5px; color: var(--r-faint); font-variant-numeric: tabular-nums }
-  .rig-prod .bar { height: 3px; border-radius: 3px; background: var(--r-line2); overflow: hidden; margin-top: 3px }
-  .rig-prod .bar i { display: block; height: 100%; background: var(--pc);
-                     transition: width var(--dx-t-slow) var(--dx-ease) }
+
+  .rig-prod .nm { font-size: 9px; letter-spacing: .13em; text-transform: uppercase; font-weight: 600;
+                  color: var(--r-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+  .rig-prod .n { font-size: 30px; font-weight: 660; line-height: 1.02; letter-spacing: -.028em;
+                 font-variant-numeric: tabular-nums; color: var(--pc); margin-top: 2px }
+  .rig-prod .n small { font-size: 11px; font-weight: 600; letter-spacing: .04em;
+                       color: var(--r-faint); margin-left: 5px }
+  .rig-prod .d { font-size: 10px; color: var(--r-faint); font-variant-numeric: tabular-nums;
+                 margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+  /* the yield ribbon: the material balance as a single bar */
+  .rig-ribbon { flex: 0 0 auto; display: flex; height: 6px; background: var(--r-line);
+                border-top: 1px solid var(--r-line) }
+  .rig-ribbon i { display: block; height: 100%;
+                  transition: width var(--dx-t-slow) var(--dx-ease), opacity var(--dx-t-base) }
+  .rig-rib.dim { opacity: .28 }
 
   /* ── 2D process view ──────────────────────────────────────────────── */
   .rig-2d { position: relative; width: 100%; height: 100%; display: grid; place-items: center;
-            background: radial-gradient(100% 90% at 50% 0%, #0a1120, #05070f 72%); overflow: hidden }
+            background: var(--r-scrim); overflow: hidden }
   .rig-2d svg { width: 100%; height: 100%; max-height: 100% }
-  .d2-blk { fill: #101a2e; stroke: var(--r-line2); stroke-width: 1.2; cursor: pointer;
+  .d2-blk { fill: var(--r-l2); stroke: var(--r-line2); stroke-width: 1.2; cursor: pointer;
             transition: fill var(--dx-t-base) var(--dx-ease), stroke var(--dx-t-base) }
-  .d2-blk:hover { fill: #16233c; stroke: var(--r-cyan) }
-  .d2-blk.on { fill: #172942; stroke: var(--r-cyan); filter: drop-shadow(0 0 7px color-mix(in srgb,var(--r-cyan) 50%,transparent)) }
-  .d2-lbl { fill: #a7b6d2; font-size: 8.5px; letter-spacing: .13em; pointer-events: none }
-  .d2-sub { fill: #5ed6ff; font-size: 9.5px; font-variant-numeric: tabular-nums; pointer-events: none;
+  .d2-blk:hover { fill: var(--r-l3); stroke: var(--r-cyan) }
+  .d2-blk.on { fill: color-mix(in srgb, var(--r-cyan) 12%, var(--r-l2)); stroke: var(--r-cyan); filter: drop-shadow(0 0 7px color-mix(in srgb,var(--r-cyan) 50%,transparent)) }
+  .d2-lbl { fill: var(--r-dim); font-size: 8.5px; letter-spacing: .13em; pointer-events: none }
+  .d2-sub { fill: var(--r-cyan); font-size: 9.5px; font-variant-numeric: tabular-nums; pointer-events: none;
             font-weight: 650 }
   .d2-tag { letter-spacing: .15em; pointer-events: none }
-  .d2-tray { stroke: #6d80a6; stroke-width: 1 }
+  .d2-tray { stroke: var(--r-line2); stroke-width: 1 }
   .d2-pipe { fill: none; stroke-linecap: round; stroke-linejoin: round; cursor: pointer }
   .d2-pipe:hover { filter: drop-shadow(0 0 6px currentColor) }
   .d2-halo { fill: none; stroke-linecap: round; stroke-linejoin: round; opacity: .16;
              filter: blur(3px); pointer-events: none }
-  .d2-trace { fill: none; stroke-linecap: round; stroke: #f2f8ff; opacity: .8;
+  .d2-trace { fill: none; stroke-linecap: round; stroke: currentColor; opacity: .8;
               stroke-dasharray: 3 26; pointer-events: none }
   .d2-out { pointer-events: auto; cursor: pointer }
   .d2-out .nm { font-size: 9px; letter-spacing: .1em; text-transform: uppercase }
-  .d2-out .r { fill: #dde6f5; font-size: 12.5px; font-variant-numeric: tabular-nums; font-weight: 700 }
-  .d2-out .sm { fill: #7f8faf; font-size: 9px; font-variant-numeric: tabular-nums }
-  .d2-out:hover .r { fill: #fff }
+  .d2-out .r { fill: var(--r-ink); font-size: 12.5px; font-variant-numeric: tabular-nums; font-weight: 700 }
+  .d2-out .sm { fill: var(--r-faint); font-size: 9px; font-variant-numeric: tabular-nums }
+  .d2-out:hover .r { fill: var(--r-cyan) }
   .d2-tick { stroke-width: 1.4; opacity: .8 }
   /* An SVG presentation attribute loses to a CSS rule, so the shell outline
      needs a rule of its own rather than fill="none". */
@@ -1312,17 +1372,17 @@
   .d2-shell:hover { stroke: var(--r-cyan) }
   .d2-shell.on { stroke: var(--r-cyan); stroke-width: 1.8;
                  filter: drop-shadow(0 0 8px color-mix(in srgb,var(--r-cyan) 55%,transparent)) }
-  .d2-tin { fill: #f0f5ff; font-size: 10px; font-weight: 650; font-variant-numeric: tabular-nums;
-            pointer-events: none; paint-order: stroke; stroke: rgba(5,9,18,.85); stroke-width: 3px;
+  .d2-tin { fill: var(--r-ink); font-size: 10px; font-weight: 650; font-variant-numeric: tabular-nums;
+            pointer-events: none; paint-order: stroke; stroke: var(--r-l0); stroke-width: 3px;
             stroke-linejoin: round }
-  .d2-t { fill: #8b9ab8; font-size: 9.5px; font-variant-numeric: tabular-nums; pointer-events: none }
+  .d2-t { fill: var(--r-faint); font-size: 9.5px; font-variant-numeric: tabular-nums; pointer-events: none }
   @keyframes d2Flow { from { stroke-dashoffset: 58 } to { stroke-dashoffset: 0 } }
 
   /* ── charts ───────────────────────────────────────────────────────── */
   .rig-chart { width: 100%; height: auto; display: block; overflow: visible }
   .rig-chart .ax { stroke: var(--r-line2); stroke-width: 1 }
   .rig-chart .gl { stroke: var(--r-line); stroke-width: 1; stroke-dasharray: 2 4 }
-  .rig-chart .lbl { fill: #6d7a95; font-size: 8.5px }
+  .rig-chart .lbl { fill: var(--r-faint); font-size: 8.5px }
   .rig-chart .ln { fill: none; stroke: var(--r-cyan); stroke-width: 1.6; stroke-linejoin: round }
   .rig-chart .tr { fill: none; stroke: var(--r-viol); stroke-width: 1.4 }
 
@@ -1359,6 +1419,7 @@
   @media (max-width: 1240px) {
     .rig-body { grid-template-columns: 280px minmax(0,1fr) 300px }
     .rig-prods { grid-template-columns: repeat(3, minmax(0,1fr)) }
+    .rig-prod .n { font-size: 22px }
   }
   @media (max-width: 1000px) {
     .rig-body { grid-template-columns: minmax(0,1fr); grid-template-rows: minmax(280px,46vh) auto auto }
@@ -1373,17 +1434,12 @@
   /* On a phone the bar becomes two rows: identity and state on the first,
      every control on a second that scrolls sideways rather than wrapping into
      four stacked rows and eating half the screen. */
-  @media (max-width: 860px) {
+  @media (max-width: 1040px) {
     .rig-bar { height: auto; min-height: 0; flex-wrap: wrap; padding: 8px 11px; gap: 8px 10px }
     .rig-bar h1 { font-size: 12.5px }
     .rig-bar .sub { display: none }
-    .rig-tools {
-      order: 9; flex: 1 0 100%; overflow-x: auto; overflow-y: hidden;
-      padding-bottom: 2px; scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-    }
-    .rig-tools::-webkit-scrollbar { display: none }
-    .rig-tools > * { flex: 0 0 auto }
+    .rig-tools { order: 9; flex: 1 0 100% }
+    .rig-rule { display: none }
     .rig-seg { padding: 6px 10px; font-size: 11px }
     .rig-back { height: 30px; padding: 0 10px; font-size: 11px }
   }
@@ -2894,6 +2950,14 @@
       </div>
       <button class="rig-back" data-act="tour" onClick="{{ rigDo }}">Guided tour</button>
       <button class="rig-back" data-act="expert" onClick="{{ rigDo }}">{{ rigExpertLabel }}</button>
+      <span class="rig-rule"></span>
+      <button class="rig-back rig-theme" onClick="{{ toggleTheme }}"
+              title="{{ rigThemeTitle }}" aria-label="{{ rigThemeTitle }}">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="{{ rigThemeD }}" stroke="currentColor" stroke-width="1.6"
+                stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </button>
     </div>
   </div>
 
@@ -3138,10 +3202,10 @@
           <div class="rig-h">Operating result</div>
           <div class="rig-figs">
             <sc-for list="{{ rigKeyFigs }}" as="kf" hint-placeholder-count="6">
-              <div class="rig-fig" style="border-top-color:{{ kf.c }}">
-                <span class="k">{{ kf.k }}</span>
+              <div class="rig-fig">
                 <span class="n" style="color:{{ kf.c }}">{{ kf.v }}</span>
                 <span class="u">{{ kf.u }}</span>
+                <span class="k">{{ kf.k }}</span>
               </div>
             </sc-for>
           </div>
@@ -3243,14 +3307,20 @@
     </div>
   </div>
 
+  <!-- ── the charge, drawn as one bar ─────────────────────────────────── -->
+  <div class="rig-ribbon" role="img" aria-label="Product yield, as a share of the charge">
+    <sc-for list="{{ rigRibbon }}" as="rb" hint-placeholder-count="6">
+      <i class="{{ rb.cls }}" style="width:{{ rb.w }};background:{{ rb.col }}" title="{{ rb.title }}"></i>
+    </sc-for>
+  </div>
+
   <!-- ── product strip ────────────────────────────────────────────────── -->
   <div class="rig-prods">
     <sc-for list="{{ rigProducts }}" as="pr" hint-placeholder-count="6">
       <button class="{{ pr.cls }}" style="--pc:{{ pr.col }}" data-k="{{ pr.key }}" onClick="{{ rigProdPick }}">
         <span class="nm">{{ pr.name }}</span>
-        <span class="n">{{ pr.rate }}</span>
-        <span class="d">t/h &middot; {{ pr.pct }} % &middot; {{ pr.tbp }}</span>
-        <span class="bar"><i style="width:{{ pr.bar }}"></i></span>
+        <span class="n">{{ pr.rate }}<small>t/h</small></span>
+        <span class="d">{{ pr.pct }} % &middot; {{ pr.tbp }}</span>
       </button>
     </sc-for>
   </div>
@@ -3280,6 +3350,7 @@
      info / view2d       what each component is, and the flat process view
 
    Nothing below this line calculates a process quantity. ═══════════════ */
+// @include rig/theme.js
 // @include rig/glmath.js
 // @include rig/geometry.js
 // @include rig/plant.js
@@ -3615,6 +3686,7 @@ class Component extends DCLogic {
     try {
       this._tickView(); this._tickNums(); this._tickPill(); this._tickFill(); this._tickSvgText();
       this._bindPointer(); this._tickReveal();
+      if (this._rigTheme()) this._rigApplyResult();
       this._rigMount(); this._rigCollectTags();
     } catch (e) { /* presentation only — never let it reach the engine */ }
   }

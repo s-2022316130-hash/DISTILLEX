@@ -161,8 +161,11 @@ rigView(s) {
   });
 
   /* ── products ────────────────────────────────────────────────────── */
-  const TONE = { gas:'#78ebd8', naphtha:'#ffd778', kerosene:'#ffbe50',
-                 diesel:'#fa9e33', gasoil:'#f27038', residue:'#e65c7a' };
+  // Product colours come from theme.js in whichever theme is current, so the
+  // strip, the flow sheet and the 3D scene can never disagree — and so the
+  // light theme gets values that are actually readable on a light ground.
+  const TH = THEME.of(s.theme === 'light' ? 'light' : 'dark');
+  const TONE = TH.stream;
   const products = (has ? r.products : CDU.CUTS.map(c => ({ key:c.key, name:c.name }))).map(p => {
     const on = rg.prod === p.key;
     return {
@@ -183,13 +186,16 @@ rigView(s) {
   /* ── headline figures ────────────────────────────────────────────── */
   const distillate = has ? r.products.filter(p => p.key !== 'residue')
                                      .reduce((a, p) => a + p.pct, 0) : 0;
+  // The numeral carries the colour; there is no decorative rule down the side
+  // of the tile. Only the figures that genuinely belong to a stream are
+  // tinted — the rest are ink, because colour here means something.
   const keyFigs = [
-    { k: 'Distillate yield', v: has ? f(distillate, 1) : '—', u: '% of charge', c: '#7fd8ff' },
-    { k: 'Flash-zone vapour', v: has ? f(r.flash.psi * 100, 1) : '—', u: '% vaporised', c: '#ffb457' },
-    { k: 'Top tray', v: has ? f(r.internals.Tprofile[1], 0) : '—', u: '°C', c: '#9fb8ff' },
-    { k: 'Furnace duty', v: has ? f(r.energy.furnace, 0) : '—', u: 'MW', c: '#ff8a4c' },
-    { k: 'Condenser duty', v: has ? f(r.energy.condenser, 0) : '—', u: 'MW', c: '#78d2ff' },
-    { k: 'Residue', v: has ? f(r.products[r.products.length - 1].pct, 1) : '—', u: '% of charge', c: '#e65c7a' }
+    { k: 'Distillate yield',  v: has ? f(distillate, 1) : '—',              u: '% of charge', c: TH.ui.accent },
+    { k: 'Flash-zone vapour', v: has ? f(r.flash.psi * 100, 1) : '—',       u: '% vaporised', c: TH.ui.ink },
+    { k: 'Top tray',          v: has ? f(r.internals.Tprofile[1], 0) : '—', u: '°C',          c: TH.ui.ink },
+    { k: 'Sump',              v: has ? f(r.energy.Tbot, 0) : '—',           u: '°C',          c: TH.ui.ink },
+    { k: 'Furnace duty',      v: has ? f(r.energy.furnace, 0) : '—',        u: 'MW',          c: TH.stream.hot },
+    { k: 'Condenser duty',    v: has ? f(r.energy.condenser, 0) : '—',      u: 'MW',          c: TH.stream.vapour }
   ];
 
   /* ── mass balance ────────────────────────────────────────────────── */
@@ -308,6 +314,12 @@ rigView(s) {
       ? 'Every stage the solver carries, with the liquid and vapour traffic on it, in kmol/h.'
       : 'The named stages, top to bottom. Expert view lists every tray and its internal traffic.',
     rigExpertLabel: rg.expert ? 'Expert view on' : 'Expert view',
+    // a drawn sun or moon, never an emoji: it has to inherit the current colour
+    rigThemeTitle: s.theme === 'dark' ? 'Switch to daylight' : 'Switch to night',
+    rigThemeD: s.theme === 'dark'
+      ? 'M12 7.4a4.6 4.6 0 100 9.2 4.6 4.6 0 000-9.2zM12 1.8v2.4M12 19.8v2.4M4.8 4.8l1.7 1.7'
+        + 'M17.5 17.5l1.7 1.7M1.8 12h2.4M19.8 12h2.4M4.8 19.2l1.7-1.7M17.5 6.5l1.7-1.7'
+      : 'M20 14.2A8.4 8.4 0 019.8 4 8.8 8.8 0 1020 14.2z',
     rigFlowLabel: rg.flow ? 'Pause flow' : 'Resume flow',
     rigGl: rg.gl3d !== false,
     rigGlNote: this._glFail || '',

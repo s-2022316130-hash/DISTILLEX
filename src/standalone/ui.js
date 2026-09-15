@@ -40,13 +40,47 @@ var APP = (function () {
     dirty: false,             // the panel has moved since the result was solved
     expert: false,
     tour: -1,
-    hist: []
+    hist: [],
+    theme: 'dark',            // the resolved theme
+    themePref: 'auto'         // what the operator asked for: auto | light | dark
   };
 
   var gl = null, plant = null, cams = null, camPreset = 'plant';
+  var THEME_KEY = 'crude-unit.theme';
   var raf = 0, tourTimer = null, tagEls = [], hoverRaf = 0, hoverAt = 0;
   var reduced = false;
   try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+  /* ── theme ─────────────────────────────────────────────────────────────
+     Three states, which is one more than a toggle and the one people
+     actually want: follow the system, or pin light, or pin dark. Only a
+     deliberate pin is remembered; 'auto' keeps tracking the OS afterwards. */
+  var media = null;
+  try { media = window.matchMedia('(prefers-color-scheme: light)'); } catch (e) {}
+
+  function stored() {
+    try { var v = localStorage.getItem(THEME_KEY); return v === 'light' || v === 'dark' ? v : 'auto'; }
+    catch (e) { return 'auto'; }
+  }
+  function resolve(pref) {
+    if (pref === 'light' || pref === 'dark') return pref;
+    return (media && media.matches) ? 'light' : 'dark';
+  }
+  function applyTheme(pref, animate) {
+    S.themePref = pref;
+    var mode = resolve(pref);
+    S.theme = mode;
+    THEME.set(mode);
+    document.documentElement.setAttribute('data-theme', mode);
+    document.documentElement.style.colorScheme = mode;
+    try {
+      if (pref === 'auto') localStorage.removeItem(THEME_KEY);
+      else localStorage.setItem(THEME_KEY, pref);
+    } catch (e) {}
+    if (gl) gl.setTheme(mode);
+    if (!animate) return;
+    render();
+  }
 
   /* ── DOM helpers ───────────────────────────────────────────────────── */
   function h(tag, attrs, kids) {
@@ -151,8 +185,6 @@ var APP = (function () {
     warning:     ['WARNING', 'A result was produced, but it comes with qualifications.', 'warn'],
     error:       ['ERROR', 'No result. The inputs were refused, or the solve failed.', 'err']
   };
-  var TONE = { gas:'#78ebd8', naphtha:'#ffd778', kerosene:'#ffbe50',
-               diesel:'#fa9e33', gasoil:'#f27038', residue:'#e65c7a' };
 
   /* ── the run ───────────────────────────────────────────────────────────
      Three painted states, each matching work that is genuinely happening.
@@ -427,16 +459,49 @@ var APP = (function () {
       h('button', { class:'ghost', onclick: function () {
         if (S.tour >= 0) { stopTour(); set({ tour:-1 }); } else tourGo(0);
       } }, S.tour >= 0 ? 'End tour' : 'Guided tour'),
-      h('button', { class:'ghost', onclick: function () { set({ expert: !S.expert }); } },
-        S.expert ? 'Expert view on' : 'Expert view')
+      h('button', { class:'ghost' + (S.expert ? ' on' : ''),
+                    onclick: function () { set({ expert: !S.expert }); } },
+        S.expert ? 'Expert view on' : 'Expert view'),
+      h('span', { class:'rule' }),
+      themeControl()
     ]);
+  }
+
+  /* A sun, a moon and a half-and-half disc for 'follow the system'. Drawn,
+     because an emoji would be the wrong register and would not inherit the
+     current colour. */
+  var GLYPH = {
+    auto: 'M12 3a9 9 0 100 18V3z|M12 3a9 9 0 010 18',
+    light:'M12 7.4a4.6 4.6 0 100 9.2 4.6 4.6 0 000-9.2z|M12 1.8v2.4M12 19.8v2.4M4.8 4.8l1.7 1.7'
+        + 'M17.5 17.5l1.7 1.7M1.8 12h2.4M19.8 12h2.4M4.8 19.2l1.7-1.7M17.5 6.5l1.7-1.7',
+    dark: 'M20 14.2A8.4 8.4 0 019.8 4 8.8 8.8 0 1020 14.2z|'
+  };
+  function themeControl() {
+    var order = ['auto', 'light', 'dark'];
+    var label = { auto:'Match system', light:'Light', dark:'Dark' };
+    var cur = S.themePref;
+    return h('button', {
+      class:'ghost icon-btn',
+      title: 'Theme: ' + label[cur] + ' \u2014 click to change',
+      'aria-label': 'Theme: ' + label[cur],
+      onclick: function () { applyTheme(order[(order.indexOf(cur) + 1) % 3], true); }
+    }, glyph(cur));
+  }
+  function glyph(kind) {
+    var parts = GLYPH[kind].split('|');
+    var kids = [s('path', { d: parts[0], fill: kind === 'auto' ? 'currentColor' : 'none',
+                            stroke:'currentColor', 'stroke-width':'1.6',
+                            'stroke-linecap':'round', 'stroke-linejoin':'round' })];
+    if (parts[1]) kids.push(s('path', { d: parts[1], fill:'none', stroke:'currentColor',
+                                        'stroke-width':'1.6', 'stroke-linecap':'round' }));
+    return s('svg', { viewBox:'0 0 24 24', 'aria-hidden':'true' }, kids);
   }
 
   /* ── the operator panel ────────────────────────────────────────────── */
   function renderPanel() {
     var out = [];
     out.push(h('div', { class:'sec' }, h('div', { class:'secbody', style:'padding-top:14px' }, [
-      h('div', { class:'hd' }, 'Crude assay'),
+      h('div', { class:'cap' }, 'Crude assay'),
       h('div', { class:'assays' }, Object.keys(CDU.ASSAY).map(function (k) {
         var a = CDU.ASSAY[k], on = S.inputs.assay === k;
         return h('button', { class:'assay' + (on ? ' on' : ''),
@@ -503,12 +568,13 @@ var APP = (function () {
       if (p.halo) g.appendChild(s('path', { class:'d2-halo', d:p.d, stroke:p.col, 'stroke-width':p.halo }));
       g.appendChild(s('path', { class:'d2-pipe', d:p.d, stroke:p.col, 'stroke-width':p.w,
         onclick: function () { select(p.pick); } }));
-      if (p.tracer) g.appendChild(s('path', { class:'d2-trace', d:p.d, 'stroke-width':p.tw, style:p.style }));
+      if (p.tracer) g.appendChild(s('path', { class:'d2-trace', d:p.d, 'stroke-width':p.tw,
+        style:p.style + ';stroke:' + d.sheet.tracer + ';opacity:' + d.sheet.tracerOp }));
       kids.push(g);
     });
 
     var tw = d.tower, tg = s('g', { opacity:tw.op });
-    tg.appendChild(s('rect', { x:tw.x, y:tw.y, width:tw.w, height:tw.h, rx:tw.rx, fill:'#0c1424' }));
+    tg.appendChild(s('rect', { x:tw.x, y:tw.y, width:tw.w, height:tw.h, rx:tw.rx, fill:tw.fill }));
     d.bands.forEach(function (b) {
       tg.appendChild(s('rect', { x:b.x, y:b.y, width:b.w, height:b.h, fill:b.fill, opacity:b.op }));
     });
@@ -559,28 +625,43 @@ var APP = (function () {
     fill($('d2'), svg);
   }
 
-  /* ── the product strip ─────────────────────────────────────────────── */
+  /* ── the product strip, and the ribbon above it ────────────────────────
+     The ribbon is the material balance drawn as a single bar: the whole
+     charge, segmented by where it left the unit. It is the strip's header
+     and a chart at the same time, and it costs no extra vertical space. */
   function renderProducts() {
-    var list = S.r ? S.r.products : CDU.CUTS.map(function (c) { return { key:c.key, name:c.name }; });
+    var has = !!S.r;
+    var list = has ? S.r.products : CDU.CUTS.map(function (c) { return { key:c.key, name:c.name }; });
+
+    fill($('ribbon'), list.map(function (p) {
+      var pct = has ? Math.max(0.35, p.pct) : 100 / 6;
+      var dimmed = S.prod && S.prod !== p.key;
+      return h('i', { class: dimmed ? 'dim' : '',
+                      style:'width:' + pct.toFixed(2) + '%;background:' + tone(p.key),
+                      title: p.name + (has ? ' — ' + fmt(p.pct, 1) + ' % of charge' : '') });
+    }));
+
     fill($('products'), list.map(function (p) {
-      var has = !!S.r, on = S.prod === p.key;
-      var cut = has && p.mass > 0.05 ? fmt(p.tbp5, 0) + '–' + fmt(p.tbp95, 0) + ' °C' : DASH;
-      return h('button', { class:'prod' + (on ? ' on' : ''), style:'--pc:' + (TONE[p.key] || '#9aa6bd'),
+      var on = S.prod === p.key;
+      var cut = has && p.mass > 0.05 ? fmt(p.tbp5, 0) + '\u2013' + fmt(p.tbp95, 0) + ' \u00b0C' : DASH;
+      return h('button', { class:'prod' + (on ? ' on' : ''), style:'--pc:' + tone(p.key),
+        'aria-pressed': on ? 'true' : 'false',
         onclick: function () { selectProduct(p.key); } }, [
         h('span', { class:'nm' }, p.name),
-        h('span', { class:'n' }, has ? rate(p.mass) : DASH),
-        h('span', { class:'d' }, 't/h · ' + (has ? fmt(p.pct, 1) : DASH) + ' % · ' + cut),
-        h('span', { class:'meter' }, h('i', { style:'width:' + (has ? Math.max(0.6, p.pct) : 0) + '%' }))
+        h('span', { class:'n' }, [ has ? rate(p.mass) : DASH, h('small', null, 't/h') ]),
+        h('span', { class:'d' }, (has ? fmt(p.pct, 1) : DASH) + ' % \u00b7 ' + cut)
       ]);
     }));
   }
+  /** A product's colour, from the theme, so it follows the lights. */
+  function tone(key) { return THEME.get().stream[key] || THEME.get().ui.ink3; }
 
   /* ── the results rail ──────────────────────────────────────────────── */
   function renderResults() {
     var r = S.r, st = STATUS[S.status] || STATUS.ready, out = [];
 
     /* run state */
-    var blk = [h('div', { class:'hd' }, 'Run state'), h('p', { class:'note', style:'margin:0' }, st[1])];
+    var blk = [h('div', { class:'cap' }, 'Run state'), h('p', { class:'note', style:'margin:0' }, st[1])];
     if (S.pre) {
       blk.push(row('Charge', rate(S.pre.feed.molar) + ' kmol/h'));
       blk.push(row('Mean molar mass', fmt(S.pre.feed.M, 1) + ' kg/kmol'));
@@ -596,7 +677,7 @@ var APP = (function () {
       var tr = traceChart(r.trace);
       if (tr) {
         blk.push(h('div', null, [
-          h('div', { class:'hd', style:'margin-bottom:5px' }, 'Residual, per sweep'),
+          h('div', { class:'cap', style:'margin-bottom:5px' }, 'Residual, per sweep'),
           tr.svg,
           h('div', { class:'note' }, 'Temperature residual on a log scale, ' + tr.hi +
             ' K down to ' + tr.lo + ' K over ' + tr.n + ' sweeps.')
@@ -608,31 +689,36 @@ var APP = (function () {
     out.push(h('div', { class:'blk' }, blk));
 
     if (r) {
-      /* headline figures */
+      /* headline figures.
+         The numeral carries the colour, because in this interface colour
+         means something. No coloured rule down the side of a card: that is
+         decoration pretending to be information. Only the two figures that
+         genuinely belong to a stream are tinted; the rest are ink. */
       var dist = r.products.filter(function (p) { return p.key !== 'residue'; })
                            .reduce(function (a, p) { return a + p.pct; }, 0);
+      var U = THEME.get().ui;
       var figs = [
-        ['Distillate yield', fmt(dist, 1), '% of charge', '#7fd8ff'],
-        ['Flash-zone vapour', fmt(r.flash.psi * 100, 1), '% vaporised', '#ffb457'],
-        ['Top tray', fmt(r.internals.Tprofile[1], 0), '°C', '#9fb8ff'],
-        ['Furnace duty', fmt(r.energy.furnace, 0), 'MW', '#ff8a4c'],
-        ['Condenser duty', fmt(r.energy.condenser, 0), 'MW', '#78d2ff'],
-        ['Residue', fmt(r.products[r.products.length - 1].pct, 1), '% of charge', '#e65c7a']
+        ['Distillate yield',   fmt(dist, 1),                    '% of charge',  U.accent],
+        ['Flash-zone vapour',  fmt(r.flash.psi * 100, 1),       '% vaporised',  U.ink],
+        ['Top tray',           fmt(r.internals.Tprofile[1], 0), '\u00b0C',      U.ink],
+        ['Sump',               fmt(r.energy.Tbot, 0),           '\u00b0C',      U.ink],
+        ['Furnace duty',       fmt(r.energy.furnace, 0),        'MW',           tone('hot')],
+        ['Condenser duty',     fmt(r.energy.condenser, 0),      'MW',           tone('vapour')]
       ];
       out.push(h('div', { class:'blk' }, [
-        h('div', { class:'hd' }, 'Operating result'),
+        h('div', { class:'cap' }, 'Operating result'),
         h('div', { class:'figs' }, figs.map(function (f) {
-          return h('div', { class:'fig', style:'border-top-color:' + f[3] }, [
-            h('span', { class:'k' }, f[0]),
+          return h('div', { class:'fig' }, [
             h('span', { class:'n', style:'color:' + f[3] }, f[1]),
-            h('span', { class:'u' }, f[2])
+            h('span', { class:'u' }, f[2]),
+            h('span', { class:'k' }, f[0])
           ]);
         }))
       ]));
 
       /* temperature profile and the stages */
       out.push(h('div', { class:'blk' }, [
-        h('div', { class:'hd' }, 'Temperature profile'),
+        h('div', { class:'cap' }, 'Temperature profile'),
         profileChart(r),
         h('div', { class:'note' }, S.expert
           ? 'Every stage the solver carries, with the liquid and vapour traffic on it, in kmol/h.'
@@ -642,13 +728,13 @@ var APP = (function () {
 
       /* material balance */
       var closes = Math.abs(r.balance.closure) <= 1e-6;
-      var bal = [h('div', { class:'hd' }, 'Material balance'),
+      var bal = [h('div', { class:'cap' }, 'Material balance'),
         row('Crude charged', rate(r.balance.inMass) + ' t/h'),
         row('Stripping steam (inert)', rate(r.steam.mass) + ' t/h'),
         row('Products out', rate(r.balance.outMass) + ' t/h')];
       r.products.forEach(function (p) {
         bal.push(h('div', { class:'row' }, [
-          h('i', { class:'sw', style:'background:' + TONE[p.key] }),
+          h('i', { class:'sw', style:'background:' + tone(p.key) }),
           h('span', { class:'k' }, p.name),
           h('span', { class:'v' }, rate(p.mass) + ' t/h'),
           h('span', { class:'p' }, fmt(p.pct, 2) + ' %')
@@ -663,7 +749,7 @@ var APP = (function () {
       /* expert-only blocks */
       if (S.expert) {
         var I = r.internals;
-        out.push(h('div', { class:'blk' }, [h('div', { class:'hd' }, 'Internal flows')].concat([
+        out.push(h('div', { class:'blk' }, [h('div', { class:'cap' }, 'Internal flows')].concat([
           ['Reflux to the top tray', rate(I.Ltop), 'kmol/h'],
           ['Vapour off the flash zone', rate(I.Vflash), 'kmol/h'],
           ['Liquid to the sump', rate(I.Lflash), 'kmol/h'],
@@ -680,7 +766,7 @@ var APP = (function () {
           'Molar rates inside the tower. They are not product rates and do not sum to the charge.')])));
         var cut = cutChart(r, S.prod);
         if (cut) out.push(h('div', { class:'blk' }, [
-          h('div', { class:'hd' }, 'Cut composition — ' + cut.name), cut.svg,
+          h('div', { class:'cap' }, 'Cut composition — ' + cut.name), cut.svg,
           h('div', { class:'note' }, cut.note)
         ]));
       }
@@ -688,7 +774,7 @@ var APP = (function () {
 
     /* run history */
     if (S.hist.length) {
-      out.push(h('div', { class:'blk' }, [h('div', { class:'hd' }, 'Run history')].concat(
+      out.push(h('div', { class:'blk' }, [h('div', { class:'cap' }, 'Run history')].concat(
         S.hist.map(function (q, i) {
           return h('button', { class:'hrow' + (i === 0 ? ' now' : ''), title:'Load these inputs',
             onclick: function () { S.inputs = JSON.parse(JSON.stringify(q.snap)); markDirty(); render(); } }, [
@@ -824,7 +910,7 @@ var APP = (function () {
     var cv = $('gl');
     try {
       plant = PLANT.build();
-      gl = RIGGL.create(cv, plant, { maxDpr: 2 });
+      gl = RIGGL.create(cv, plant, { maxDpr: 2, theme: S.theme });
     } catch (err) {
       $('glfail').hidden = false;
       $('glfail').textContent = 'WebGL is unavailable in this browser, so the 3D view cannot be drawn. '
@@ -1104,6 +1190,14 @@ var APP = (function () {
 
   /* ══ boot ═════════════════════════════════════════════════════════════ */
   function boot() {
+    // Resolve the theme first: the scene is created with it, so there is no
+    // flash of the wrong palette and no second upload of every colour buffer.
+    applyTheme(stored(), false);
+    if (media && media.addEventListener) {
+      media.addEventListener('change', function () {
+        if (S.themePref === 'auto') applyTheme('auto', true);
+      });
+    }
     $('run').addEventListener('click', run);
     $('reset').addEventListener('click', reset);
     $('save').addEventListener('click', save);
