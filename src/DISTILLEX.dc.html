@@ -1194,6 +1194,11 @@
                     color:color-mix(in srgb, var(--color-text) 70%, transparent) }
   .dx-ctag[data-on="1"] { border-color:var(--ct);
                           background:color-mix(in srgb, var(--ct) 16%, var(--color-surface)) }
+  /* The chip is one line of type on a phone, which is a 20px-tall target. It
+     keeps its size and grows its touch area instead: a transparent extension
+     takes the tappable box past the 44px floor without turning eight labels
+     into eight pills over a 356px picture. */
+  .dx-ctag::before { content:''; position:absolute; inset:-12px -10px; border-radius:12px }
   .dx-ctag:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px }
   @media (max-width: 900px) {
     /* a phone has no room for eight two-line labels over a 300px picture */

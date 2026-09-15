@@ -693,7 +693,7 @@ _heroLoop() {
   const gl = this._heroGl;
   if (!gl || this._heroRaf) return;
   const home = this._heroPlant.home;
-  let last = performance.now(), acc = 0, frames = 0, phase = 0;
+  let last = performance.now(), acc = 0, frames = 0, phase = 0, stall = 0;
   const step = (now) => {
     this._heroRaf = 0;
     if (!this._heroGl || this.state.view !== 'landing') return;
@@ -726,6 +726,13 @@ _heroLoop() {
       else if (fps < 26 && st.tracers > 0.35) st.tracers = 0.3;
       else if (fps > 55 && st.scale < 1) st.scale = Math.min(1, st.scale + 0.2);
       else if (fps > 58 && st.tracers < 1) st.tracers = 1;
+      // The floor under the floor. If the machine still cannot hold frames at
+      // the lowest quality the watchdog can ask for, the honest answer is to
+      // stop moving: the model is the point, the turntable is not, and a hero
+      // stuttering at fifteen frames is worse than one that sits still.
+      if (fps < 20 && st.scale <= 0.62 && st.tracers <= 0.35) {
+        if (++stall >= 2) { st.flow = false; try { gl.render(1 / 60); } catch (e) {} return; }
+      } else stall = 0;
       acc = 0; frames = 0;
     }
     this._heroRaf = requestAnimationFrame(step);
@@ -801,6 +808,7 @@ _crudeUnmount() {
   if (cv) cv._dxBound = false;
   this._crudePlant = null;
   this._crudeFirst = false;
+  this._crudeMeasW = -1;
 }
 
 /** Pointing at the model names a cut, exactly as pointing at its label does.
@@ -831,7 +839,7 @@ _crudeLoop() {
   const gl = this._crudeGl;
   if (!gl || this._crudeRaf) return;
   const P = this._crudePlant, h = P.home;
-  let last = performance.now(), phase = 0, selNow = null, acc = 0, frames = 0;
+  let last = performance.now(), phase = 0, selNow = null, acc = 0, frames = 0, stall = 0, still = false;
   const calm = this._calm();
   const step = (now) => {
     this._crudeRaf = 0;
@@ -855,7 +863,7 @@ _crudeLoop() {
     const t = this._crudeT;
     const dist = h.dist + (P.explodedDist - h.dist) * t;
     const ty = h.target[1] + (P.explodedTarget[1] - h.target[1]) * t;
-    if (!calm) {
+    if (!calm && !still) {
       phase += dt * 0.115;
       gl.cam.tYaw = h.yaw + Math.sin(phase) * 0.62;
       gl.cam.tPitch = h.pitch + Math.sin(phase * 0.58) * 0.055;
@@ -876,7 +884,7 @@ _crudeLoop() {
         const stage = document.getElementById('crude-stage');
         if (stage) stage.classList.add('dx-crude-3d');
       }
-      if (calm) this._crudeDirty = false;      // one frame, then hold it
+      if (calm || still) this._crudeDirty = false;   // one frame, then hold it
       // the same watchdog the hero runs, for the same reason: this is a
       // picture on a landing page, and it should be the first thing to give
       // ground when the machine cannot hold a frame
@@ -887,6 +895,13 @@ _crudeLoop() {
         else if (fps < 26 && st.tracers > 0.35) st.tracers = 0.3;
         else if (fps > 55 && st.scale < 1) st.scale = Math.min(1, st.scale + 0.2);
         else if (fps > 58 && st.tracers < 1) st.tracers = 1;
+        // As in the hero: once the quality levers are spent, stop the idle
+        // motion rather than stutter. The view button still works — opening
+        // and closing the assembly marks the scene dirty, which is the only
+        // thing that draws from here on.
+        if (fps < 20 && st.scale <= 0.62 && st.tracers <= 0.35) {
+          if (++stall >= 2) { still = true; st.flow = false; }
+        } else stall = 0;
         acc = 0; frames = 0;
       }
     }
@@ -906,18 +921,56 @@ _crudeTags() {
   if (!els.length) return;
   const cv = document.getElementById('crude-gl');
   const W = cv ? cv.clientWidth : 0, H = cv ? cv.clientHeight : 0;
+
+  // Project everything first. A label that has swung behind the tower is
+  // faded, not moved: leaving it where it belongs is what keeps it attached
+  // to its own nozzle.
+  // offsetWidth forces the browser to flush layout. Eight of those a frame is
+  // a synchronous layout per label per frame, for boxes whose text never
+  // changes — so they are measured once, and again only when the stage
+  // resizes, which is the only thing that can change them.
+  if (this._crudeMeasW !== W) {
+    this._crudeMeasW = W;
+    for (let i = 0; i < els.length; i++) {
+      els[i]._dxW = els[i].offsetWidth || 90;
+      els[i]._dxH = els[i].offsetHeight || 24;
+    }
+  }
+  const rows = [];
   for (let i = 0; i < els.length; i++) {
     const el = els[i], L = P.labels[i];
     if (!L) { el.style.opacity = '0'; continue; }
     const p = gl.toScreen(L.now || L.at);
     if (!p) { el.style.opacity = '0'; el.style.pointerEvents = 'none'; continue; }
-    // a label that has swung behind the tower is faded, not moved: leaving it
-    // where it belongs is what keeps it attached to its own nozzle
-    const w = el.offsetWidth || 90, hh = el.offsetHeight || 24;
-    const x = Math.max(0, Math.min(W - w, p.x + 6));
-    const y = Math.max(0, Math.min(H - hh, p.y - hh / 2));
-    el.style.transform = 'translate3d(' + Math.round(x) + 'px,' + Math.round(y) + 'px,0)';
-    el.style.opacity = String(Math.max(0.42, Math.min(1, 1.35 - p.d * 0.0072)));
-    el.style.pointerEvents = 'auto';
+    rows.push({ el: el, p: p, w: el._dxW, h: el._dxH, y: p.y - el._dxH / 2 });
+  }
+
+  // Then spread them. Eight draws off one tower project within thirty pixels
+  // of each other, and two labels thirty pixels apart are two touch targets
+  // that overlap — the tap lands on the neighbour. Pushing them to at least a
+  // finger apart is what makes each one its own target, and it reads better.
+  const MIN = 44;
+  rows.sort((a, b) => a.y - b.y);
+  for (let i = 1; i < rows.length; i++) {
+    const gap = rows[i].y - rows[i - 1].y;
+    if (gap < MIN) rows[i].y = rows[i - 1].y + MIN;
+  }
+  // If that pushed the stack off the bottom, walk it back up from the end.
+  // PAD keeps the bottom label's own touch extension inside the stage, which
+  // is what the browser will hit-test against.
+  const PAD = 12;
+  const over = rows.length ? (rows[rows.length - 1].y + rows[rows.length - 1].h + PAD) - H : 0;
+  if (over > 0) {
+    for (let i = rows.length - 1; i >= 0; i--) {
+      rows[i].y -= over;
+      if (i > 0 && rows[i].y - rows[i - 1].y >= MIN) break;
+    }
+  }
+  for (const r of rows) {
+    const x = Math.max(0, Math.min(W - r.w, r.p.x + 6));
+    const y = Math.max(PAD, Math.min(H - r.h - PAD, r.y));
+    r.el.style.transform = 'translate3d(' + Math.round(x) + 'px,' + Math.round(y) + 'px,0)';
+    r.el.style.opacity = String(Math.max(0.42, Math.min(1, 1.35 - r.p.d * 0.0072)));
+    r.el.style.pointerEvents = 'auto';
   }
 }
