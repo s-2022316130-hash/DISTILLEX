@@ -1517,6 +1517,45 @@
   @keyframes rigBlink { 0%,100% { opacity: .25 } 50% { opacity: 1 } }
 
   /* ── the three-column body ────────────────────────────────────────── */
+  /* ── the scene on its own ─────────────────────────────────────────────
+     Both rails go, the stage takes the whole body, and the controls that
+     belong to the scene ride over the top of it. The bar keeps its own
+     background so the buttons never sit on a piece of sky they cannot be
+     read against. A real fullscreen request is made alongside this, so the
+     browser chrome goes too where it is allowed to; the class is what does
+     the work if that request is refused. */
+  .dx-rig.rig-full .rig-rail,
+  .dx-rig.rig-full .rig-prods,
+  .dx-rig.rig-full .dx-sig { display: none }
+  .dx-rig.rig-full .rig-body { grid-template-columns: minmax(0,1fr) }
+  .dx-rig.rig-full { position: relative }
+  .dx-rig.rig-full .rig-bar {
+    position: absolute; z-index: 12; top: 0; left: 0; right: 0;
+    background: color-mix(in srgb, var(--r-l1) 84%, transparent);
+    backdrop-filter: blur(9px);
+    border-bottom: 1px solid color-mix(in srgb, var(--r-line) 70%, transparent);
+  }
+  .dx-rig.rig-full .rig-bar h1,
+  .dx-rig.rig-full .rig-bar .sub { display: none }
+  .rig-fs { display: inline-flex; align-items: center; gap: 7px }
+  .rig-fs svg { width: 15px; height: 15px; flex: 0 0 auto }
+  .rig-fs[aria-pressed="true"] { color: var(--r-cyan);
+                                 border-color: color-mix(in srgb, var(--r-cyan) 55%, transparent) }
+  @media (max-width: 1000px) {
+    .rig-fs-t { display: none }
+    .dx-rig.rig-full .rig-body { display: block; overflow: hidden }
+    .dx-rig.rig-full .rig-stage { height: 100%; flex: none }
+    /* The tool row scrolls sideways on a phone, so in focus mode the way out
+       has to leave it: a control you have to find by scrolling is not a way
+       out of a full-screen view. */
+    .dx-rig.rig-full .rig-fs {
+      position: fixed; z-index: 14;
+      top: calc(8px + env(safe-area-inset-top, 0px)); right: 10px;
+      background: color-mix(in srgb, var(--r-l2) 92%, transparent);
+      border-color: color-mix(in srgb, var(--r-cyan) 55%, transparent);
+    }
+  }
+
   .rig-body {
     flex: 1 1 auto; min-height: 0;
     display: grid; grid-template-columns: 314px minmax(0,1fr) 348px;
@@ -4081,7 +4120,7 @@
      in one is a selection in the other. Nothing here is decorative; every
      number shown was produced by the solver. ═══════════════════════════ -->
 <sc-if value="{{ isRig }}">
-<div class="dx-rig {{ themeClass }}">
+<div class="dx-rig {{ themeClass }} {{ rigFullCls }}" id="rig-root">
 
   <div class="rig-bar">
     <button class="rig-back" data-act="home" onClick="{{ rigDo }}" aria-label="Back to DISTILLEX">&larr;&nbsp;DISTILLEX</button>
@@ -4100,6 +4139,14 @@
           <button class="{{ md.cls }}" data-k="{{ md.k }}" onClick="{{ rigMode }}">{{ md.label }}</button>
         </sc-for>
       </div>
+      <button class="rig-back rig-fs" data-act="full" onClick="{{ rigDo }}"
+              title="{{ rigFullTitle }}" aria-label="{{ rigFullTitle }}" aria-pressed="{{ rigFullOn }}">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="{{ rigFullD }}" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        <span class="rig-fs-t">{{ rigFullLabel }}</span>
+      </button>
       <button class="rig-back" data-act="tour" onClick="{{ rigDo }}">Guided tour</button>
       <button class="rig-back" data-act="expert" onClick="{{ rigDo }}">{{ rigExpertLabel }}</button>
       <span class="rig-rule"></span>
@@ -4560,6 +4607,7 @@
 // @include rig/theme.js
 // @include rig/glmath.js
 // @include rig/geometry.js
+// @include rig/kit.js
 // @include rig/plant.js
 // @include rig/column3d.js
 // @include rig/crude3d.js
@@ -4735,7 +4783,7 @@ class Component extends DCLogic {
     rig:{ in:CDU.baseCase(), r:null, pre:null, status:'ready', errs:[], warns:[], stage:-1,
           sel:null, prod:null, mode:'material', view:'3d', flow:true,
           open:{ feed:true, furnace:true, column:false, products:false, adv:false },
-          expert:false, tour:-1, hist:[], dirty:false, gl3d:true },
+          expert:false, tour:-1, hist:[], dirty:false, gl3d:true, full:false },
     theme:(this.props||{}).defaultTheme||'dark',
     narrow:false, moreOpen:false, folds:{}, themeTx:false,
     custom:{a:{name:'Component A',A:6.90565,B:1211.033,C:220.79,MW:78.11,Tb:80.1,lat:30.8},

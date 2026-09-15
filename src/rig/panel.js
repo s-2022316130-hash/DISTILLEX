@@ -58,7 +58,9 @@ _rigMount() {
   THEME.set(mode);
   this._themeNow = mode;
   try {
-    this._plant = PLANT.build();
+    // The surroundings are most of the triangles and none of the process, so
+    // a small screen gets the unit and not the site it stands on.
+    this._plant = PLANT.build({ site: (window.innerWidth || 1200) >= 820 });
     gl = RIGGL.create(cv, this._plant, { maxDpr: 2, theme: mode });
   } catch (err) {
     this._glFail = (err && err.message) || 'WebGL is unavailable';
@@ -75,6 +77,49 @@ _rigMount() {
   // The instrument tags are built from the plant, which did not exist when the
   // page first rendered. One more pass, once, puts them on screen.
   this.setRig({ glReady: true });
+}
+
+/** Show the scene on its own.
+ *
+ *  Two things happen, and either can work without the other. The class lays
+ *  the page out with the rails gone and the bar floating over the stage; the
+ *  Fullscreen API asks the browser to drop its own chrome as well. The request
+ *  can be refused — an iframe without the permission, a browser that does not
+ *  do it — so the class is what is relied on and the API is a bonus.
+ *
+ *  The canvas is sized from its client box every frame, so nothing has to be
+ *  told the viewport changed. */
+rigFullToggle() {
+  const want = !this.state.rig.full;
+  this.setRig({ full: want });
+  const el = document.getElementById('rig-root');
+  try {
+    if (want) {
+      if (el && el.requestFullscreen) el.requestFullscreen().catch(() => {});
+      else if (el && el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    } else if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+  } catch (e) { /* the layout does not depend on it */ }
+  if (!this._rigFsBound) {
+    this._rigFsBound = true;
+    // Leaving fullscreen by Escape or by the browser's own control has to put
+    // the layout back, or the rails stay hidden with no way to bring them back.
+    const sync = () => {
+      const on = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      if (!on && this.state.rig.full) this.setRig({ full: false });
+    };
+    document.addEventListener('fullscreenchange', sync);
+    document.addEventListener('webkitfullscreenchange', sync);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.state.rig.full &&
+          !document.fullscreenElement && !document.webkitFullscreenElement) {
+        this.setRig({ full: false });
+      }
+    });
+  }
 }
 
 _rigUnmount() {

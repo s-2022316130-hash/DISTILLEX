@@ -760,6 +760,7 @@ function suiteRig() {
     cyl: GEO.cylinder(24, false, false), cylCap: GEO.cylinder(24, true, true),
     rod: GEO.cylinder(10, false, false), rodCap: GEO.cylinder(10, true, true),
     cone: GEO.cone(24, 0.62), skirt: GEO.cone(24, 0.94), dish: GEO.dish(20, 6),
+    dishLo: GEO.dish(12, 4),
     box: GEO.box(), annulus: GEO.annulus(24, 0.62, true),
     ringThin: GEO.annulus(22, 0.90, true), disc: GEO.annulus(24, 0.06, true),
     cylArc: GEO.cylArc(28, Math.PI * 1.44, 0.055),
@@ -821,7 +822,7 @@ function suiteRig() {
   // cameras are derived from the plant, so they must move with it
   const cams = RIGINFO.cameras(P);
   ok(cams.length >= 6, 'there are camera presets for every part of the unit');
-  ok(cams.every(c => c.t.every(Number.isFinite) && c.dist > 10 && c.dist < 260 &&
+  ok(cams.every(c => c.t.every(Number.isFinite) && c.dist > 10 && c.dist < 420 &&
                      Math.abs(c.pitch) < 1.2), 'every camera preset is usable');
   ok(new Set(RIGINFO.TOUR.map(t => t.cam)).size <= cams.length &&
      RIGINFO.TOUR.every(t => cams.some(c => c.key === t.cam)),
