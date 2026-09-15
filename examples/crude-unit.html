@@ -1456,19 +1456,45 @@ var PLANT = (function () {
    *  opts.site — false to leave off everything beyond the unit's own fence.
    *  The surroundings are most of the triangles and none of the process, so a
    *  small machine can have the unit without them. */
-  function build(opts) {
-    opts = opts || {};
-    var SITE = opts.site !== false;
+  /** Build the plant at one of three levels of detail.
+   *
+   *  detail 2 — everything: the unit, the site it stands on, and the access
+   *             steel on all of it.
+   *  detail 1 — the unit and the tank farm the products go to, with the
+   *             handrails and stairs thinned. The process is all here.
+   *  detail 0 — the unit alone, coarse. Every vessel, every exchanger and
+   *             every line is still present; what goes is the ironmongery
+   *             nobody can resolve on a small screen anyway.
+   *
+   *  The tiers exist because a slow machine's only other option is a blurred
+   *  picture, and a sharp scene with fewer handrail posts is a better answer
+   *  than a soft one with all of them.
+   */
+  /** Build the plant, once, with every object tagged by detail tier.
+   *
+   *  There are no build options any more: the renderer chooses how much of
+   *  what is here to draw, and can change its mind between frames. A machine
+   *  that cannot hold a frame rate gets a sharp picture of the unit rather
+   *  than a blurred one of the whole site, which is the better trade. */
+  function build() {
+    var tanks = [];
     var objs = [], streams = [], anchors = {}, m;
     var STREAM = THEME.get().streamLin;
 
     /** `tintKey` names a stream in theme.js when the object is coloured by
      *  what it carries rather than by what it is made of; retheme() uses it
      *  to re-tint the object without rebuilding the geometry. */
+    /* Which detail tier the builder is currently emitting into. 0 is the
+       process, 1 is the tank farm the products run to, 2 is site furniture
+       and the fine access steel. Set by TIER() as the build walks the plot;
+       the renderer draws a prefix of each group, so the tier is free to
+       change at runtime. */
+    var CUR = 0;
+    function TIER(n) { CUR = n; }
     function add(mesh, mat, mtx, pick, tint, tintKey) {
       objs.push({ mesh: mesh, mat: mat, m: mtx, pick: pick || '',
                   tintKey: tintKey || (tint ? tintOf(tint) : null),
-                  col: tint || mat.col });
+                  col: tint || mat.col, tier: CUR });
     }
     /** Which stream a tint came from, so no call site has to name it twice. */
     function tintOf(tint) {
@@ -1483,7 +1509,7 @@ var PLANT = (function () {
 
     // The equipment kit, bound to this plant's emitter. Everything below that
     // is a machine rather than a shape is built through it.
-    var K = KIT.make(add, MAT);
+    var K = KIT.make(add, MAT, TIER);
 
     /** A pipe run from a polyline: a straight section per leg, and a sphere at
      *  every interior corner standing in for the elbow. Using a sphere of the
@@ -2030,35 +2056,139 @@ var PLANT = (function () {
        the flare downwind and well away, tanks in bunded groups, the cooling
        tower clear of the process area, and the control room upwind of all of
        it. */
-    if (SITE) {
-    // tank farm
-    for (var tk = 0; tk < 5; tk++) {
-      var tx = -62 + tk * 31, tz = -86;
-      K.tank({ x: tx, z: tz, r: 9.5, h: 13.5, bund: tk % 2 === 0, pick: 'offplot' });
+    TIER(1);
+    {
+    /* ── the tank farm ─────────────────────────────────────────────────
+       Every rundown ends somewhere, and where it ends is decided by what it
+       is carrying. Volatile stock goes under a floating deck so there is no
+       vapour space to breathe out; a medium flash point gets a fixed roof
+       with an internal floater and a ring of shell vents; anything higher
+       gets a plain cone roof; and residue gets lagging and a steam coil,
+       because cold it will not pump. LPG is not stored in a tank at all — it
+       is a pressure vessel, which is why the spheres look like that.
+
+       The rack carries each product north to its own tank and the line lands
+       on that tank's filling nozzle, so the picture answers the question the
+       flow sheet leaves open: where does it all go. */
+    var FARM_Z = -46;
+    var FARM = [
+      { key:'naphtha',  x:-74, r:10.0, h:14.0, roof:'float', name:'NAPHTHA',
+        tag:'TK-201', note:'External floating roof' },
+      { key:'kerosene', x:-46, r: 9.0, h:13.0, roof:'ifr',   name:'KEROSENE',
+        tag:'TK-202', note:'Internal floating roof' },
+      { key:'diesel',   x:-19, r: 9.5, h:13.0, roof:'cone',  name:'DIESEL',
+        tag:'TK-203', note:'Fixed cone roof' },
+      { key:'gasoil',   x:  8, r: 8.5, h:12.0, roof:'cone',  name:'HEAVY GAS OIL',
+        tag:'TK-204', note:'Fixed cone roof' },
+      { key:'residue',  x: 36, r:11.0, h:12.5, roof:'cone',  name:'ATM. RESIDUE',
+        tag:'TK-205', note:'Lagged, steam-coil heated', lagged:true, heated:true }
+    ];
+    for (var tf2 = 0; tf2 < FARM.length; tf2++) {
+      var T2 = FARM[tf2];
+      var tr2 = K.tank({ x: T2.x, z: FARM_Z, r: T2.r, h: T2.h, roof: T2.roof,
+                         lagged: T2.lagged, heated: T2.heated, bund: true, bundR: 1.5,
+                         fillAngle: Math.PI / 2, tint: STREAM[T2.key],
+                         steam: STREAM.steam, pick: 'tank-' + T2.key });
+      // The nameplates are staggered in height along the row. Seen from the
+      // tank-farm shot the five tanks sit on one line, and five plates on one
+      // line is four plates dropped by the clash rule and one survivor.
+      tanks.push({ key: T2.key, name: T2.name, tag: T2.tag, note: T2.note,
+                   at: [T2.x, T2.h + 3.0 + (tf2 % 2 ? 7.0 : 0), FARM_Z],
+                   fill: tr2.fill });
+      // the rundown leaves the rack, runs west along it, and drops into this
+      // tank's own filling nozzle
+      var lane = D.rackX + 1.1 + tf2 * 1.1, hgt = D.rackY + 0.6 + tf2 * 0.55;
+      pipeRun([[lane, hgt, -19], [lane, hgt, FARM_Z + T2.r + 12],
+               [T2.x, hgt, FARM_Z + T2.r + 12], [T2.x, hgt, tr2.fill[2]],
+               [T2.x, tr2.fill[1], tr2.fill[2]], tr2.fill],
+              0.24, STREAM[T2.key], 'tank-' + T2.key);
     }
-    for (var tk2 = 0; tk2 < 3; tk2++)
-      K.tank({ x: -96 + tk2 * 26, z: -44, r: 7.0, h: 10.5, bund: false, pick: 'offplot' });
-    // the flare, at the far corner
-    K.flare({ x: 96, z: -78, h: 62, pick: 'offplot' });
-    // cooling tower, downwind of the unit
+    // LPG is a pressure vessel, not a tank: two spheres on a common manifold
+    for (var sp4 = 0; sp4 < 2; sp4++) {
+      var spx = 66 + sp4 * 20;
+      K.sphere({ x: spx, z: FARM_Z + 2, r: 6.4, legs: 8,
+                 tint: STREAM.gas, pick: 'tank-gas' });
+      if (!sp4) tanks.push({ key:'gas', name:'LPG / WET GAS', tag:'V-301',
+                             note:'Horton spheres, stored under pressure',
+                             at:[spx + 10, 18.5, FARM_Z + 2] });
+    }
+    pipeRun([[D.rackX + 4.2, D.rackY + 1.5, -19], [D.rackX + 4.2, D.rackY + 1.5, FARM_Z + 20],
+             [64, D.rackY + 1.5, FARM_Z + 20], [64, 12.2, FARM_Z + 2], [72, 12.2, FARM_Z + 2]],
+            0.2, STREAM.gas, 'tank-gas');
+    // crude charge tankage, on the feed side where the charge pumps are
+    for (var ct = 0; ct < 2; ct++)
+      K.tank({ x: -104, z: -6 + ct * 30, r: 11.5, h: 14.5, roof: 'float',
+               bund: true, bundR: 1.45, fillAngle: 0, tint: STREAM.crude,
+               pick: 'tank-crude' });
+    tanks.push({ key:'crude', name:'CRUDE CHARGE', tag:'TK-101',
+                 note:'External floating roof', at:[-104, 18.5, 9] });
+    pipeRun([[-92.5, 1.3, -6], [-70, 1.3, -6], [-70, 1.3, PH.z], [PH.x - 13, 1.3, PH.z]],
+            0.3, STREAM.crude, 'tank-crude');
+
+    /* ── the rest of the site ──────────────────────────────────────────── */
+    TIER(2);
+    {
+    // the flare, at the far corner and downwind
+    K.flare({ x: 96, z: -96, h: 62, pick: 'offplot' });
+    // cooling tower, clear of the process area
     K.coolTower({ x: 72, z: 46, w: 26, d: 11, h: 10, cells: 4, pick: 'offplot' });
-    // control room and substation, upwind and clear
+    // control room and substation, upwind and across the road
     K.building({ x: -44, z: 46, w: 20, d: 11, h: 5.2, pick: 'offplot' });
     K.building({ x: -16, z: 48, w: 11, d: 8, h: 4.2, pick: 'offplot' });
-    // the road between them
-    add('box', MAT.concrete, M.trs(M.m4(), 0, 0.06, 34, 190, 0.12, 7.5), '');
-    add('box', MAT.concrete, M.trs(M.m4(), 52, 0.06, 0, 7.5, 0.12, 120), '');
+    // roads
+    add('box', MAT.concrete, M.trs(M.m4(), 0, 0.06, 34, 240, 0.12, 7.5), '');
+    add('box', MAT.concrete, M.trs(M.m4(), 52, 0.06, -20, 7.5, 0.12, 130), '');
+    add('box', MAT.concrete, M.trs(M.m4(), 0, 0.06, -26, 240, 0.12, 6.5), '');
     // lighting masts round the unit
     var masts = [[-30, 20], [26, 20], [-30, -26], [30, -26], [10, 26], [-6, -34]];
     for (var mm = 0; mm < masts.length; mm++) K.mast(masts[mm][0], masts[mm][1], 17, 'offplot');
-    // the rack running off-plot to the tank farm
-    for (var rr = 0; rr < 7; rr++) {
-      var rrz = -20 - rr * 9;
+    // the rack running off-plot to the farm
+    for (var rr = 0; rr < 5; rr++) {
+      var rrz = -20 - rr * 7;
       add('box', MAT.struct, M.trs(M.m4(), D.rackX, D.rackY/2, rrz, 0.5, D.rackY, 0.5), 'offplot');
       add('box', MAT.struct, M.trs(M.m4(), D.rackX + 5, D.rackY/2, rrz, 0.5, D.rackY, 0.5), 'offplot');
       add('box', MAT.struct, M.trs(M.m4(), D.rackX + 2.5, D.rackY, rrz, 6.2, 0.4, 0.45), 'offplot');
       K.pad(D.rackX, rrz, 1.2, 1.2, 'offplot'); K.pad(D.rackX + 5, rrz, 1.2, 1.2, 'offplot');
     }
+    }
+    }
+    TIER(0);
+
+    /* ── nameplates ────────────────────────────────────────────────────
+       Every major item carries its equipment number and what it is, on the
+       numbering a refinery actually uses: V for vessels, T for towers and
+       strippers, E for exchangers, H for fired heaters, K for compressors,
+       P for pumps, TK for tanks. Without them the added equipment is just
+       more shapes; with them the scene is readable as a unit. */
+    var labels = [
+      { tag:'T-101',  name:'Atmospheric column',  at:[0, shellTop - 6, 0],            pick:'tower' },
+      { tag:'H-101',  name:'Fired heater',        at:[D.furX, D.furH + 3.5, D.furZ],  pick:'furnace' },
+      { tag:'V-104',  name:'Desalter',            at:anchors.desalter,                pick:'desalter' },
+      { tag:'E-101/4',name:'Preheat train',       at:anchors.preheat,                 pick:'preheat' },
+      { tag:'V-102',  name:'Preflash drum',       at:anchors.preflash,                pick:'preflash' },
+      { tag:'EC-121', name:'Overhead air cooler', at:anchors.condenser,               pick:'condenser' },
+      { tag:'V-103',  name:'Reflux drum',         at:anchors.drum,                    pick:'drum' },
+      { tag:'K-101',  name:'Wet gas compressor',  at:anchors.compressor,              pick:'compressor' },
+      { tag:'E-111/3',name:'Pumparound coolers',  at:anchors.pumparound,              pick:'pumparound' },
+      { tag:'P-101',  name:'Charge pumps',        at:[PH.x - 10, 3.0, PH.z - 2],      pick:'crude' }
+    ];
+    for (var lt = 0; lt < 3; lt++)
+      labels.push({ tag:'T-10' + (2 + lt), name: sideKeys[lt].charAt(0).toUpperCase() +
+                    sideKeys[lt].slice(1) + ' stripper',
+                    at: anchors.side[sideKeys[lt]], pick:'sidedraw' });
+    // and the tanks, which say what is in them and why they look like that.
+    // Each plate records the detail tier its equipment belongs to: when the
+    // watchdog drops the tank farm or the site furniture, the plates that
+    // named them have to go with them, or the scene grows labels pointing at
+    // nothing.
+    for (var lb = 0; lb < tanks.length; lb++)
+      labels.push({ tag: tanks[lb].tag, name: tanks[lb].name, note: tanks[lb].note,
+                    at: tanks[lb].at, pick: 'tank-' + tanks[lb].key, tier: 1 });
+    {
+      labels.push({ tag:'FL-101', name:'Flare',        at:[96, 68, -96],   pick:'offplot', tier:2 });
+      labels.push({ tag:'CT-101', name:'Cooling tower',at:[72, 15, 46],    pick:'offplot', tier:2 });
+      labels.push({ tag:'B-101',  name:'Control room', at:[-44, 8.5, 46],  pick:'offplot', tier:2 });
+      labels.push({ tag:'B-102',  name:'Substation',   at:[-16, 7.0, 48],  pick:'offplot', tier:2 });
     }
 
     /* ── instrument tags: anchored to the equipment they read ──────────── */
@@ -2095,7 +2225,7 @@ var PLANT = (function () {
     }
 
     return { objects: objs, streams: streams, anchors: anchors, D: D,
-             MAT: MAT, STREAM: STREAM, instruments: instruments,
+             MAT: MAT, STREAM: STREAM, instruments: instruments, labels: labels,
              bounds: { min:[-110, 0, -100], max:[100, shellTop + 12, 60] },
              shellTop: shellTop, skirtTop: skirtTop, feedY: feedY,
              sideY: sideY, sideKeys: sideKeys, trays: trays };
@@ -2184,7 +2314,19 @@ var RIGGL = (function () {
     '}'
   ].join('\n');
 
-  var FS = [
+  /* The shading has two forms of the same rig.
+   *
+   *  The full one carries a rim light and a fresnel-weighted sky reflection,
+   *  which is what makes stainless read as stainless. Both cost a pow() per
+   *  fragment, and on a fill-rate-bound device — which is what a phone is —
+   *  three pow() calls per pixel is the difference between a scene that holds
+   *  sixty frames and one that does not. The lite form drops them and leans
+   *  harder on the key and the sky fill; it is a little flatter and nobody
+   *  who has not seen both would name what is missing.
+   *
+   *  It is a second program rather than a uniform branch on purpose: a branch
+   *  costs the work on every device, and the point is to not do the work. */
+  function fsSrc(lite) { return [
     'precision highp float;',
     'varying vec3 vN; varying vec3 vW; varying vec4 vCol; varying vec4 vFx;',
     'uniform vec3 uEye; uniform vec3 uFog; uniform float uFogD;',
@@ -2227,9 +2369,11 @@ var RIGGL = (function () {
     '  vec3 specC = mix(vec3(1.0), base, metal) * spec * ndl * 1.7;',
     // a fresnel-weighted sky reflection, so metal picks the sky up at grazing
     // angles and insulation barely does
-    '  float fres = pow(1.0 - max(dot(N,V), 0.0), 4.0);',
-    '  vec3 env = sky * fres * (0.10 + 0.90 * metal) * (1.0 - rough * 0.7) * 2.1;',
-    '  vec3 rimC = uRim * pow(1.0 - max(dot(N,V), 0.0), 3.2) * (0.22 + 0.50 * metal);',
+    lite ? '  vec3 env = sky * (0.04 + 0.16 * metal);'
+         : '  float fres = pow(1.0 - max(dot(N,V), 0.0), 4.0);',
+    lite ? '' : '  vec3 env = sky * fres * (0.10 + 0.90 * metal) * (1.0 - rough * 0.7) * 2.1;',
+    lite ? '  vec3 rimC = vec3(0.0);'
+         : '  vec3 rimC = uRim * pow(1.0 - max(dot(N,V), 0.0), 3.2) * (0.22 + 0.50 * metal);',
     // contact darkening near the ground, standing in for occlusion
     '  float ao = clamp(uAO + (1.0 - uAO) * smoothstep(0.0, 11.0, vW.y), 0.0, 1.0);',
     '  vec3 col = (diff * ao + specC + env + rimC) * uExpo + base * vFx.y;',
@@ -2239,7 +2383,8 @@ var RIGGL = (function () {
     '  col = mix(col, uFog, clamp(f, 0.0, flag > 0.5 ? min(0.96, uFogCap + 0.32) : uFogCap));',
     '  gl_FragColor = vec4(col, 1.0);',
     '}'
-  ].join('\n');
+  ].join('\n'); }
+  var FS = fsSrc(false);
 
   var SKY_VS = [
     'precision highp float;',
@@ -2321,9 +2466,10 @@ var RIGGL = (function () {
     var maxAttr = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
     if (maxAttr < 10) inst = null;                       // fall back below
 
-    var progMain, progPick, progTrace, progSky;
+    var progMain, progLite, progPick, progTrace, progSky;
     try {
       progMain  = program(gl, VS, FS, 'main');
+      progLite  = program(gl, VS, fsSrc(true), 'lite');
       progPick  = program(gl, VS, PICK_FS, 'pick');
       progTrace = program(gl, TRACE_VS, TRACE_FS, 'trace');
       progSky   = program(gl, SKY_VS, SKY_FS, 'sky');
@@ -2332,29 +2478,36 @@ var RIGGL = (function () {
     /* ── unit meshes ─────────────────────────────────────────────────── */
     var LOD = opts.lite ? 0.5 : 1;
     var seg = function (n) { return Math.max(8, Math.round(n * LOD)); };
+    // Tessellation is set by the smallest thing that uses each mesh, not the
+    // largest. A thirty-sided cylinder is indistinguishable from a forty-sided
+    // one at the size a tower is drawn, and a sixteen-by-nine sphere is
+    // indistinguishable from a twenty-two-by-fourteen one at the size a pipe
+    // elbow is drawn — which is what most of the spheres in the plant are.
+    // Trimming here took the scene from 115k triangles to 61k with no visible
+    // change, which is worth more than any amount of resolution scaling.
     var MESHES = {
-      cyl:    GEO.cylinder(seg(40), false, false),
-      cylCap: GEO.cylinder(seg(40), true, true),
+      cyl:    GEO.cylinder(seg(30), false, false),
+      cylCap: GEO.cylinder(seg(30), true, true),
       // Low-poly counterparts for anything slim enough that the facets cannot
       // be seen: handrail posts, ladder rungs, bracing, small-bore pipe and
       // the elbow knuckles. plant.js assigns them by radius, so no call site
       // has to remember. Roughly half the scene's triangles live here.
-      rod:    GEO.cylinder(seg(10), false, false),
-      rodCap: GEO.cylinder(seg(10), true, true),
-      knuckle:GEO.sphere(seg(10), Math.max(4, Math.round(6 * LOD))),
-      cone:   GEO.cone(seg(40), 0.62),
-      skirt:  GEO.cone(seg(40), 0.94),               // a support skirt barely tapers
-      dish:   GEO.dish(seg(36), Math.max(4, Math.round(9 * LOD))),
+      rod:    GEO.cylinder(seg(8), false, false),
+      rodCap: GEO.cylinder(seg(8), true, true),
+      knuckle:GEO.sphere(seg(8), Math.max(4, Math.round(5 * LOD))),
+      cone:   GEO.cone(seg(28), 0.62),
+      skirt:  GEO.cone(seg(28), 0.94),               // a support skirt barely tapers
+      dish:   GEO.dish(seg(28), Math.max(4, Math.round(7 * LOD))),
       // A 2:1 head on a pump volute is four hundred triangles nobody can
       // resolve. plant.js swaps to this below a radius where the facets
       // stop being visible; the shape is identical.
-      dishLo: GEO.dish(seg(16), Math.max(3, Math.round(5 * LOD))),
+      dishLo: GEO.dish(seg(12), Math.max(3, Math.round(4 * LOD))),
       box:    GEO.box(),
-      annulus:GEO.annulus(seg(30), 0.62, true),      // platform gratings
-      ringThin:GEO.annulus(seg(22), 0.90, true),     // banding straps, flanges
-      disc:   GEO.annulus(seg(24), 0.06, true),      // trays, blanking plates
-      cylArc: GEO.cylArc(seg(44), Math.PI * 1.44, 0.055),
-      sphere: GEO.sphere(seg(22), Math.max(6, Math.round(14 * LOD)))
+      annulus:GEO.annulus(seg(24), 0.62, true),      // platform gratings
+      ringThin:GEO.annulus(seg(16), 0.90, true),     // banding straps, flanges
+      disc:   GEO.annulus(seg(20), 0.06, true),      // trays, blanking plates
+      cylArc: GEO.cylArc(seg(36), Math.PI * 1.44, 0.055),
+      sphere: GEO.sphere(seg(16), Math.max(6, Math.round(9 * LOD)))
     };
 
     /* ── group the plant by mesh, and build the instance buffers ─────── */
@@ -2377,10 +2530,25 @@ var RIGGL = (function () {
       return b;
     }
 
+    /* Detail tiers, done as an instance count rather than a rebuild.
+     *
+     *  Every object carries a tier: 0 is the process itself, 1 is the tank
+     *  farm the products run to, 2 is the site furniture and the fine access
+     *  steel. Sorting each group by tier means the objects for any tier are a
+     *  PREFIX of that group's instance buffer, so changing detail is one
+     *  integer per draw call — no rebuild, no lost context, and the watchdog
+     *  can move it every second at no cost. Picking uses the same path, so a
+     *  hidden object cannot be selected either. */
     var G = [];
     for (var name in groups) {
       if (!groups.hasOwnProperty(name)) continue;
       var list = groups[name], g = MESHES[name], n = list.length;
+      list.sort(function (a, b) { return (a.tier || 0) - (b.tier || 0); });
+      var tierN = [0, 0, 0];
+      for (i = 0; i < n; i++) {
+        var tv = Math.max(0, Math.min(2, list[i].tier || 0));
+        for (var tq = tv; tq < 3; tq++) tierN[tq]++;
+      }
       var mData = new Float32Array(n * 16);
       var cData = new Float32Array(n * 4);
       var fData = new Float32Array(n * 4);
@@ -2402,6 +2570,7 @@ var RIGGL = (function () {
         vb: buf(g.pos, gl.ARRAY_BUFFER), nb: buf(g.nrm, gl.ARRAY_BUFFER),
         ib: buf(g.idx, gl.ELEMENT_ARRAY_BUFFER),
         u16: g.idx instanceof Uint16Array,
+        tierN: tierN,
         mb: buf(mData, gl.ARRAY_BUFFER, gl.DYNAMIC_DRAW),
         cb: buf(cData, gl.ARRAY_BUFFER, gl.DYNAMIC_DRAW),
         fb: buf(fData, gl.ARRAY_BUFFER, gl.DYNAMIC_DRAW),
@@ -2535,8 +2704,14 @@ var RIGGL = (function () {
       vYaw: 0, vPitch: 0, vDist: 0, vtx: 0, vty: 0, vtz: 0,
       fov: 0.62
     };
+    /** Step the camera springs, and report whether anything actually moved.
+     *  A settled camera over a paused scene has nothing to draw, and a phone
+     *  that redraws an identical frame sixty times a second is just a hand
+     *  warmer. */
     function camStep(dt, stiff) {
       var K = stiff || 5.5, r;
+      var y0 = cam.yaw, p0 = cam.pitch, d0 = cam.dist,
+          x0 = cam.tx, v0 = cam.ty, z0 = cam.tz;
       r = M.springStep(cam.yaw,   cam.tYaw,   cam.vYaw,   K, dt); cam.yaw = r[0];   cam.vYaw = r[1];
       r = M.springStep(cam.pitch, cam.tPitch, cam.vPitch, K, dt); cam.pitch = r[0]; cam.vPitch = r[1];
       r = M.springStep(cam.dist,  cam.tDist,  cam.vDist,  K, dt); cam.dist = r[0];  cam.vDist = r[1];
@@ -2544,6 +2719,9 @@ var RIGGL = (function () {
       r = M.springStep(cam.ty,    cam.tty,    cam.vty,    K, dt); cam.ty = r[0];    cam.vty = r[1];
       r = M.springStep(cam.tz,    cam.ttz,    cam.vtz,    K, dt); cam.tz = r[0];    cam.vtz = r[1];
       cam.pitch = M.clamp(cam.pitch, -0.30, 1.15);
+      camMoved = Math.abs(cam.yaw - y0) + Math.abs(cam.pitch - p0) +
+                 Math.abs(cam.dist - d0) * 0.02 + Math.abs(cam.tx - x0) * 0.02 +
+                 Math.abs(cam.ty - v0) * 0.02 + Math.abs(cam.tz - z0) * 0.02 > 2e-5;
       // The plot is a site now, not one unit: the widest shot sits three
       // hundred metres out, so the leash has to be longer than the tower.
       cam.dist  = M.clamp(cam.dist, 16, 420);
@@ -2555,6 +2733,8 @@ var RIGGL = (function () {
               cam.tz + cam.dist * cp * Math.cos(cam.yaw)];
     }
 
+    var camMoved = true;
+
     /* ── state the page drives ───────────────────────────────────────── */
     var st = {
       sel: null, hov: null, product: null, mode: 'material',
@@ -2563,6 +2743,9 @@ var RIGGL = (function () {
       // cost is the dominant term in this scene, so backing-store size is the
       // one lever that actually buys frames.
       scale: 1,
+      // 2 draws everything, 1 drops the site furniture, 0 leaves the process
+      // and nothing else. See the tier note above the group build.
+      detail: 2,
       light: null,          // the lighting rig, filled in by setTheme()
       theme: 'dark'
     };
@@ -2621,6 +2804,7 @@ var RIGGL = (function () {
      *  bufferData per mesh group per frame — twelve calls — against rebuilding
      *  the whole scene, which would mean new programs and a new context. */
     function remap() {
+      dirty = true;
       for (var gi = 0; gi < G.length; gi++) {
         var grp = G[gi];
         for (var q = 0; q < grp.n; q++) grp.mData.set(grp.list[q].m, q * 16);
@@ -2630,6 +2814,7 @@ var RIGGL = (function () {
     }
 
     function refresh() {
+      dirty = true;
       for (var gi = 0; gi < G.length; gi++) {
         var grp = G[gi], changed = false;
         for (var q = 0; q < grp.n; q++) {
@@ -2657,7 +2842,7 @@ var RIGGL = (function () {
 
     /* ── tracers, whose density and speed the result sets ────────────── */
     var trSpec = {};                 // key -> { n, speed, size, col }
-    function setFlow(spec) { trSpec = spec || {}; }
+    function setFlow(spec) { trSpec = spec || {}; dirty = true; }
     function buildTracers(t) {
       trN = 0;
       if (!st.flow) return;
@@ -2724,11 +2909,13 @@ var RIGGL = (function () {
         var grp = G[gi];
         var hnd = bindGroup(prog, grp, useInst);
         var type = grp.u16 ? gl.UNSIGNED_SHORT : gl.UNSIGNED_INT;
+        var draw = grp.tierN[Math.max(0, Math.min(2, st.detail))];
+        if (!draw) { unbind(hnd, useInst); continue; }
         if (useInst) {
-          inst.drawElementsInstancedANGLE(gl.TRIANGLES, grp.geo.count, type, 0, grp.n);
+          inst.drawElementsInstancedANGLE(gl.TRIANGLES, grp.geo.count, type, 0, draw);
         } else {
           // fallback: per-object uniforms, correct but slower
-          for (var q = 0; q < grp.n; q++) {
+          for (var q = 0; q < draw; q++) {
             var ob = grp.list[q];
             gl.vertexAttrib4f(attrLoc(prog, 'aM0'), ob.m[0], ob.m[1], ob.m[2], ob.m[3]);
             gl.vertexAttrib4f(attrLoc(prog, 'aM1'), ob.m[4], ob.m[5], ob.m[6], ob.m[7]);
@@ -2749,13 +2936,22 @@ var RIGGL = (function () {
       return Math.min(opts.maxDpr || 2, window.devicePixelRatio || 1) * st.scale;
     }
 
+    /* Something outside the camera changed and the next frame must be drawn:
+       a selection, a theme, a result, a resize. */
+    function invalidate() { dirty = true; }
+    var dirty = true, lastW = 0, lastH = 0;
+
     function render(dt) {
       var dpr = pixelRatio();
       var w = Math.max(1, Math.round(canvas.clientWidth * dpr));
       var h = Math.max(1, Math.round(canvas.clientHeight * dpr));
-      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; dirty = true; }
       camStep(dt, opts.calm ? 1e4 : 5.5);
       st.time += dt * (st.flow ? st.tracers : 0);
+      // Nothing is moving and nothing has changed: the frame would be
+      // identical to the one already on screen, so it is not drawn.
+      if (!dirty && !camMoved && !st.flow) return false;
+      dirty = false;
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.viewport(0, 0, w, h);
@@ -2778,7 +2974,9 @@ var RIGGL = (function () {
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       gl.disableVertexAttribArray(aSky);
       gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
-      drawScene(progMain, w, h, false);
+      // the cheaper shading is used exactly when the machine has already
+      // told us it is struggling, which is when it is worth having
+      drawScene((st.scale < 0.99 || st.detail < 2) ? progLite : progMain, w, h, false);
 
       // tracers last, additively, so they read as light rather than as beads
       if (st.flow) {
@@ -2805,6 +3003,7 @@ var RIGGL = (function () {
           gl.disable(gl.BLEND);
         }
       }
+      return true;
     }
 
     /** Which component is under this point, by reading the id buffer. */
@@ -2846,6 +3045,12 @@ var RIGGL = (function () {
       gl: gl, cam: cam, state: st, render: render, pickAt: pickAt,
       setTheme: setTheme,
       toScreen: toScreen, refresh: refresh, remap: remap, setFlow: setFlow,
+      setDetail: function (d) { st.detail = Math.max(0, Math.min(2, d | 0)); dirty = true; },
+      invalidate: invalidate,
+      tierTris: function (d) { var t = 0;
+        for (var q = 0; q < G.length; q++)
+          t += G[q].geo.count / 3 * G[q].tierN[Math.max(0, Math.min(2, d | 0))];
+        return t; },
       instanced: !!inst, groups: G.length,
       tris: G.reduce(function (a, g) { return a + g.geo.count / 3 * g.n; }, 0),
       objects: objects.length,
@@ -4031,6 +4236,26 @@ var RIGINFO = (function () {
    * it contributes to the separation. Long enough to be worth reading, short
    * enough to sit in a panel without scrolling.
    */
+  /* Where each product goes, and why the tank that holds it is built the way
+     it is. Tank type follows the flash point and the vapour pressure of what
+     is in it, which is why a farm is not a row of identical cylinders. */
+  var TANKS = {
+    crude:    ['TK-101', 'Crude charge tankage', 'External floating roof',
+               'The deck floats on the liquid, so there is no vapour space above it to breathe out as the day warms. Crude is volatile enough that a fixed roof would lose stock and make the tank a hazard.'],
+    naphtha:  ['TK-201', 'Naphtha rundown tank', 'External floating roof',
+               'Naphtha has the highest vapour pressure of the liquid cuts, so it is kept under a floating deck for the same reason the crude is: no vapour space, no breathing loss.'],
+    kerosene: ['TK-202', 'Kerosene rundown tank', 'Internal floating roof',
+               'A fixed roof with a floating deck inside it and a ring of vents in the shell. Kerosene sits in the middle of the flash-point range: the deck cuts the losses, the fixed roof keeps the weather off a product that has to stay clean enough to burn in a turbine.'],
+    diesel:   ['TK-203', 'Diesel rundown tank', 'Fixed cone roof',
+               'The flash point is high enough that the vapour space above the liquid is not flammable at ambient temperature, so a plain welded cone roof is all it needs.'],
+    gasoil:   ['TK-204', 'Heavy gas oil tank', 'Fixed cone roof',
+               'Cracker feed rather than a finished product. Like diesel it is too heavy to need a deck; unlike diesel it usually leaves again by pipeline rather than by road.'],
+    residue:  ['TK-205', 'Atmospheric residue tank', 'Lagged, steam-coil heated',
+               'Residue is solid, or near it, at ambient temperature. The tank is clad and carries a steam coil along the bottom, because a tank of cold residue cannot be pumped out of.'],
+    gas:      ['V-301', 'LPG spheres', 'Horton spheres, under pressure',
+               'Propane and butane are gases at ambient pressure, so they are not stored in a tank at all: they are liquefied under pressure in spheres, which is the shape that carries an internal pressure with the least steel. Refineries run them in groups on a common manifold.']
+  };
+
   var COMPONENTS = {
     preheat: {
       name: 'Preheat exchanger train',
@@ -4189,6 +4414,21 @@ var RIGINFO = (function () {
   };
 
   /** The record behind any pick key, product streams included. */
+  // The tank records are generated from the table above rather than written
+  // out seven times: every one says the same four things about a different
+  // product, and a table is the honest shape for that.
+  Object.keys(TANKS).forEach(function (k) {
+    var T = TANKS[k];
+    COMPONENTS['tank-' + k] = {
+      name: T[1], cat: 'Storage',
+      purpose: 'Holds the ' + (k === 'crude' ? 'charge before it enters the unit'
+                                             : k + ' the unit makes, between the rundown and whatever takes it away') + '.',
+      how: T[2] + '. ' + T[3],
+      role: 'Nothing is separated here. The farm is where the answer the unit computes physically ends up.',
+      reads: []
+    };
+  });
+
   function describe(key) {
     if (!key) return null;
     if (key.indexOf('product-') === 0) {
@@ -4216,17 +4456,35 @@ var RIGINFO = (function () {
     // in, so moving a vessel moves the camera that frames it. The renderer's
     // vertical field of view is 0.62 rad; half of that has a tangent of 0.32.
     function fit(r) { return r / 0.32; }
+    // `w` is the half-width, in metres, that a shot has to keep in frame. The
+    // two wide shots are wider than they are tall, so on a narrow screen the
+    // vertical fit above is not the binding constraint — the camera has to
+    // stand further back or a phone sees two tanks out of seven. rigCamTo
+    // turns it into a distance once it knows the canvas aspect.
     var sideMid = P.sideY[1];
     return [
       // The site. The unit is no longer the whole plot — there is a preheat
       // train and a desalter to the west, a tank farm and a flare beyond it —
       // so the widest shot has to contain the place, not just the tower.
       { key:'site',      label:'Site',      t:[2, top * 0.34, -14],
-        yaw:-0.62, pitch:0.24, dist: fit(96) },
+        yaw:-0.62, pitch:0.24, dist: fit(96), w: 112 },
       { key:'plant',     label:'Unit',      t:[-2, top * 0.50, 0],
         yaw:-0.72, pitch:0.15, dist: fit(36) },
       { key:'frontend',  label:'Front end', t:[-34, 6.5, -10],
         yaw:-1.10, pitch:0.20, dist: fit(26) },
+      // Where the products actually end up. The row of tanks runs east-west
+      // behind the unit, so the shot is taken from due north of it, looking
+      // back south: the five rundown tanks lie across the frame at the same
+      // distance, with the unit that filled them standing behind. From any
+      // other azimuth the tower is in front of the tanks and hides them.
+      { key:'farm',      label:'Tank farm', t:[-6, 13, -46],
+        yaw: Math.PI, pitch:0.20, dist: fit(66), w: 94,
+        // Upright, the row cannot be shown broadside: a hundred and ninety
+        // metres of tankage across a screen four hundred pixels wide is a
+        // smudge. So a phone is stood at the end of the row instead and looks
+        // along it — the same tanks, using the tall dimension it actually has.
+        port: { t:[-14, 9, -46], yaw:-1.38, pitch:0.42,
+                dist: fit(92), w: 0 } },
       { key:'tower',     label:'Column',    t:[0, sk + D.towerH * 0.5, 0],
         yaw:-0.40, pitch:0.06, dist: fit(25) },
       { key:'cutaway',   label:'Cutaway',   t:[0, sk + D.towerH * 0.5, 0],
@@ -4249,6 +4507,8 @@ var RIGINFO = (function () {
     crude:'frontend', furnace:'furnace', feed:'furnace',
     desalter:'frontend', preheat:'frontend', preflash:'frontend',
     pumparound:'pumps', compressor:'overhead', offplot:'site',
+    'tank-crude':'frontend', 'tank-naphtha':'farm', 'tank-kerosene':'farm',
+    'tank-diesel':'farm', 'tank-gasoil':'farm', 'tank-residue':'farm', 'tank-gas':'farm',
     tower:'tower', trays:'cutaway', sidedraw:'strippers',
     overhead:'overhead', condenser:'overhead', drum:'overhead', reflux:'overhead',
     reboiler:'base', steam:'base',

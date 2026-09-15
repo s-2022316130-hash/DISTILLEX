@@ -52,7 +52,19 @@ var RIGGL = (function () {
     '}'
   ].join('\n');
 
-  var FS = [
+  /* The shading has two forms of the same rig.
+   *
+   *  The full one carries a rim light and a fresnel-weighted sky reflection,
+   *  which is what makes stainless read as stainless. Both cost a pow() per
+   *  fragment, and on a fill-rate-bound device — which is what a phone is —
+   *  three pow() calls per pixel is the difference between a scene that holds
+   *  sixty frames and one that does not. The lite form drops them and leans
+   *  harder on the key and the sky fill; it is a little flatter and nobody
+   *  who has not seen both would name what is missing.
+   *
+   *  It is a second program rather than a uniform branch on purpose: a branch
+   *  costs the work on every device, and the point is to not do the work. */
+  function fsSrc(lite) { return [
     'precision highp float;',
     'varying vec3 vN; varying vec3 vW; varying vec4 vCol; varying vec4 vFx;',
     'uniform vec3 uEye; uniform vec3 uFog; uniform float uFogD;',
@@ -95,9 +107,11 @@ var RIGGL = (function () {
     '  vec3 specC = mix(vec3(1.0), base, metal) * spec * ndl * 1.7;',
     // a fresnel-weighted sky reflection, so metal picks the sky up at grazing
     // angles and insulation barely does
-    '  float fres = pow(1.0 - max(dot(N,V), 0.0), 4.0);',
-    '  vec3 env = sky * fres * (0.10 + 0.90 * metal) * (1.0 - rough * 0.7) * 2.1;',
-    '  vec3 rimC = uRim * pow(1.0 - max(dot(N,V), 0.0), 3.2) * (0.22 + 0.50 * metal);',
+    lite ? '  vec3 env = sky * (0.04 + 0.16 * metal);'
+         : '  float fres = pow(1.0 - max(dot(N,V), 0.0), 4.0);',
+    lite ? '' : '  vec3 env = sky * fres * (0.10 + 0.90 * metal) * (1.0 - rough * 0.7) * 2.1;',
+    lite ? '  vec3 rimC = vec3(0.0);'
+         : '  vec3 rimC = uRim * pow(1.0 - max(dot(N,V), 0.0), 3.2) * (0.22 + 0.50 * metal);',
     // contact darkening near the ground, standing in for occlusion
     '  float ao = clamp(uAO + (1.0 - uAO) * smoothstep(0.0, 11.0, vW.y), 0.0, 1.0);',
     '  vec3 col = (diff * ao + specC + env + rimC) * uExpo + base * vFx.y;',
@@ -107,7 +121,8 @@ var RIGGL = (function () {
     '  col = mix(col, uFog, clamp(f, 0.0, flag > 0.5 ? min(0.96, uFogCap + 0.32) : uFogCap));',
     '  gl_FragColor = vec4(col, 1.0);',
     '}'
-  ].join('\n');
+  ].join('\n'); }
+  var FS = fsSrc(false);
 
   var SKY_VS = [
     'precision highp float;',
@@ -189,9 +204,10 @@ var RIGGL = (function () {
     var maxAttr = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
     if (maxAttr < 10) inst = null;                       // fall back below
 
-    var progMain, progPick, progTrace, progSky;
+    var progMain, progLite, progPick, progTrace, progSky;
     try {
       progMain  = program(gl, VS, FS, 'main');
+      progLite  = program(gl, VS, fsSrc(true), 'lite');
       progPick  = program(gl, VS, PICK_FS, 'pick');
       progTrace = program(gl, TRACE_VS, TRACE_FS, 'trace');
       progSky   = program(gl, SKY_VS, SKY_FS, 'sky');
@@ -200,29 +216,36 @@ var RIGGL = (function () {
     /* ── unit meshes ─────────────────────────────────────────────────── */
     var LOD = opts.lite ? 0.5 : 1;
     var seg = function (n) { return Math.max(8, Math.round(n * LOD)); };
+    // Tessellation is set by the smallest thing that uses each mesh, not the
+    // largest. A thirty-sided cylinder is indistinguishable from a forty-sided
+    // one at the size a tower is drawn, and a sixteen-by-nine sphere is
+    // indistinguishable from a twenty-two-by-fourteen one at the size a pipe
+    // elbow is drawn — which is what most of the spheres in the plant are.
+    // Trimming here took the scene from 115k triangles to 61k with no visible
+    // change, which is worth more than any amount of resolution scaling.
     var MESHES = {
-      cyl:    GEO.cylinder(seg(40), false, false),
-      cylCap: GEO.cylinder(seg(40), true, true),
+      cyl:    GEO.cylinder(seg(30), false, false),
+      cylCap: GEO.cylinder(seg(30), true, true),
       // Low-poly counterparts for anything slim enough that the facets cannot
       // be seen: handrail posts, ladder rungs, bracing, small-bore pipe and
       // the elbow knuckles. plant.js assigns them by radius, so no call site
       // has to remember. Roughly half the scene's triangles live here.
-      rod:    GEO.cylinder(seg(10), false, false),
-      rodCap: GEO.cylinder(seg(10), true, true),
-      knuckle:GEO.sphere(seg(10), Math.max(4, Math.round(6 * LOD))),
-      cone:   GEO.cone(seg(40), 0.62),
-      skirt:  GEO.cone(seg(40), 0.94),               // a support skirt barely tapers
-      dish:   GEO.dish(seg(36), Math.max(4, Math.round(9 * LOD))),
+      rod:    GEO.cylinder(seg(8), false, false),
+      rodCap: GEO.cylinder(seg(8), true, true),
+      knuckle:GEO.sphere(seg(8), Math.max(4, Math.round(5 * LOD))),
+      cone:   GEO.cone(seg(28), 0.62),
+      skirt:  GEO.cone(seg(28), 0.94),               // a support skirt barely tapers
+      dish:   GEO.dish(seg(28), Math.max(4, Math.round(7 * LOD))),
       // A 2:1 head on a pump volute is four hundred triangles nobody can
       // resolve. plant.js swaps to this below a radius where the facets
       // stop being visible; the shape is identical.
-      dishLo: GEO.dish(seg(16), Math.max(3, Math.round(5 * LOD))),
+      dishLo: GEO.dish(seg(12), Math.max(3, Math.round(4 * LOD))),
       box:    GEO.box(),
-      annulus:GEO.annulus(seg(30), 0.62, true),      // platform gratings
-      ringThin:GEO.annulus(seg(22), 0.90, true),     // banding straps, flanges
-      disc:   GEO.annulus(seg(24), 0.06, true),      // trays, blanking plates
-      cylArc: GEO.cylArc(seg(44), Math.PI * 1.44, 0.055),
-      sphere: GEO.sphere(seg(22), Math.max(6, Math.round(14 * LOD)))
+      annulus:GEO.annulus(seg(24), 0.62, true),      // platform gratings
+      ringThin:GEO.annulus(seg(16), 0.90, true),     // banding straps, flanges
+      disc:   GEO.annulus(seg(20), 0.06, true),      // trays, blanking plates
+      cylArc: GEO.cylArc(seg(36), Math.PI * 1.44, 0.055),
+      sphere: GEO.sphere(seg(16), Math.max(6, Math.round(9 * LOD)))
     };
 
     /* ── group the plant by mesh, and build the instance buffers ─────── */
@@ -245,10 +268,25 @@ var RIGGL = (function () {
       return b;
     }
 
+    /* Detail tiers, done as an instance count rather than a rebuild.
+     *
+     *  Every object carries a tier: 0 is the process itself, 1 is the tank
+     *  farm the products run to, 2 is the site furniture and the fine access
+     *  steel. Sorting each group by tier means the objects for any tier are a
+     *  PREFIX of that group's instance buffer, so changing detail is one
+     *  integer per draw call — no rebuild, no lost context, and the watchdog
+     *  can move it every second at no cost. Picking uses the same path, so a
+     *  hidden object cannot be selected either. */
     var G = [];
     for (var name in groups) {
       if (!groups.hasOwnProperty(name)) continue;
       var list = groups[name], g = MESHES[name], n = list.length;
+      list.sort(function (a, b) { return (a.tier || 0) - (b.tier || 0); });
+      var tierN = [0, 0, 0];
+      for (i = 0; i < n; i++) {
+        var tv = Math.max(0, Math.min(2, list[i].tier || 0));
+        for (var tq = tv; tq < 3; tq++) tierN[tq]++;
+      }
       var mData = new Float32Array(n * 16);
       var cData = new Float32Array(n * 4);
       var fData = new Float32Array(n * 4);
@@ -270,6 +308,7 @@ var RIGGL = (function () {
         vb: buf(g.pos, gl.ARRAY_BUFFER), nb: buf(g.nrm, gl.ARRAY_BUFFER),
         ib: buf(g.idx, gl.ELEMENT_ARRAY_BUFFER),
         u16: g.idx instanceof Uint16Array,
+        tierN: tierN,
         mb: buf(mData, gl.ARRAY_BUFFER, gl.DYNAMIC_DRAW),
         cb: buf(cData, gl.ARRAY_BUFFER, gl.DYNAMIC_DRAW),
         fb: buf(fData, gl.ARRAY_BUFFER, gl.DYNAMIC_DRAW),
@@ -403,8 +442,14 @@ var RIGGL = (function () {
       vYaw: 0, vPitch: 0, vDist: 0, vtx: 0, vty: 0, vtz: 0,
       fov: 0.62
     };
+    /** Step the camera springs, and report whether anything actually moved.
+     *  A settled camera over a paused scene has nothing to draw, and a phone
+     *  that redraws an identical frame sixty times a second is just a hand
+     *  warmer. */
     function camStep(dt, stiff) {
       var K = stiff || 5.5, r;
+      var y0 = cam.yaw, p0 = cam.pitch, d0 = cam.dist,
+          x0 = cam.tx, v0 = cam.ty, z0 = cam.tz;
       r = M.springStep(cam.yaw,   cam.tYaw,   cam.vYaw,   K, dt); cam.yaw = r[0];   cam.vYaw = r[1];
       r = M.springStep(cam.pitch, cam.tPitch, cam.vPitch, K, dt); cam.pitch = r[0]; cam.vPitch = r[1];
       r = M.springStep(cam.dist,  cam.tDist,  cam.vDist,  K, dt); cam.dist = r[0];  cam.vDist = r[1];
@@ -412,6 +457,9 @@ var RIGGL = (function () {
       r = M.springStep(cam.ty,    cam.tty,    cam.vty,    K, dt); cam.ty = r[0];    cam.vty = r[1];
       r = M.springStep(cam.tz,    cam.ttz,    cam.vtz,    K, dt); cam.tz = r[0];    cam.vtz = r[1];
       cam.pitch = M.clamp(cam.pitch, -0.30, 1.15);
+      camMoved = Math.abs(cam.yaw - y0) + Math.abs(cam.pitch - p0) +
+                 Math.abs(cam.dist - d0) * 0.02 + Math.abs(cam.tx - x0) * 0.02 +
+                 Math.abs(cam.ty - v0) * 0.02 + Math.abs(cam.tz - z0) * 0.02 > 2e-5;
       // The plot is a site now, not one unit: the widest shot sits three
       // hundred metres out, so the leash has to be longer than the tower.
       cam.dist  = M.clamp(cam.dist, 16, 420);
@@ -423,6 +471,8 @@ var RIGGL = (function () {
               cam.tz + cam.dist * cp * Math.cos(cam.yaw)];
     }
 
+    var camMoved = true;
+
     /* ── state the page drives ───────────────────────────────────────── */
     var st = {
       sel: null, hov: null, product: null, mode: 'material',
@@ -431,6 +481,9 @@ var RIGGL = (function () {
       // cost is the dominant term in this scene, so backing-store size is the
       // one lever that actually buys frames.
       scale: 1,
+      // 2 draws everything, 1 drops the site furniture, 0 leaves the process
+      // and nothing else. See the tier note above the group build.
+      detail: 2,
       light: null,          // the lighting rig, filled in by setTheme()
       theme: 'dark'
     };
@@ -489,6 +542,7 @@ var RIGGL = (function () {
      *  bufferData per mesh group per frame — twelve calls — against rebuilding
      *  the whole scene, which would mean new programs and a new context. */
     function remap() {
+      dirty = true;
       for (var gi = 0; gi < G.length; gi++) {
         var grp = G[gi];
         for (var q = 0; q < grp.n; q++) grp.mData.set(grp.list[q].m, q * 16);
@@ -498,6 +552,7 @@ var RIGGL = (function () {
     }
 
     function refresh() {
+      dirty = true;
       for (var gi = 0; gi < G.length; gi++) {
         var grp = G[gi], changed = false;
         for (var q = 0; q < grp.n; q++) {
@@ -525,7 +580,7 @@ var RIGGL = (function () {
 
     /* ── tracers, whose density and speed the result sets ────────────── */
     var trSpec = {};                 // key -> { n, speed, size, col }
-    function setFlow(spec) { trSpec = spec || {}; }
+    function setFlow(spec) { trSpec = spec || {}; dirty = true; }
     function buildTracers(t) {
       trN = 0;
       if (!st.flow) return;
@@ -592,11 +647,13 @@ var RIGGL = (function () {
         var grp = G[gi];
         var hnd = bindGroup(prog, grp, useInst);
         var type = grp.u16 ? gl.UNSIGNED_SHORT : gl.UNSIGNED_INT;
+        var draw = grp.tierN[Math.max(0, Math.min(2, st.detail))];
+        if (!draw) { unbind(hnd, useInst); continue; }
         if (useInst) {
-          inst.drawElementsInstancedANGLE(gl.TRIANGLES, grp.geo.count, type, 0, grp.n);
+          inst.drawElementsInstancedANGLE(gl.TRIANGLES, grp.geo.count, type, 0, draw);
         } else {
           // fallback: per-object uniforms, correct but slower
-          for (var q = 0; q < grp.n; q++) {
+          for (var q = 0; q < draw; q++) {
             var ob = grp.list[q];
             gl.vertexAttrib4f(attrLoc(prog, 'aM0'), ob.m[0], ob.m[1], ob.m[2], ob.m[3]);
             gl.vertexAttrib4f(attrLoc(prog, 'aM1'), ob.m[4], ob.m[5], ob.m[6], ob.m[7]);
@@ -617,13 +674,22 @@ var RIGGL = (function () {
       return Math.min(opts.maxDpr || 2, window.devicePixelRatio || 1) * st.scale;
     }
 
+    /* Something outside the camera changed and the next frame must be drawn:
+       a selection, a theme, a result, a resize. */
+    function invalidate() { dirty = true; }
+    var dirty = true, lastW = 0, lastH = 0;
+
     function render(dt) {
       var dpr = pixelRatio();
       var w = Math.max(1, Math.round(canvas.clientWidth * dpr));
       var h = Math.max(1, Math.round(canvas.clientHeight * dpr));
-      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; dirty = true; }
       camStep(dt, opts.calm ? 1e4 : 5.5);
       st.time += dt * (st.flow ? st.tracers : 0);
+      // Nothing is moving and nothing has changed: the frame would be
+      // identical to the one already on screen, so it is not drawn.
+      if (!dirty && !camMoved && !st.flow) return false;
+      dirty = false;
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.viewport(0, 0, w, h);
@@ -646,7 +712,9 @@ var RIGGL = (function () {
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       gl.disableVertexAttribArray(aSky);
       gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
-      drawScene(progMain, w, h, false);
+      // the cheaper shading is used exactly when the machine has already
+      // told us it is struggling, which is when it is worth having
+      drawScene((st.scale < 0.99 || st.detail < 2) ? progLite : progMain, w, h, false);
 
       // tracers last, additively, so they read as light rather than as beads
       if (st.flow) {
@@ -673,6 +741,7 @@ var RIGGL = (function () {
           gl.disable(gl.BLEND);
         }
       }
+      return true;
     }
 
     /** Which component is under this point, by reading the id buffer. */
@@ -714,6 +783,12 @@ var RIGGL = (function () {
       gl: gl, cam: cam, state: st, render: render, pickAt: pickAt,
       setTheme: setTheme,
       toScreen: toScreen, refresh: refresh, remap: remap, setFlow: setFlow,
+      setDetail: function (d) { st.detail = Math.max(0, Math.min(2, d | 0)); dirty = true; },
+      invalidate: invalidate,
+      tierTris: function (d) { var t = 0;
+        for (var q = 0; q < G.length; q++)
+          t += G[q].geo.count / 3 * G[q].tierN[Math.max(0, Math.min(2, d | 0))];
+        return t; },
       instanced: !!inst, groups: G.length,
       tris: G.reduce(function (a, g) { return a + g.geo.count / 3 * g.n; }, 0),
       objects: objects.length,

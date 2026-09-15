@@ -90,19 +90,45 @@ var PLANT = (function () {
    *  opts.site — false to leave off everything beyond the unit's own fence.
    *  The surroundings are most of the triangles and none of the process, so a
    *  small machine can have the unit without them. */
-  function build(opts) {
-    opts = opts || {};
-    var SITE = opts.site !== false;
+  /** Build the plant at one of three levels of detail.
+   *
+   *  detail 2 — everything: the unit, the site it stands on, and the access
+   *             steel on all of it.
+   *  detail 1 — the unit and the tank farm the products go to, with the
+   *             handrails and stairs thinned. The process is all here.
+   *  detail 0 — the unit alone, coarse. Every vessel, every exchanger and
+   *             every line is still present; what goes is the ironmongery
+   *             nobody can resolve on a small screen anyway.
+   *
+   *  The tiers exist because a slow machine's only other option is a blurred
+   *  picture, and a sharp scene with fewer handrail posts is a better answer
+   *  than a soft one with all of them.
+   */
+  /** Build the plant, once, with every object tagged by detail tier.
+   *
+   *  There are no build options any more: the renderer chooses how much of
+   *  what is here to draw, and can change its mind between frames. A machine
+   *  that cannot hold a frame rate gets a sharp picture of the unit rather
+   *  than a blurred one of the whole site, which is the better trade. */
+  function build() {
+    var tanks = [];
     var objs = [], streams = [], anchors = {}, m;
     var STREAM = THEME.get().streamLin;
 
     /** `tintKey` names a stream in theme.js when the object is coloured by
      *  what it carries rather than by what it is made of; retheme() uses it
      *  to re-tint the object without rebuilding the geometry. */
+    /* Which detail tier the builder is currently emitting into. 0 is the
+       process, 1 is the tank farm the products run to, 2 is site furniture
+       and the fine access steel. Set by TIER() as the build walks the plot;
+       the renderer draws a prefix of each group, so the tier is free to
+       change at runtime. */
+    var CUR = 0;
+    function TIER(n) { CUR = n; }
     function add(mesh, mat, mtx, pick, tint, tintKey) {
       objs.push({ mesh: mesh, mat: mat, m: mtx, pick: pick || '',
                   tintKey: tintKey || (tint ? tintOf(tint) : null),
-                  col: tint || mat.col });
+                  col: tint || mat.col, tier: CUR });
     }
     /** Which stream a tint came from, so no call site has to name it twice. */
     function tintOf(tint) {
@@ -117,7 +143,7 @@ var PLANT = (function () {
 
     // The equipment kit, bound to this plant's emitter. Everything below that
     // is a machine rather than a shape is built through it.
-    var K = KIT.make(add, MAT);
+    var K = KIT.make(add, MAT, TIER);
 
     /** A pipe run from a polyline: a straight section per leg, and a sphere at
      *  every interior corner standing in for the elbow. Using a sphere of the
@@ -664,35 +690,139 @@ var PLANT = (function () {
        the flare downwind and well away, tanks in bunded groups, the cooling
        tower clear of the process area, and the control room upwind of all of
        it. */
-    if (SITE) {
-    // tank farm
-    for (var tk = 0; tk < 5; tk++) {
-      var tx = -62 + tk * 31, tz = -86;
-      K.tank({ x: tx, z: tz, r: 9.5, h: 13.5, bund: tk % 2 === 0, pick: 'offplot' });
+    TIER(1);
+    {
+    /* ── the tank farm ─────────────────────────────────────────────────
+       Every rundown ends somewhere, and where it ends is decided by what it
+       is carrying. Volatile stock goes under a floating deck so there is no
+       vapour space to breathe out; a medium flash point gets a fixed roof
+       with an internal floater and a ring of shell vents; anything higher
+       gets a plain cone roof; and residue gets lagging and a steam coil,
+       because cold it will not pump. LPG is not stored in a tank at all — it
+       is a pressure vessel, which is why the spheres look like that.
+
+       The rack carries each product north to its own tank and the line lands
+       on that tank's filling nozzle, so the picture answers the question the
+       flow sheet leaves open: where does it all go. */
+    var FARM_Z = -46;
+    var FARM = [
+      { key:'naphtha',  x:-74, r:10.0, h:14.0, roof:'float', name:'NAPHTHA',
+        tag:'TK-201', note:'External floating roof' },
+      { key:'kerosene', x:-46, r: 9.0, h:13.0, roof:'ifr',   name:'KEROSENE',
+        tag:'TK-202', note:'Internal floating roof' },
+      { key:'diesel',   x:-19, r: 9.5, h:13.0, roof:'cone',  name:'DIESEL',
+        tag:'TK-203', note:'Fixed cone roof' },
+      { key:'gasoil',   x:  8, r: 8.5, h:12.0, roof:'cone',  name:'HEAVY GAS OIL',
+        tag:'TK-204', note:'Fixed cone roof' },
+      { key:'residue',  x: 36, r:11.0, h:12.5, roof:'cone',  name:'ATM. RESIDUE',
+        tag:'TK-205', note:'Lagged, steam-coil heated', lagged:true, heated:true }
+    ];
+    for (var tf2 = 0; tf2 < FARM.length; tf2++) {
+      var T2 = FARM[tf2];
+      var tr2 = K.tank({ x: T2.x, z: FARM_Z, r: T2.r, h: T2.h, roof: T2.roof,
+                         lagged: T2.lagged, heated: T2.heated, bund: true, bundR: 1.5,
+                         fillAngle: Math.PI / 2, tint: STREAM[T2.key],
+                         steam: STREAM.steam, pick: 'tank-' + T2.key });
+      // The nameplates are staggered in height along the row. Seen from the
+      // tank-farm shot the five tanks sit on one line, and five plates on one
+      // line is four plates dropped by the clash rule and one survivor.
+      tanks.push({ key: T2.key, name: T2.name, tag: T2.tag, note: T2.note,
+                   at: [T2.x, T2.h + 3.0 + (tf2 % 2 ? 7.0 : 0), FARM_Z],
+                   fill: tr2.fill });
+      // the rundown leaves the rack, runs west along it, and drops into this
+      // tank's own filling nozzle
+      var lane = D.rackX + 1.1 + tf2 * 1.1, hgt = D.rackY + 0.6 + tf2 * 0.55;
+      pipeRun([[lane, hgt, -19], [lane, hgt, FARM_Z + T2.r + 12],
+               [T2.x, hgt, FARM_Z + T2.r + 12], [T2.x, hgt, tr2.fill[2]],
+               [T2.x, tr2.fill[1], tr2.fill[2]], tr2.fill],
+              0.24, STREAM[T2.key], 'tank-' + T2.key);
     }
-    for (var tk2 = 0; tk2 < 3; tk2++)
-      K.tank({ x: -96 + tk2 * 26, z: -44, r: 7.0, h: 10.5, bund: false, pick: 'offplot' });
-    // the flare, at the far corner
-    K.flare({ x: 96, z: -78, h: 62, pick: 'offplot' });
-    // cooling tower, downwind of the unit
+    // LPG is a pressure vessel, not a tank: two spheres on a common manifold
+    for (var sp4 = 0; sp4 < 2; sp4++) {
+      var spx = 66 + sp4 * 20;
+      K.sphere({ x: spx, z: FARM_Z + 2, r: 6.4, legs: 8,
+                 tint: STREAM.gas, pick: 'tank-gas' });
+      if (!sp4) tanks.push({ key:'gas', name:'LPG / WET GAS', tag:'V-301',
+                             note:'Horton spheres, stored under pressure',
+                             at:[spx + 10, 18.5, FARM_Z + 2] });
+    }
+    pipeRun([[D.rackX + 4.2, D.rackY + 1.5, -19], [D.rackX + 4.2, D.rackY + 1.5, FARM_Z + 20],
+             [64, D.rackY + 1.5, FARM_Z + 20], [64, 12.2, FARM_Z + 2], [72, 12.2, FARM_Z + 2]],
+            0.2, STREAM.gas, 'tank-gas');
+    // crude charge tankage, on the feed side where the charge pumps are
+    for (var ct = 0; ct < 2; ct++)
+      K.tank({ x: -104, z: -6 + ct * 30, r: 11.5, h: 14.5, roof: 'float',
+               bund: true, bundR: 1.45, fillAngle: 0, tint: STREAM.crude,
+               pick: 'tank-crude' });
+    tanks.push({ key:'crude', name:'CRUDE CHARGE', tag:'TK-101',
+                 note:'External floating roof', at:[-104, 18.5, 9] });
+    pipeRun([[-92.5, 1.3, -6], [-70, 1.3, -6], [-70, 1.3, PH.z], [PH.x - 13, 1.3, PH.z]],
+            0.3, STREAM.crude, 'tank-crude');
+
+    /* ── the rest of the site ──────────────────────────────────────────── */
+    TIER(2);
+    {
+    // the flare, at the far corner and downwind
+    K.flare({ x: 96, z: -96, h: 62, pick: 'offplot' });
+    // cooling tower, clear of the process area
     K.coolTower({ x: 72, z: 46, w: 26, d: 11, h: 10, cells: 4, pick: 'offplot' });
-    // control room and substation, upwind and clear
+    // control room and substation, upwind and across the road
     K.building({ x: -44, z: 46, w: 20, d: 11, h: 5.2, pick: 'offplot' });
     K.building({ x: -16, z: 48, w: 11, d: 8, h: 4.2, pick: 'offplot' });
-    // the road between them
-    add('box', MAT.concrete, M.trs(M.m4(), 0, 0.06, 34, 190, 0.12, 7.5), '');
-    add('box', MAT.concrete, M.trs(M.m4(), 52, 0.06, 0, 7.5, 0.12, 120), '');
+    // roads
+    add('box', MAT.concrete, M.trs(M.m4(), 0, 0.06, 34, 240, 0.12, 7.5), '');
+    add('box', MAT.concrete, M.trs(M.m4(), 52, 0.06, -20, 7.5, 0.12, 130), '');
+    add('box', MAT.concrete, M.trs(M.m4(), 0, 0.06, -26, 240, 0.12, 6.5), '');
     // lighting masts round the unit
     var masts = [[-30, 20], [26, 20], [-30, -26], [30, -26], [10, 26], [-6, -34]];
     for (var mm = 0; mm < masts.length; mm++) K.mast(masts[mm][0], masts[mm][1], 17, 'offplot');
-    // the rack running off-plot to the tank farm
-    for (var rr = 0; rr < 7; rr++) {
-      var rrz = -20 - rr * 9;
+    // the rack running off-plot to the farm
+    for (var rr = 0; rr < 5; rr++) {
+      var rrz = -20 - rr * 7;
       add('box', MAT.struct, M.trs(M.m4(), D.rackX, D.rackY/2, rrz, 0.5, D.rackY, 0.5), 'offplot');
       add('box', MAT.struct, M.trs(M.m4(), D.rackX + 5, D.rackY/2, rrz, 0.5, D.rackY, 0.5), 'offplot');
       add('box', MAT.struct, M.trs(M.m4(), D.rackX + 2.5, D.rackY, rrz, 6.2, 0.4, 0.45), 'offplot');
       K.pad(D.rackX, rrz, 1.2, 1.2, 'offplot'); K.pad(D.rackX + 5, rrz, 1.2, 1.2, 'offplot');
     }
+    }
+    }
+    TIER(0);
+
+    /* ── nameplates ────────────────────────────────────────────────────
+       Every major item carries its equipment number and what it is, on the
+       numbering a refinery actually uses: V for vessels, T for towers and
+       strippers, E for exchangers, H for fired heaters, K for compressors,
+       P for pumps, TK for tanks. Without them the added equipment is just
+       more shapes; with them the scene is readable as a unit. */
+    var labels = [
+      { tag:'T-101',  name:'Atmospheric column',  at:[0, shellTop - 6, 0],            pick:'tower' },
+      { tag:'H-101',  name:'Fired heater',        at:[D.furX, D.furH + 3.5, D.furZ],  pick:'furnace' },
+      { tag:'V-104',  name:'Desalter',            at:anchors.desalter,                pick:'desalter' },
+      { tag:'E-101/4',name:'Preheat train',       at:anchors.preheat,                 pick:'preheat' },
+      { tag:'V-102',  name:'Preflash drum',       at:anchors.preflash,                pick:'preflash' },
+      { tag:'EC-121', name:'Overhead air cooler', at:anchors.condenser,               pick:'condenser' },
+      { tag:'V-103',  name:'Reflux drum',         at:anchors.drum,                    pick:'drum' },
+      { tag:'K-101',  name:'Wet gas compressor',  at:anchors.compressor,              pick:'compressor' },
+      { tag:'E-111/3',name:'Pumparound coolers',  at:anchors.pumparound,              pick:'pumparound' },
+      { tag:'P-101',  name:'Charge pumps',        at:[PH.x - 10, 3.0, PH.z - 2],      pick:'crude' }
+    ];
+    for (var lt = 0; lt < 3; lt++)
+      labels.push({ tag:'T-10' + (2 + lt), name: sideKeys[lt].charAt(0).toUpperCase() +
+                    sideKeys[lt].slice(1) + ' stripper',
+                    at: anchors.side[sideKeys[lt]], pick:'sidedraw' });
+    // and the tanks, which say what is in them and why they look like that.
+    // Each plate records the detail tier its equipment belongs to: when the
+    // watchdog drops the tank farm or the site furniture, the plates that
+    // named them have to go with them, or the scene grows labels pointing at
+    // nothing.
+    for (var lb = 0; lb < tanks.length; lb++)
+      labels.push({ tag: tanks[lb].tag, name: tanks[lb].name, note: tanks[lb].note,
+                    at: tanks[lb].at, pick: 'tank-' + tanks[lb].key, tier: 1 });
+    {
+      labels.push({ tag:'FL-101', name:'Flare',        at:[96, 68, -96],   pick:'offplot', tier:2 });
+      labels.push({ tag:'CT-101', name:'Cooling tower',at:[72, 15, 46],    pick:'offplot', tier:2 });
+      labels.push({ tag:'B-101',  name:'Control room', at:[-44, 8.5, 46],  pick:'offplot', tier:2 });
+      labels.push({ tag:'B-102',  name:'Substation',   at:[-16, 7.0, 48],  pick:'offplot', tier:2 });
     }
 
     /* ── instrument tags: anchored to the equipment they read ──────────── */
@@ -729,7 +859,7 @@ var PLANT = (function () {
     }
 
     return { objects: objs, streams: streams, anchors: anchors, D: D,
-             MAT: MAT, STREAM: STREAM, instruments: instruments,
+             MAT: MAT, STREAM: STREAM, instruments: instruments, labels: labels,
              bounds: { min:[-110, 0, -100], max:[100, shellTop + 12, 60] },
              shellTop: shellTop, skirtTop: skirtTop, feedY: feedY,
              sideY: sideY, sideKeys: sideKeys, trays: trays };

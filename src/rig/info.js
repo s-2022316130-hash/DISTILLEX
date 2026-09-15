@@ -23,6 +23,26 @@ var RIGINFO = (function () {
    * it contributes to the separation. Long enough to be worth reading, short
    * enough to sit in a panel without scrolling.
    */
+  /* Where each product goes, and why the tank that holds it is built the way
+     it is. Tank type follows the flash point and the vapour pressure of what
+     is in it, which is why a farm is not a row of identical cylinders. */
+  var TANKS = {
+    crude:    ['TK-101', 'Crude charge tankage', 'External floating roof',
+               'The deck floats on the liquid, so there is no vapour space above it to breathe out as the day warms. Crude is volatile enough that a fixed roof would lose stock and make the tank a hazard.'],
+    naphtha:  ['TK-201', 'Naphtha rundown tank', 'External floating roof',
+               'Naphtha has the highest vapour pressure of the liquid cuts, so it is kept under a floating deck for the same reason the crude is: no vapour space, no breathing loss.'],
+    kerosene: ['TK-202', 'Kerosene rundown tank', 'Internal floating roof',
+               'A fixed roof with a floating deck inside it and a ring of vents in the shell. Kerosene sits in the middle of the flash-point range: the deck cuts the losses, the fixed roof keeps the weather off a product that has to stay clean enough to burn in a turbine.'],
+    diesel:   ['TK-203', 'Diesel rundown tank', 'Fixed cone roof',
+               'The flash point is high enough that the vapour space above the liquid is not flammable at ambient temperature, so a plain welded cone roof is all it needs.'],
+    gasoil:   ['TK-204', 'Heavy gas oil tank', 'Fixed cone roof',
+               'Cracker feed rather than a finished product. Like diesel it is too heavy to need a deck; unlike diesel it usually leaves again by pipeline rather than by road.'],
+    residue:  ['TK-205', 'Atmospheric residue tank', 'Lagged, steam-coil heated',
+               'Residue is solid, or near it, at ambient temperature. The tank is clad and carries a steam coil along the bottom, because a tank of cold residue cannot be pumped out of.'],
+    gas:      ['V-301', 'LPG spheres', 'Horton spheres, under pressure',
+               'Propane and butane are gases at ambient pressure, so they are not stored in a tank at all: they are liquefied under pressure in spheres, which is the shape that carries an internal pressure with the least steel. Refineries run them in groups on a common manifold.']
+  };
+
   var COMPONENTS = {
     preheat: {
       name: 'Preheat exchanger train',
@@ -181,6 +201,21 @@ var RIGINFO = (function () {
   };
 
   /** The record behind any pick key, product streams included. */
+  // The tank records are generated from the table above rather than written
+  // out seven times: every one says the same four things about a different
+  // product, and a table is the honest shape for that.
+  Object.keys(TANKS).forEach(function (k) {
+    var T = TANKS[k];
+    COMPONENTS['tank-' + k] = {
+      name: T[1], cat: 'Storage',
+      purpose: 'Holds the ' + (k === 'crude' ? 'charge before it enters the unit'
+                                             : k + ' the unit makes, between the rundown and whatever takes it away') + '.',
+      how: T[2] + '. ' + T[3],
+      role: 'Nothing is separated here. The farm is where the answer the unit computes physically ends up.',
+      reads: []
+    };
+  });
+
   function describe(key) {
     if (!key) return null;
     if (key.indexOf('product-') === 0) {
@@ -208,17 +243,35 @@ var RIGINFO = (function () {
     // in, so moving a vessel moves the camera that frames it. The renderer's
     // vertical field of view is 0.62 rad; half of that has a tangent of 0.32.
     function fit(r) { return r / 0.32; }
+    // `w` is the half-width, in metres, that a shot has to keep in frame. The
+    // two wide shots are wider than they are tall, so on a narrow screen the
+    // vertical fit above is not the binding constraint — the camera has to
+    // stand further back or a phone sees two tanks out of seven. rigCamTo
+    // turns it into a distance once it knows the canvas aspect.
     var sideMid = P.sideY[1];
     return [
       // The site. The unit is no longer the whole plot — there is a preheat
       // train and a desalter to the west, a tank farm and a flare beyond it —
       // so the widest shot has to contain the place, not just the tower.
       { key:'site',      label:'Site',      t:[2, top * 0.34, -14],
-        yaw:-0.62, pitch:0.24, dist: fit(96) },
+        yaw:-0.62, pitch:0.24, dist: fit(96), w: 112 },
       { key:'plant',     label:'Unit',      t:[-2, top * 0.50, 0],
         yaw:-0.72, pitch:0.15, dist: fit(36) },
       { key:'frontend',  label:'Front end', t:[-34, 6.5, -10],
         yaw:-1.10, pitch:0.20, dist: fit(26) },
+      // Where the products actually end up. The row of tanks runs east-west
+      // behind the unit, so the shot is taken from due north of it, looking
+      // back south: the five rundown tanks lie across the frame at the same
+      // distance, with the unit that filled them standing behind. From any
+      // other azimuth the tower is in front of the tanks and hides them.
+      { key:'farm',      label:'Tank farm', t:[-6, 13, -46],
+        yaw: Math.PI, pitch:0.20, dist: fit(66), w: 94,
+        // Upright, the row cannot be shown broadside: a hundred and ninety
+        // metres of tankage across a screen four hundred pixels wide is a
+        // smudge. So a phone is stood at the end of the row instead and looks
+        // along it — the same tanks, using the tall dimension it actually has.
+        port: { t:[-14, 9, -46], yaw:-1.38, pitch:0.42,
+                dist: fit(92), w: 0 } },
       { key:'tower',     label:'Column',    t:[0, sk + D.towerH * 0.5, 0],
         yaw:-0.40, pitch:0.06, dist: fit(25) },
       { key:'cutaway',   label:'Cutaway',   t:[0, sk + D.towerH * 0.5, 0],
@@ -241,6 +294,8 @@ var RIGINFO = (function () {
     crude:'frontend', furnace:'furnace', feed:'furnace',
     desalter:'frontend', preheat:'frontend', preflash:'frontend',
     pumparound:'pumps', compressor:'overhead', offplot:'site',
+    'tank-crude':'frontend', 'tank-naphtha':'farm', 'tank-kerosene':'farm',
+    'tank-diesel':'farm', 'tank-gasoil':'farm', 'tank-residue':'farm', 'tank-gas':'farm',
     tower:'tower', trays:'cutaway', sidedraw:'strippers',
     overhead:'overhead', condenser:'overhead', drum:'overhead', reflux:'overhead',
     reboiler:'base', steam:'base',
