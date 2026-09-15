@@ -5,7 +5,7 @@ equilibrium, McCabe–Thiele stage construction, column operation, stage profile
 studies, theory and an exam mode. Everything is computed in the browser — no server, no build
 step, no account, no telemetry, no stored data.
 
-**Live entry point:** `index.html` (self-contained, ~945 KB, works offline by double-click).
+**Live entry point:** `index.html` (self-contained, ~953 KB, works offline by double-click).
 
 Alongside the binary simulator there is an **industrial crude unit** at
 `/industrial-distillation` — an interactive, educational visualisation of an atmospheric
@@ -275,6 +275,32 @@ surface it can appear over (WCAG 1.4.3, 4.5:1), every stream against the
 ground and the panel (1.4.11, 3:1), that no two streams collide, that the
 accent is not also a stream, that hue survives the theme switch, and that both
 stylesheets still carry the exact values `theme.js` generates.
+
+### One vocabulary for every diagram
+
+The binary simulator's plots draw from a small set of *plot roles*, so a colour
+means the same thing wherever it appears:
+
+| Role | Carries | Why |
+| --- | --- | --- |
+| `--dx-plot-phys` | the equilibrium curve, the dew line, y vapour | the physics, which is not yours to move |
+| `--dx-plot-spec` | the operating lines, the drag handles | what you specified |
+| `--dx-plot-liq` | the bubble line, x liquid, L | the falling phase |
+| `--dx-plot-feed` | the q-line, the feed stage | where the feed enters |
+| `--dx-plot-work` | the stage construction | pencil work, laid over the lines it is built from |
+| `--dx-plot-ref` | y = x, the minimum-reflux line | reference geometry |
+| `--dx-mark` | the hovered stage, the swept case, the selected tray | a live cursor, tuned at 3:1 as a marker rather than 4.5:1 as a label |
+
+Three hues carry meaning and the rest is ink. Before this the McCabe–Thiele
+diagram used three different blues plus a teal — equilibrium in the accent,
+operating lines in accent-800, the staircase split between two process colours
+— and the *answer*, the staircase, was the quietest thing on the plot. The
+stage charts under the column contradicted the column's own legend, colouring
+x and y as two values of one blue while the legend beneath them said blue for
+liquid and teal for vapour.
+
+Convergence state uses the semantic roles rather than the accent: a rating
+solve that fails to close cannot wear the same colour as one that succeeds.
 
 ### Taking it somewhere else
 

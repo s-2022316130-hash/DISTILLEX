@@ -44,140 +44,132 @@
   /* ── light palette ────────────────────────────────────────────────────
      The application ships dark; this is the daylight counterpart. */
   :root {
-    --dx-l0: #eef1fa;   /* floor, behind everything */
-    --color-bg:      #f4f6fc;
-    --color-surface: #e9edf8;   /* inset well */
+    /* ── daylight ─────────────────────────────────────────────────────
+       Generated in src/rig/theme.js and checked by the `contrast` and `rig`
+       suites. Hue is held constant between the two themes — only lightness
+       and chroma move — so nothing on the page changes identity when the
+       lights come on. */
+    --dx-l0: #e8ecf4;           /* floor, behind everything */
+    --color-bg:      #f0f3f8;
+    --color-surface: #edf0f6;   /* inset well */
     --dx-raised:     #ffffff;   /* panel  */
-    --dx-ctrl:       #ffffff;   /* control */
-    --color-text:    #0d1424;
-    --color-divider: color-mix(in srgb, #0d1424 12%, transparent);
-    --dx-hairline:   color-mix(in srgb, #0d1424 8%, transparent);
+    --dx-ctrl:       #f8fafe;   /* control */
+    --color-text:    #191e29;
+    --color-divider: #d6d9e0;
+    --dx-hairline:   #e2e5ea;
 
-    --color-accent:     #6366f1;
-    --color-accent-100: #eef0ff;
-    --color-accent-200: #e0e3ff;
-    --color-accent-300: #c3c8fb;
-    --color-accent-400: #9aa2f4;
-    --color-accent-500: #6366f1;
-    --color-accent-600: #5254e0;
-    --color-accent-700: #4338ca;
-    --color-accent-800: #312a8f;
-    --color-accent-900: #1f1b5c;
+    --color-accent:     #4454df;
+    --color-accent-100: #eef0fe;
+    --color-accent-200: #dfe3fb;
+    --color-accent-300: #b9c1f5;
+    --color-accent-400: #8b97ec;
+    --color-accent-500: #4454df;
+    --color-accent-600: #3a48c8;
+    --color-accent-700: #303ca8;
+    --color-accent-800: #232c7c;
+    --color-accent-900: #171d52;
 
-    --color-accent-2:     #0c6880;
-    --color-accent-2-100: #e4f5fa;
-    --color-accent-2-200: #c2e8f1;
-    --color-accent-2-700: #0c6880;
-    --color-accent-2-800: #08485a;
+    --color-accent-2:     #00848f;
+    --color-accent-2-100: #e3f4f5;
+    --color-accent-2-200: #c0e5e8;
+    --color-accent-2-700: #00848f;
+    --color-accent-2-800: #005d66;
 
-    /* semantic roles */
-    --dx-vapour:  #0c6880;   /* rising vapour, gas, flow      */
-    --dx-liquid:  #4338ca;   /* descending liquid, stages     */
-    --dx-violet:  #6d28d9;   /* interactive emphasis          */
-    --dx-magenta: #a21b62;   /* selected state, feed          */
-    --dx-heat:    #8a4c04;   /* temperature, reboiler duty    */
-    --dx-ok:      #046c4a;
-    --dx-warn:    #8a4c04;
-    --dx-err:     #b3123c;
-    --dx-info:    #1d4ed8;
-    --dx-orange:  #b63d0b;
-    --dx-gold:    #935906;
-    --dx-red:     #b91c1c;
-    --dx-green:   #137638;
-    --dx-crude:   #6b3f12;   /* raw charge, unfractionated    */
+    /* semantic roles — the only saturated things on the page */
+    --dx-vapour:  #007781;   /* rising vapour, gas, flow      */
+    --dx-liquid:  #4e61cc;   /* descending liquid, stages     */
+    --dx-violet:  #8154c1;   /* interactive emphasis          */
+    --dx-magenta: #be3d43;   /* selected state, feed          */
+    --dx-heat:    #8f6300;   /* temperature, reboiler duty    */
+    --dx-ok:      #007b4b;
+    --dx-warn:    #8f6300;
+    --dx-err:     #be3d43;
+    --dx-info:    #007595;
+    --dx-orange:  #b64a00;
+    --dx-gold:    #7f6a00;
+    --dx-red:     #be3d43;
+    --dx-green:   #007b4b;
+    --dx-crude:   #7d6850;   /* raw charge, unfractionated    */
 
-    /* Crude-fraction ramp — a sequential thermal scale, coolest and lightest
-       at the top of the tower to hottest and heaviest at the sump. It is a
-       conceptual representation of the temperature gradient, not a reading of
-       any temperature this application computes. */
-    --dx-f1: #0c6880;  /* refinery gas   */
-    --dx-f2: #0f766e;  /* LPG            */
-    --dx-f3: #47720e;  /* naphtha        */
-    --dx-f4: #935906;  /* kerosene       */
-    --dx-f5: #a64c08;  /* diesel         */
-    --dx-f6: #b63d0b;  /* heavy gas oil  */
-    --dx-f7: #b91c1c;  /* fuel oil       */
-    --dx-f8: #a21b62;  /* residue        */
+    /* the eight fractions on the landing tower, on the same ramp the
+       simulator's six cuts use, so both tell one story */
+    --dx-f1: #00786f; --dx-f2: #007c37; --dx-f3: #7f6a00; --dx-f4: #8f6300;
+    --dx-f5: #a85500; --dx-f6: #b9441c; --dx-f7: #bc4040; --dx-f8: #ba3e5b;
 
-    --dx-glow-a: color-mix(in srgb, var(--color-accent) 34%, transparent);
-    --dx-glow-v: color-mix(in srgb, var(--dx-vapour)  30%, transparent);
-    --dx-glow-m: color-mix(in srgb, var(--dx-magenta) 28%, transparent);
+    --dx-glow-a: color-mix(in srgb, var(--color-accent) 30%, transparent);
+    --dx-glow-v: color-mix(in srgb, var(--dx-vapour)  26%, transparent);
+    --dx-glow-m: color-mix(in srgb, var(--dx-magenta) 24%, transparent);
 
-    /* elevation — tinted toward the palette, never neutral grey */
-    --shadow-sm: 0 1px 2px color-mix(in srgb, #1f1b5c 9%, transparent);
-    --shadow-md: 0 2px 4px color-mix(in srgb, #1f1b5c 7%, transparent),
-                 0 10px 24px -8px color-mix(in srgb, #1f1b5c 16%, transparent);
-    --shadow-lg: 0 6px 12px color-mix(in srgb, #1f1b5c 8%, transparent),
-                 0 26px 56px -14px color-mix(in srgb, #1f1b5c 22%, transparent);
-    --dx-inset: inset 0 1px 2px color-mix(in srgb, #1f1b5c 8%, transparent);
+    /* In daylight elevation is a shadow, tinted with the accent's hue so it
+       belongs to the same colour world as everything else. */
+    --shadow-sm: 0 1px 2px rgba(31,41,72,.05);
+    --shadow-md: 0 1px 2px rgba(31,41,72,.06), 0 10px 24px rgba(31,41,72,.07);
+    --shadow-lg: 0 2px 4px rgba(31,41,72,.06), 0 22px 52px rgba(31,41,72,.12);
+    --dx-inset: inset 0 1px 2px rgba(31,41,72,.06);
     --dx-ring: 0 0 0 3px var(--dx-glow-a);
 
-    --dx-r-sm: 7px; --dx-r-md: 11px; --dx-r-lg: 16px; --dx-r-xl: 22px;
-    --dx-t-fast: 130ms; --dx-t-base: 220ms; --dx-t-slow: 360ms; --dx-t-view: 300ms;
+    --dx-r-sm: 6px; --dx-r-md: 10px; --dx-r-lg: 14px; --dx-r-xl: 20px;
+    --dx-t-fast: 120ms; --dx-t-base: 200ms; --dx-t-slow: 340ms; --dx-t-view: 260ms;
     --dx-ease: cubic-bezier(.32,.72,.28,1);
     --dx-spring: cubic-bezier(.34,1.42,.44,1);
   }
 
-  /* ── midnight palette — the application's primary atmosphere ────────── */
   .dx-dark {
-    --dx-l0: #03060e;
-    --color-bg:      #060a14;
-    --color-surface: #0b1222;
-    --dx-raised:     #111a30;
-    --dx-ctrl:       #182342;
-    --color-text:    #e9eefb;
-    --color-divider: color-mix(in srgb, #e9eefb 15%, transparent);
-    --dx-hairline:   color-mix(in srgb, #e9eefb 9%, transparent);
+    /* ── night ────────────────────────────────────────────────────────── */
+    --dx-l0: #06080e;
+    --color-bg:      #090c13;
+    --color-surface: #10141c;
+    --dx-raised:     #171b24;
+    --dx-ctrl:       #212630;
+    --color-text:    #f1f3f8;
+    --color-divider: #303540;
+    --dx-hairline:   #242934;
 
-    --color-accent:     #6272e8;
-    --color-accent-100: #131c36;
-    --color-accent-200: #1b2649;
-    --color-accent-300: #8b9cff;
-    --color-accent-400: #7b8cf5;
-    --color-accent-500: #6272e8;
-    --color-accent-600: #8b9cff;
-    --color-accent-700: #8b9cff;
-    --color-accent-800: #c3cdff;
-    --color-accent-900: #e2e7ff;
+    --color-accent:     #7d95ff;
+    --color-accent-100: #161b2e;
+    --color-accent-200: #1e2540;
+    --color-accent-300: #3f4d80;
+    --color-accent-400: #5f73c4;
+    --color-accent-500: #7d95ff;
+    --color-accent-600: #93a7ff;
+    --color-accent-700: #a9b9ff;
+    --color-accent-800: #c6d0ff;
+    --color-accent-900: #e4e9ff;
 
-    --color-accent-2:     #22d3ee;
-    --color-accent-2-100: #08222c;
-    --color-accent-2-200: #0d3541;
-    --color-accent-2-700: #22d3ee;
-    --color-accent-2-800: #9beaf6;
+    --color-accent-2:     #39d4e4;
+    --color-accent-2-100: #0a2027;
+    --color-accent-2-200: #10323b;
+    --color-accent-2-700: #39d4e4;
+    --color-accent-2-800: #9be8f2;
 
-    --dx-vapour:  #22d3ee;
-    --dx-liquid:  #8b9cff;
-    --dx-violet:  #b39bff;
-    --dx-magenta: #f472d0;
-    --dx-heat:    #fbbf24;
-    --dx-ok:      #34d399;
-    --dx-warn:    #fbbf24;
-    --dx-err:     #fb7185;
-    --dx-info:    #7dd3fc;
-    --dx-orange:  #fb923c;
-    --dx-gold:    #fde047;
-    --dx-red:     #f87171;
-    --dx-green:   #4ade80;
-    --dx-crude:   #e0a86a;
+    --dx-vapour:  #00bac9;
+    --dx-liquid:  #859dff;
+    --dx-violet:  #b58afb;
+    --dx-magenta: #fb7475;
+    --dx-heat:    #d79700;
+    --dx-ok:      #14c37c;
+    --dx-warn:    #d79700;
+    --dx-err:     #fb7475;
+    --dx-info:    #00b5e4;
+    --dx-orange:  #f67e42;
+    --dx-gold:    #c2a200;
+    --dx-red:     #fb7475;
+    --dx-green:   #14c37c;
+    --dx-crude:   #b7a186;
 
-    --dx-f1: #67e8f9;
-    --dx-f2: #5eead4;
-    --dx-f3: #a3e635;
-    --dx-f4: #fde047;
-    --dx-f5: #fbbf24;
-    --dx-f6: #fb923c;
-    --dx-f7: #f87171;
-    --dx-f8: #e879a0;
+    --dx-f1: #00beaf; --dx-f2: #4ac06c; --dx-f3: #c2a200; --dx-f4: #d79700;
+    --dx-f5: #ef852e; --dx-f6: #f77c56; --dx-f7: #f97772; --dx-f8: #f6758e;
 
-    --dx-glow-a: color-mix(in srgb, var(--color-accent) 55%, transparent);
-    --dx-glow-v: color-mix(in srgb, var(--dx-vapour)  45%, transparent);
-    --dx-glow-m: color-mix(in srgb, var(--dx-magenta) 42%, transparent);
+    --dx-glow-a: color-mix(in srgb, var(--color-accent) 34%, transparent);
+    --dx-glow-v: color-mix(in srgb, var(--dx-vapour)  30%, transparent);
+    --dx-glow-m: color-mix(in srgb, var(--dx-magenta) 26%, transparent);
 
-    --shadow-sm: 0 1px 2px rgba(0,0,0,.6);
-    --shadow-md: 0 2px 6px rgba(0,0,0,.55), 0 12px 30px -10px rgba(0,0,0,.7);
-    --shadow-lg: 0 8px 18px rgba(0,0,0,.55), 0 34px 70px -18px rgba(0,0,0,.8);
-    --dx-inset: inset 0 1px 2px rgba(0,0,0,.5);
+    /* On a dark ground a drop shadow is invisible; elevation is carried by
+       lightness and a lit top edge instead. */
+    --shadow-sm: inset 0 1px 0 rgba(255,255,255,.04);
+    --shadow-md: inset 0 1px 0 rgba(255,255,255,.05), 0 12px 28px rgba(0,0,0,.45);
+    --shadow-lg: inset 0 1px 0 rgba(255,255,255,.06), 0 24px 60px rgba(0,0,0,.6);
+    --dx-inset: inset 0 1px 2px rgba(0,0,0,.4);
     --dx-ring: 0 0 0 3px var(--dx-glow-a);
   }
 
@@ -186,6 +178,36 @@
      or sits behind it. Both themes are checked by the `contrast` suite. */
   :root { --dx-ink-accent: var(--color-accent-700); }
   .dx-dark { --dx-ink-accent: var(--color-accent-600); }
+
+  /* A quiet tone for labels: the secondary and tertiary text roles the whole
+     interface now uses instead of tinting every small-caps heading. */
+  :root    { --dx-ink2: #4f5767; --dx-ink3: #5c6578; }
+  .dx-dark { --dx-ink2: #b0b6c2; --dx-ink3: #9098a9; }
+
+  /* ═══ plot roles ══════════════════════════════════════════════════════
+     Every diagram in the app draws from one vocabulary, so a colour means
+     the same thing on the VLE plot, the McCabe-Thiele construction and the
+     stage charts.  Three hues carry meaning — what the physics fixes, what
+     you specified, where the feed enters — and everything else is ink, so
+     the meaning survives being looked at quickly. */
+  :root, .dx-dark {
+    --dx-plot-phys:  var(--dx-vapour);       /* equilibrium: not yours to move */
+    --dx-plot-spec:  var(--color-accent);    /* operating lines: your choice   */
+    --dx-plot-feed:  var(--dx-magenta);      /* the feed                       */
+    --dx-plot-liq:   var(--dx-liquid);       /* the falling phase              */
+    --dx-plot-temp:  var(--dx-orange);       /* temperature                    */
+    --dx-plot-work:  color-mix(in srgb, var(--color-text) 94%, transparent);
+    --dx-plot-work2: color-mix(in srgb, var(--color-text) 62%, transparent);
+    --dx-plot-ref:   color-mix(in srgb, var(--color-text) 34%, transparent);
+    --dx-plot-grid:  color-mix(in srgb, var(--color-text)  9%, transparent);
+    --dx-plot-axis:  var(--color-divider);
+    --dx-plot-tick:  var(--dx-ink3);
+  }
+  /* The live cursor — the hovered stage, the swept case.  It is a marker,
+     not a label, so it is tuned against 3:1 for graphics rather than the
+     4.5:1 the gold text role has to carry. */
+  :root    { --dx-mark: #b88000; --dx-drop: 0 3px 12px rgba(31,41,72,.20) }
+  .dx-dark { --dx-mark: #eeb300; --dx-drop: 0 3px 12px rgba(0,0,0,.55) }
 
   /* ═══ motion policy ═══════════════════════════════════════════════════
      Everything decorative is switched off; the interface stays fully
@@ -211,16 +233,22 @@
   .dx-aurora::before, .dx-aurora::after {
     content: ''; position: absolute; inset: 0; will-change: transform;
   }
+  /* The strength of this has to invert with the theme. On a dark ground a
+     wash at a third opacity reads as atmosphere; on a white one the same
+     wash is a stain, and every panel floats in coloured haze. Daylight gets
+     roughly a sixth of the night value, and only the two cool hues. */
+  :root    { --dx-aur-1: 5%;  --dx-aur-2: 4%;  --dx-aur-3: 4%;  --dx-aur-4: 0% }
+  .dx-dark { --dx-aur-1: 30%; --dx-aur-2: 26%; --dx-aur-3: 24%; --dx-aur-4: 16% }
   .dx-aurora::before {
     background:
-      radial-gradient(46% 38% at 18% 16%, color-mix(in srgb, var(--color-accent) 30%, transparent), transparent 70%),
-      radial-gradient(40% 34% at 82% 8%,  color-mix(in srgb, var(--dx-vapour)  26%, transparent), transparent 70%);
+      radial-gradient(46% 38% at 18% 16%, color-mix(in srgb, var(--color-accent) var(--dx-aur-1), transparent), transparent 70%),
+      radial-gradient(40% 34% at 82% 8%,  color-mix(in srgb, var(--dx-vapour)  var(--dx-aur-2), transparent), transparent 70%);
     animation: dxDriftA 40s var(--dx-ease) infinite alternate;
   }
   .dx-aurora::after {
     background:
-      radial-gradient(42% 36% at 72% 82%, color-mix(in srgb, var(--dx-violet)  24%, transparent), transparent 70%),
-      radial-gradient(34% 30% at 26% 94%, color-mix(in srgb, var(--dx-magenta) 16%, transparent), transparent 70%);
+      radial-gradient(42% 36% at 72% 82%, color-mix(in srgb, var(--dx-violet)  var(--dx-aur-3), transparent), transparent 70%),
+      radial-gradient(34% 30% at 26% 94%, color-mix(in srgb, var(--dx-magenta) var(--dx-aur-4), transparent), transparent 70%);
     animation: dxDriftB 56s var(--dx-ease) infinite alternate;
   }
   @keyframes dxDriftA { from { transform: translate3d(-3%,-2%,0) scale(1) }
@@ -228,8 +256,10 @@
   @keyframes dxDriftB { from { transform: translate3d(3%,2%,0) scale(1.08) }
                           to { transform: translate3d(-4%,-3%,0) scale(1) } }
   /* the grid that says "instrument" rather than "web page" */
+  :root { --dx-grid-o: .34 } .dx-dark { --dx-grid-o: .5 }
   .dx-app::before {
-    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .5;
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    opacity: var(--dx-grid-o);
     background-image:
       linear-gradient(var(--dx-hairline) 1px, transparent 1px),
       linear-gradient(90deg, var(--dx-hairline) 1px, transparent 1px);
@@ -254,15 +284,15 @@
                 transform var(--dx-t-base) var(--dx-ease),
                 border-color var(--dx-t-base) var(--dx-ease);
   }
+  /* A single lit top edge in the dark theme, where elevation cannot be a
+     shadow. No gradient rainbow: it was decoration, and on a page with this
+     many panels it read as noise rather than as depth. */
   .card::before {
     content: ''; position: absolute; inset: 0 0 auto; height: 1px; border-radius: inherit;
-    background: linear-gradient(90deg, transparent,
-                color-mix(in srgb, var(--color-accent) 42%, transparent) 30%,
-                color-mix(in srgb, var(--dx-vapour) 34%, transparent) 70%, transparent);
-    opacity: .5; pointer-events: none;
-    transition: opacity var(--dx-t-base) var(--dx-ease);
+    background: var(--dx-hairline-lit, transparent); pointer-events: none;
   }
-  .card:hover::before { opacity: .95 }
+  :root { --dx-hairline-lit: transparent }
+  .dx-dark { --dx-hairline-lit: rgba(255,255,255,.055) }
   /* the ticks from the old flat identity; redundant now there is real depth */
   .blueprint > .corner { display: none }
   .blueprint:not(.card) {
@@ -336,11 +366,32 @@
               letter-spacing: -.022em; margin: 0; line-height: 1.12 }
   .dx-sub { margin: 0; font-size: 13.5px; line-height: 1.6; max-width: 74ch;
             color: color-mix(in srgb, var(--color-text) 74%, transparent) }
+  /* A section label is a label, not a headline. Tinting every one of them
+     put the accent on roughly forty elements per screen and left nothing for
+     the accent to actually mean; they are quiet now, and the data is loud. */
   .card-kicker, .dx-kicker {
-    font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
-    font-weight: 700; color: var(--dx-ink-accent);
+    font-size: 10px; letter-spacing: .15em; text-transform: uppercase;
+    font-weight: 620; color: var(--dx-ink3);
   }
   .dx-num { font-variant-numeric: tabular-nums; letter-spacing: -.012em }
+  .dx-themebtn { min-height: 32px; width: 34px; padding: 0; display: inline-flex;
+                 align-items: center; justify-content: center }
+  .dx-themebtn svg { width: 15px; height: 15px }
+
+  /* ── figure tiles ──────────────────────────────────────────────────────
+     One hairline grid, not three cards. A coloured rule down the side of a
+     tile is decoration pretending to be information; the numeral carries the
+     colour, and it is set large enough to be the thing the eye lands on. */
+  .dx-figs { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1px;
+             background: var(--color-divider); border: 1px solid var(--color-divider);
+             border-radius: var(--dx-r-md); overflow: hidden }
+  .dx-fig { padding: 12px; background: var(--dx-raised);
+            display: flex; flex-direction: column; gap: 2px; min-width: 0 }
+  .dx-fig .n { font-size: 26px; font-weight: 680; line-height: 1.06; letter-spacing: -.022em }
+  .dx-fig .u { font-size: 9px; color: var(--dx-ink3); letter-spacing: .06em }
+  .dx-fig .k { font-size: 9px; letter-spacing: .13em; text-transform: uppercase;
+               font-weight: 620; color: var(--dx-ink3); line-height: 1.3; margin-top: 3px }
+  @media (max-width: 560px) { .dx-figs { grid-template-columns: repeat(2, minmax(0,1fr)) } }
 
   .dx-head { display:flex; align-items:flex-end; justify-content:space-between;
              gap:18px; flex-wrap:wrap; padding: 4px 0 2px }
@@ -518,12 +569,22 @@
   .dx-toast { animation: dxToast 320ms var(--dx-spring) both }
 
   /* ═══ progressive disclosure ══════════════════════════════════════════ */
+  /* A value the model fixes rather than offers.  It used to be drawn as an
+     input, which invited a click that could never do anything; it is a
+     statement, so it is set as one. */
+  .dx-fixed { display:flex; align-items:baseline; gap:10px; padding:7px 0 8px 11px;
+              border-left:2px solid var(--color-divider); font-size:13.5px;
+              line-height:1.45; color:var(--color-text) }
+  .dx-fixed > i { font-style:normal; font-family:var(--font-heading); font-size:9.5px;
+                  letter-spacing:.12em; text-transform:uppercase; color:var(--dx-ink3);
+                  margin-left:auto; white-space:nowrap }
+
   .dx-dis { border-top:1px solid var(--dx-hairline); margin-top:2px }
   .dx-dis > summary {
     list-style:none; cursor:pointer; padding:8px 0 7px;
     display:flex; align-items:center; gap:7px;
     font-size:11.5px; font-weight:650; letter-spacing:.02em;
-    color:var(--dx-ink-accent);
+    color:var(--color-text);
     transition: color var(--dx-t-fast) var(--dx-ease), padding-left var(--dx-t-fast) var(--dx-ease);
   }
   .dx-dis > summary:hover { padding-left:3px }
@@ -585,14 +646,20 @@
   .dx-col { position:relative; transform-style:preserve-3d; margin:0 auto }
   .dx-col-mid { position:absolute; left:50%; top:0; transform-style:preserve-3d }
 
+  /* The column is drawn as translucent shell slats. On a dark ground a glow
+     carries the edges; on a bright one a glow is invisible and the edges have
+     to carry themselves, so the strokes firm up and the bloom is switched
+     off. Three variables, one geometry. */
+  :root    { --dx-3d-edge: 62%; --dx-3d-fill: 15%; --dx-3d-glow: 0%;  --dx-3d-tray: 92% }
+  .dx-dark { --dx-3d-edge: 46%; --dx-3d-fill: 26%; --dx-3d-glow: 30%; --dx-3d-tray: 85% }
   .dx-slat {
     position:absolute; left:0; top:0; transform-origin:50% 50%;
     background:linear-gradient(90deg,
-      color-mix(in srgb, var(--color-accent) 26%, transparent),
-      color-mix(in srgb, var(--color-accent) 5%, transparent) 45%,
-      color-mix(in srgb, var(--color-accent) 26%, transparent));
-    border-top:1px solid color-mix(in srgb, var(--color-accent) 46%, transparent);
-    border-bottom:1px solid color-mix(in srgb, var(--color-accent) 46%, transparent);
+      color-mix(in srgb, var(--color-accent) var(--dx-3d-fill), transparent),
+      color-mix(in srgb, var(--color-accent) 4%, transparent) 45%,
+      color-mix(in srgb, var(--color-accent) var(--dx-3d-fill), transparent));
+    border-top:1px solid color-mix(in srgb, var(--color-accent) var(--dx-3d-edge), transparent);
+    border-bottom:1px solid color-mix(in srgb, var(--color-accent) var(--dx-3d-edge), transparent);
     backface-visibility:visible;
   }
   /* the shell reads the solved temperature profile: cool overhead, warm sump */
@@ -602,8 +669,8 @@
 
   .dx-tray {
     position:absolute; border-radius:50%; transform-style:preserve-3d;
-    border:1.5px solid color-mix(in srgb, var(--dx-liquid) 85%, transparent);
-    box-shadow:0 0 12px color-mix(in srgb, var(--dx-liquid) 30%, transparent);
+    border:1.5px solid color-mix(in srgb, var(--dx-liquid) var(--dx-3d-tray), transparent);
+    box-shadow:0 0 12px color-mix(in srgb, var(--dx-liquid) var(--dx-3d-glow), transparent);
     transition:background var(--dx-t-slow) var(--dx-ease), border-color var(--dx-t-base) var(--dx-ease);
   }
   .dx-tray.feed {
@@ -611,16 +678,16 @@
     background:radial-gradient(circle at 50% 50%,
       color-mix(in srgb, var(--dx-magenta) 46%, transparent),
       color-mix(in srgb, var(--dx-magenta) 15%, transparent) 72%, transparent) !important;
-    box-shadow:0 0 20px color-mix(in srgb, var(--dx-magenta) 55%, transparent);
+    box-shadow:0 0 20px color-mix(in srgb, var(--dx-magenta) var(--dx-3d-glow), transparent);
   }
 
   .dx-p { position:absolute; transform-style:preserve-3d; pointer-events:none }
   .dx-p i { display:block; border-radius:50%;
             animation-timing-function:linear; animation-iteration-count:infinite }
   .dx-p.up i   { background:var(--dx-vapour); animation-name:dxUp;
-                 box-shadow:0 0 8px color-mix(in srgb, var(--dx-vapour) 85%, transparent) }
+                 box-shadow:0 0 8px color-mix(in srgb, var(--dx-vapour) var(--dx-3d-glow), transparent) }
   .dx-p.down i { background:var(--dx-liquid); animation-name:dxDown;
-                 box-shadow:0 0 6px color-mix(in srgb, var(--dx-liquid) 60%, transparent) }
+                 box-shadow:0 0 6px color-mix(in srgb, var(--dx-liquid) var(--dx-3d-glow), transparent) }
   @keyframes dxUp   { 0% { transform:translateY(0); opacity:0 } 12%,80% { opacity:.98 } 100% { transform:translateY(-56px); opacity:0 } }
   @keyframes dxDown { 0% { transform:translateY(0); opacity:0 } 12%,80% { opacity:.85 } 100% { transform:translateY(56px); opacity:0 } }
   .dx-col.paused .dx-p i { animation-play-state:paused; opacity:.55 }
@@ -641,14 +708,18 @@
             border:1px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
             background:color-mix(in srgb, var(--color-accent) 18%, transparent) }
 
+  :root    { --dx-stage-w1: 7%; --dx-stage-w2: 4%; --dx-stage-base: 2%;
+             --dx-stage-edge: 14%; --dx-stage-lip: 0% }
+  .dx-dark { --dx-stage-w1: 26%; --dx-stage-w2: 16%; --dx-stage-base: 7%;
+             --dx-stage-edge: 20%; --dx-stage-lip: 12% }
   .dx-stage {
     position: relative; border-radius: var(--dx-r-lg); overflow: hidden;
     background:
-      radial-gradient(120% 85% at 50% -6%, color-mix(in srgb, var(--color-accent) 26%, transparent), transparent 62%),
-      radial-gradient(90% 60% at 90% 100%, color-mix(in srgb, var(--dx-vapour) 16%, transparent), transparent 66%),
-      linear-gradient(180deg, color-mix(in srgb, var(--color-accent) 7%, var(--dx-raised)), var(--color-surface));
-    border: 1px solid color-mix(in srgb, var(--color-accent) 20%, var(--dx-hairline));
-    box-shadow: var(--shadow-md), inset 0 1px 0 color-mix(in srgb, #fff 12%, transparent);
+      radial-gradient(120% 85% at 50% -6%, color-mix(in srgb, var(--color-accent) var(--dx-stage-w1), transparent), transparent 62%),
+      radial-gradient(90% 60% at 90% 100%, color-mix(in srgb, var(--dx-vapour) var(--dx-stage-w2), transparent), transparent 66%),
+      linear-gradient(180deg, color-mix(in srgb, var(--color-accent) var(--dx-stage-base), var(--dx-raised)), var(--color-surface));
+    border: 1px solid color-mix(in srgb, var(--color-accent) var(--dx-stage-edge), var(--dx-hairline));
+    box-shadow: var(--shadow-md), inset 0 1px 0 color-mix(in srgb, #fff var(--dx-stage-lip), transparent);
     perspective: 1400px; perspective-origin: 50% 42%;
   }
   .dx-stage-inner { transform-style: preserve-3d; will-change: transform;
@@ -685,7 +756,7 @@
       color-mix(in srgb, var(--color-accent) 14%, transparent));
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 40%, transparent),
                 0 0 16px -5px var(--dx-glow-a);
-    color:var(--dx-ink-accent); font-weight:700;
+    color:var(--color-text); font-weight:700;
   }
 
   /* ═══ 2D elevation and the 2D/3D split ══════════════════════
@@ -708,12 +779,12 @@
   .dx-frow .link { stroke:color-mix(in srgb, var(--color-text) 24%, transparent); stroke-width:1 }
   .dx-frow .dxl  { fill:var(--dx-liquid) }
   .dx-frow .dxv  { fill:var(--dx-vapour) }
-  .dx-frow .num  { fill:color-mix(in srgb, var(--color-text) 62%, transparent) }
-  .dx-frow.feed .tray { stroke:var(--dx-magenta); stroke-width:2.8 }
-  .dx-frow.feed .num  { fill:var(--dx-magenta); font-weight:700 }
-  .dx-frow.on  .hit   { fill:color-mix(in srgb, var(--dx-gold) 16%, transparent) }
-  .dx-frow.on  .tray  { stroke:var(--dx-gold); stroke-width:3 }
-  .dx-frow.on  .num   { fill:var(--dx-gold); font-weight:700 }
+  .dx-frow .num  { fill:var(--dx-plot-tick) }
+  .dx-frow.feed .tray { stroke:var(--dx-plot-feed); stroke-width:2.8 }
+  .dx-frow.feed .num  { fill:var(--dx-plot-feed); font-weight:700 }
+  .dx-frow.on  .hit   { fill:color-mix(in srgb, var(--dx-mark) 14%, transparent) }
+  .dx-frow.on  .tray  { stroke:var(--dx-mark); stroke-width:3 }
+  .dx-frow.on  .num   { fill:var(--dx-mark); font-weight:700 }
   .dx-frow:hover .tray { stroke-width:2.6 }
 
   /* flat planes that face the viewer, so a tray in the 3D column can be
@@ -721,8 +792,9 @@
   .dx-hit { position:absolute; cursor:pointer; background:transparent }
   .dx-vp-top .dx-hit { pointer-events:none }
   .dx-tray.hot {
-    border-color:var(--dx-gold) !important;
-    box-shadow:0 0 28px color-mix(in srgb, var(--dx-gold) 72%, transparent);
+    border-color:var(--dx-mark) !important;
+    box-shadow:0 0 28px color-mix(in srgb, var(--dx-mark) var(--dx-3d-glow), transparent),
+               0 0 0 1px color-mix(in srgb, var(--dx-mark) 55%, transparent);
   }
   .dx-cm-split .dx-note { font-size:8.5px; letter-spacing:.04em }
   .dx-cm-split .dx-note b { font-size:10px }
@@ -732,7 +804,7 @@
   .dx-why { display:inline-flex; width:14px; height:14px; margin-left:5px;
             border:1px solid var(--color-divider); border-radius:50%;
             align-items:center; justify-content:center; font-size:9px; font-style:normal;
-            line-height:1; cursor:help; vertical-align:middle; color:var(--dx-ink-accent);
+            line-height:1; cursor:help; vertical-align:middle; color:var(--color-text);
             transition:background var(--dx-t-base) var(--dx-ease),
                        border-color var(--dx-t-base) var(--dx-ease) }
   .dx-why:hover, .dx-why:focus-visible {
@@ -742,45 +814,91 @@
   /* ═══ theory reference ══════════════════════════════════════ */
   .dx-tfind { display:flex; gap:8px; align-items:center; margin-top:12px; max-width:520px }
   .dx-tfind .input { flex:1; min-width:0 }
+  /* A key/value list.  One hairline between rows, none under the last, so a
+     long table of results reads as one block instead of a stack of ruled
+     boxes.  The key is quiet, the value is tabular and aligned right. */
+  .dx-kv { display:flex; flex-direction:column }
+  .dx-kv > div { display:flex; justify-content:space-between; align-items:baseline;
+                 gap:14px; font-size:12.5px; padding:5.5px 0;
+                 border-bottom:1px solid color-mix(in srgb, var(--color-text) 6%, transparent) }
+  .dx-kv > div:last-child { border-bottom:0 }
+  .dx-kv .k { color:var(--dx-ink2); min-width:0 }
+  .dx-kv .v { font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap }
+  .dx-kv.wrap .v { white-space:normal }
+  /* the stacked variant — a label over a value that needs the full width */
+  .dx-kv.stack > div { flex-direction:column; align-items:stretch; gap:2px; padding:7px 0 }
+  .dx-kv.stack .k { font-family:var(--font-heading); font-size:10px; letter-spacing:.09em;
+                    text-transform:uppercase; color:var(--dx-ink3) }
+  .dx-kv.stack .v { text-align:left; white-space:normal; font-variant-numeric:normal }
+
+  /* A diagram legend.  The swatch is the same stroke the plot draws with,
+     so the key can be checked against the figure without interpretation. */
+  .dx-leg { display:flex; gap:18px; flex-wrap:wrap; align-items:center;
+            font-size:11.5px; color:var(--dx-ink2) }
+  .dx-leg > span { display:flex; align-items:center; gap:7px; white-space:nowrap }
+  .dx-leg i { width:20px; height:2.2px; border-radius:2px; flex:0 0 auto;
+              background:var(--c, currentColor) }
+  .dx-leg i.thin  { height:1.4px }
+  .dx-leg i.dash  { background:none; height:0; border-top:2px dashed var(--c, currentColor) }
+  .dx-leg i.dot   { width:9px; height:9px; border-radius:50%; background:var(--c, currentColor) }
+
+  /* A view whose whole content is one card was pinned to the top of a tall
+     empty page.  Short views are centred in the space they are given; they
+     still grow and scroll normally once the content is taller than that. */
+  .dx-short { min-height:min(calc(100dvh - 270px), 760px);
+              display:flex; flex-direction:column; justify-content:center }
+  @media (max-width:880px) { .dx-short { min-height:0 } }
+
+  /* How far through a set of questions you are — position, not decoration. */
+  .dx-prog { height:3px; border-radius:3px; background:var(--dx-hairline); overflow:hidden }
+  .dx-prog > i { display:block; height:100%; width:var(--p,0%); border-radius:3px;
+                 background:var(--color-accent);
+                 transition:width var(--dx-t-slow) var(--dx-ease) }
+
   .dx-chap { display:flex; align-items:center; gap:12px; margin:18px 2px 4px }
   .dx-chap-n { font-family:var(--font-heading); font-size:12px; letter-spacing:.16em;
-               text-transform:uppercase; color:var(--dx-ink-accent); white-space:nowrap }
+               text-transform:uppercase; color:var(--color-text); white-space:nowrap }
   .dx-chap-r { flex:1; height:1px; background:linear-gradient(90deg,
-                 color-mix(in srgb, var(--color-accent) 45%, transparent), transparent) }
+                 var(--color-divider) 0 46px,
+                 color-mix(in srgb, var(--color-divider) 55%, transparent)) }
   .dx-chap-c { font-size:11px; font-variant-numeric:tabular-nums;
                color:color-mix(in srgb, var(--color-text) 52%, transparent) }
   .dx-tlive { margin:0 0 10px; padding:8px 11px; font-size:12.5px; line-height:1.55;
               max-width:82ch; border-radius:var(--dx-r-sm);
-              background:color-mix(in srgb, var(--dx-gold) 10%, transparent);
-              box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--dx-gold) 30%, transparent);
+              background:color-mix(in srgb, var(--dx-mark) 9%, transparent);
+              box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--dx-mark) 28%, transparent);
               display:flex; gap:9px; align-items:baseline;
               animation:dxIn 340ms var(--dx-ease) both }
   @media (prefers-reduced-motion: reduce) { .dx-tlive { animation:none } }
 
   /* the gap between the equilibrium curve and the diagonal: what makes the
      separation possible, filled so its size is read at a glance */
-  .dx-eqband { fill:color-mix(in srgb, var(--color-accent) 15%, transparent);
+  .dx-eqband { fill:color-mix(in srgb, var(--dx-plot-phys) 13%, transparent);
                stroke:none; pointer-events:none }
-  .dx-sensnow line   { stroke:var(--dx-gold); stroke-width:1; stroke-dasharray:3 3 }
-  .dx-sensnow .halo  { fill:color-mix(in srgb, var(--dx-gold) 26%, transparent);
-                       stroke:var(--dx-gold); stroke-width:1 }
-  .dx-sensnow .core  { fill:var(--dx-gold) }
-  .dx-sensnow text   { fill:var(--dx-ink-accent); font-weight:700 }
+  .dx-sensnow line   { stroke:var(--dx-mark); stroke-width:1; stroke-dasharray:3 3 }
+  .dx-sensnow .halo  { fill:color-mix(in srgb, var(--dx-mark) 22%, transparent);
+                       stroke:var(--dx-mark); stroke-width:1 }
+  .dx-sensnow .core  { fill:var(--dx-mark) }
+  .dx-sensnow text   { fill:var(--color-text); font-weight:700 }
 
   /* ═══ McCabe–Thiele construction ═════════════════════════════ */
+  /* The staircase is drawn in ink, over the coloured lines it is built from,
+     the way it is drawn on paper.  Only the step that has just appeared is
+     given the live-cursor amber, so the eye follows the construction. */
   .dx-mtseg { transition: stroke-width var(--dx-t-base) var(--dx-ease) }
-  .dx-mtseg.fresh { filter: drop-shadow(0 0 5px currentColor) }
+  .dx-mtseg.fresh { stroke:var(--dx-mark);
+                    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--dx-mark) 70%, transparent)) }
   .dx-mtnode { cursor:crosshair }
   .dx-mtnode .hit { fill:transparent }
-  .dx-mtnode .dot { fill:var(--color-bg); stroke:color-mix(in srgb, var(--color-text) 45%, transparent);
+  .dx-mtnode .dot { fill:var(--color-surface); stroke:var(--dx-plot-ref);
                     stroke-width:1.4; transition:fill var(--dx-t-base) var(--dx-ease),
                                                  stroke var(--dx-t-base) var(--dx-ease) }
-  .dx-mtnode.fresh .dot { stroke:var(--dx-gold); stroke-width:2 }
-  .dx-mtnode.on    .dot { fill:var(--dx-gold); stroke:var(--dx-gold); stroke-width:2 }
-  .dx-mttip rect { fill:var(--color-bg); stroke:var(--dx-gold); stroke-width:1.2;
-                   filter:drop-shadow(0 3px 10px rgba(0,0,0,.4)) }
+  .dx-mtnode.fresh .dot { stroke:var(--dx-mark); stroke-width:2 }
+  .dx-mtnode.on    .dot { fill:var(--dx-mark); stroke:var(--dx-mark); stroke-width:2 }
+  .dx-mttip rect { fill:var(--color-surface); stroke:var(--dx-mark); stroke-width:1.2;
+                   filter:drop-shadow(var(--dx-drop)) }
   .dx-mttip text { fill:var(--color-text) }
-  .dx-mttip text:first-of-type { fill:var(--dx-ink-accent) }
+  .dx-mttip text:first-of-type { fill:var(--dx-ink3) }
   @media (prefers-reduced-motion: reduce) {
     .dx-mtseg.fresh { filter:none }
   }
@@ -807,16 +925,30 @@
   }
   .dx-gate-v {
     position:relative; min-width:0; min-height:286px;
-    background:radial-gradient(110% 110% at 46% 6%, #0d1730, #05070f 74%);
+    background:var(--dx-gate-sky);
     border-right:1px solid var(--dx-hairline);
     display:grid; place-items:center; padding:14px 6px;
-    --r-line2:rgba(185,198,230,.22); --r-cyan:#7d95ff; --r-ink:#e9edf7;
-    --r-dim:#9aa5ba; --r-faint:#7d879b; --r-l2:#151c2b; --r-l3:#1d2940;
-    --r-l0:#0a0e17;
+    --r-line2:var(--dx-gate-line); --r-sheetline:var(--dx-gate-line);
+    --r-cyan:var(--color-accent); --r-ink:var(--color-text);
+    --r-dim:var(--dx-ink2); --r-faint:var(--dx-ink3);
+    --r-l2:var(--dx-gate-l2); --r-l3:var(--dx-gate-l3); --r-l0:var(--dx-gate-l0);
+  }
+  :root {
+    --dx-gate-sky:radial-gradient(110% 110% at 46% 6%, #e9eef6, #dde4f0 78%);
+    --dx-gate-line:rgba(38,50,82,.42); --dx-gate-l2:#ffffff;
+    --dx-gate-l3:#f2f5fb; --dx-gate-l0:#e4e9f3;
+    --dx-gate-veil:0;
+  }
+  .dx-dark {
+    --dx-gate-sky:radial-gradient(110% 110% at 46% 6%, #0d1730, #05070f 74%);
+    --dx-gate-line:rgba(185,198,230,.22); --dx-gate-l2:#151c2b;
+    --dx-gate-l3:#1d2940; --dx-gate-l0:#0a0e17;
+    --dx-gate-veil:.62;
   }
   .dx-gate-v svg { width:100%; height:100%; max-height:380px }
   .dx-gate-v::after {
     content:''; position:absolute; inset:0; pointer-events:none;
+    opacity:var(--dx-gate-veil);
     background:linear-gradient(276deg, transparent 74%, color-mix(in srgb, var(--dx-raised) 62%, transparent));
   }
   .dx-gate-b { min-width:0; padding:clamp(20px,2.6vw,30px); display:flex;
@@ -926,6 +1058,7 @@
     --r-orange:#c64900;
     --r-red:   #b63039;
     --r-green: #007d4d;
+    --r-sheetline: #95a0b3;
     --r-glass: rgba(255,255,255,.82);
     --r-scrim: radial-gradient(130% 100% at 50% 0%, #e9eef7 0%, #dbe2ee 74%);
     --r-lift:  0 1px 2px rgba(31,41,72,.06), 0 10px 24px rgba(31,41,72,.07);
@@ -958,6 +1091,7 @@
     --r-orange:#ff763b;
     --r-red:   #ffa09c;
     --r-green: #58da98;
+    --r-sheetline: #474d59;
     --r-glass: rgba(9,12,19,.78);
     --r-scrim: radial-gradient(130% 100% at 50% 0%, #0d1526 0%, #05070d 72%);
     --r-lift:  inset 0 1px 0 rgba(255,255,255,.06), 0 12px 28px rgba(0,0,0,.45);
@@ -1345,7 +1479,7 @@
   .rig-2d { position: relative; width: 100%; height: 100%; display: grid; place-items: center;
             background: var(--r-scrim); overflow: hidden }
   .rig-2d svg { width: 100%; height: 100%; max-height: 100% }
-  .d2-blk { fill: var(--r-l2); stroke: var(--r-line2); stroke-width: 1.2; cursor: pointer;
+  .d2-blk { fill: var(--r-l2); stroke: var(--r-sheetline); stroke-width: 1.2; cursor: pointer;
             transition: fill var(--dx-t-base) var(--dx-ease), stroke var(--dx-t-base) }
   .d2-blk:hover { fill: var(--r-l3); stroke: var(--r-cyan) }
   .d2-blk.on { fill: color-mix(in srgb, var(--r-cyan) 12%, var(--r-l2)); stroke: var(--r-cyan); filter: drop-shadow(0 0 7px color-mix(in srgb,var(--r-cyan) 50%,transparent)) }
@@ -1368,7 +1502,7 @@
   .d2-tick { stroke-width: 1.4; opacity: .8 }
   /* An SVG presentation attribute loses to a CSS rule, so the shell outline
      needs a rule of its own rather than fill="none". */
-  .d2-shell { fill: none !important; stroke: var(--r-line2); stroke-width: 1.4 }
+  .d2-shell { fill: none !important; stroke: var(--r-sheetline); stroke-width: 1.4 }
   .d2-shell:hover { stroke: var(--r-cyan) }
   .d2-shell.on { stroke: var(--r-cyan); stroke-width: 1.8;
                  filter: drop-shadow(0 0 8px color-mix(in srgb,var(--r-cyan) 55%,transparent)) }
@@ -1497,7 +1631,11 @@
 
   /* ═══ layout ══════════════════════════════════════════════════════════ */
   .dx-grid3 { display:grid; grid-template-columns:minmax(0,340px) minmax(0,1fr) minmax(0,320px); gap:20px; align-items:start }
-  .dx-grid2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; align-items:start }
+  .dx-grid2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; align-items:stretch }
+  .dx-grid2 > .dx-span2 { grid-column:1 / -1 }
+  /* two lists of very different length: a card stretched to match its
+     neighbour would carry a void, so these keep their own height */
+  .dx-grid2.top { align-items:start }
   .dx-grid3b { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; align-items:start }
   .dx-side { display:grid; grid-template-columns:minmax(0,320px) minmax(0,1fr); gap:20px; align-items:start }
   .dx-hero { display:grid; grid-template-columns:minmax(0,1.02fr) minmax(0,1fr); gap:48px; align-items:center; padding:40px 0 52px }
@@ -1575,7 +1713,7 @@
 
   <div class="dx-hero">
     <div>
-      <div class="dx-in dx-in-1" style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dx-ink-accent);margin-bottom:18px">Separation processes · Unit operations laboratory</div>
+      <div class="dx-in dx-in-1" style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-text);margin-bottom:18px">Separation processes · Unit operations laboratory</div>
       <h1 class="dx-in dx-in-2" style="font-size:clamp(40px,11vw,76px);letter-spacing:.02em;margin:0 0 8px;line-height:.98">DISTILLEX</h1>
       <h3 class="dx-in dx-in-3" style="font-weight:400;font-size:26px;margin:0 0 18px;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Interactive Fractional Distillation Laboratory</h3>
       <p class="dx-in dx-in-3" style="max-width:52ch;font-size:16px;color:color-mix(in srgb,var(--color-text) 72%,transparent);text-wrap:pretty">Understand separation by controlling the column yourself. Explore vapour–liquid equilibrium, column operation, stagewise separation and process design — every number on screen is computed in your browser from the thermodynamic model you select.</p>
@@ -1786,7 +1924,7 @@
             </sc-if>
           </sc-for>
           <rect x="{{ gateD2.tower.x }}" y="{{ gateD2.tower.y }}" width="{{ gateD2.tower.w }}"
-                height="{{ gateD2.tower.h }}" rx="{{ gateD2.tower.rx }}" fill="#0c1424"></rect>
+                height="{{ gateD2.tower.h }}" rx="{{ gateD2.tower.rx }}" fill="{{ gateD2.tower.fill }}"></rect>
           <sc-for list="{{ gateD2.bands }}" as="gb" hint-placeholder-count="16">
             <rect x="{{ gb.x }}" y="{{ gb.y }}" width="{{ gb.w }}" height="{{ gb.h }}" fill="{{ gb.fill }}" opacity="{{ gb.op }}"></rect>
           </sc-for>
@@ -1809,7 +1947,7 @@
         </svg>
       </div>
       <div class="dx-gate-b">
-        <div class="dx-kicker" style="color:var(--dx-heat)">Digital twin</div>
+        <div class="dx-kicker">Digital twin</div>
         <h3>Run a crude unit</h3>
         <p>Not an illustration of one. Set the charge, the furnace outlet, the pressures, the reflux and the draws; the browser solves the flash, the stage cascade and every balance, and the plant you see is built from the answer.</p>
         <div class="dx-gate-figs">
@@ -1873,7 +2011,12 @@
       <button class="btn btn-secondary" onClick="{{ saveCfg }}" title="Save configuration as JSON" style="min-height:32px">Save</button>
       <button class="btn btn-secondary" onClick="{{ loadClick }}" title="Load a saved configuration" style="min-height:32px">Load</button>
       <button class="btn btn-secondary" data-v="results" onClick="{{ go }}" title="Export results" style="min-height:32px">Export</button>
-      <button class="btn btn-secondary" onClick="{{ toggleTheme }}" title="Switch to {{ themeLabel }}" aria-label="Switch to {{ themeLabel }}" style="min-height:32px;width:34px;padding:0">{{ themeIcon }}</button>
+      <button class="btn btn-secondary dx-themebtn" onClick="{{ toggleTheme }}" title="Switch to {{ themeLabel }}" aria-label="Switch to {{ themeLabel }}">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="{{ themeIconD }}" stroke="currentColor" stroke-width="1.6"
+                stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </button>
       <input type="file" accept="application/json" ref="{{ fileRef }}" onChange="{{ loadCfg }}" style="display:none">
     </div>
   </header>
@@ -1893,7 +2036,7 @@
         <div class="dx-stack" style="display:flex;flex-direction:column">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Mixture &amp; model</h6>
+            <h6 style="margin:0;color:var(--color-text)">Mixture &amp; model</h6>
             <div class="field">
               <label for="dx-mix">Binary mixture</label>
               <select class="input" id="dx-mix" value="{{ v.mixKey }}" data-k="mixKey" onChange="{{ setStr }}">
@@ -1925,7 +2068,7 @@
 
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Feed conditions</h6>
+            <h6 style="margin:0;color:var(--color-text)">Feed conditions</h6>
             <div class="dx-grid2" style="gap:8px">
               <div class="field"><label for="dx-F">Flowrate F — kmol/h</label><input class="input" id="dx-F" type="number" min="0.1" step="1" value="{{ v.F }}" data-k="F" onChange="{{ setNum }}"></div>
               <div class="field"><label for="dx-Tf">Feed pressure — kPa</label><input class="input" id="dx-Tf" type="number" min="1" step="1" value="{{ v.P }}" disabled="{{ true }}"></div>
@@ -1943,15 +2086,15 @@
 
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">{{ modeTitle }}</h6>
+            <h6 style="margin:0;color:var(--color-text)">{{ modeTitle }}</h6>
             <sc-for list="{{ modeLines }}" as="ln" hint-placeholder-count="4">
-              <div style="display:flex;gap:8px;font-size:12px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 78%,transparent)"><span style="color:var(--dx-ink-accent)">—</span><span>{{ ln }}</span></div>
+              <div style="display:flex;gap:8px;font-size:12px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 78%,transparent)"><span style="color:var(--color-text)">—</span><span>{{ ln }}</span></div>
             </sc-for>
           </section>
 
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Specification</h6>
+            <h6 style="margin:0;color:var(--color-text)">Specification</h6>
             <div class="seg" style="width:100%">
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxcalc" value="design" checked="{{ isDesign }}" data-k="calcMode" onChange="{{ setStr }}"><span>Design</span></label>
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxcalc" value="rating" checked="{{ isRating }}" data-k="calcMode" onChange="{{ setStr }}"><span>Rating</span></label>
@@ -2103,10 +2246,10 @@
             </sc-if>
             </div>
             <div class="dx-colkey dx-noprint">
-              <span><i style="background:var(--dx-liquid)"></i>x liquid</span>
-              <span><i style="background:var(--dx-vapour)"></i>y vapour</span>
-              <span><i style="background:var(--dx-magenta)"></i>feed stage</span>
-              <span><i style="background:var(--dx-gold)"></i>selected stage</span>
+              <span><i style="background:var(--dx-plot-liq)"></i>x liquid</span>
+              <span><i style="background:var(--dx-plot-phys)"></i>y vapour</span>
+              <span><i style="background:var(--dx-plot-feed)"></i>feed stage</span>
+              <span><i style="background:var(--dx-mark)"></i>selected stage</span>
               <span style="margin-left:auto">{{ stageNote }}</span>
             </div>
             <p style="margin:0;font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Stage positions, feed stage and the end temperatures are read from the solved case. The rising and falling traffic depicts counter-current flow and scales with the internal vapour and liquid rates — it is a visual aid, not a hydraulic calculation.</p>
@@ -2131,7 +2274,7 @@
         <section class="card blueprint" style="padding:14px;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Stage profiles</h6>
+            <h6 style="margin:0;color:var(--color-text)">Stage profiles</h6>
             <span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Stage 1 = top tray · stage {{ r.N }} = reboiler</span>
           </div>
           <div class="dx-grid2" style="gap:14px">
@@ -2164,12 +2307,12 @@
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div class="dx-kicker">Live results</div>
-            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+            <div class="dx-figs">
               <sc-for list="{{ keyRows }}" as="kr" hint-placeholder-count="3">
-                <div class="dx-well" style="padding:11px 12px;display:flex;flex-direction:column;gap:3px;min-width:0;border-top:2px solid {{ kr.c }}">
-                  <span style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:color-mix(in srgb,var(--color-text) 70%,transparent);line-height:1.25">{{ kr.k }}</span>
-                  <span class="dx-num" data-dxn="{{ kr.n }}" style="font-size:23px;font-weight:700;line-height:1.05;color:{{ kr.c }}">{{ kr.v }}</span>
-                  <span class="dx-num" style="font-size:10px;color:color-mix(in srgb,var(--color-text) 66%,transparent)">{{ kr.u }}</span>
+                <div class="dx-fig">
+                  <span class="dx-num n" data-dxn="{{ kr.n }}" style="color:{{ kr.c }}">{{ kr.v }}</span>
+                  <span class="dx-num u">{{ kr.u }}</span>
+                  <span class="k">{{ kr.k }}</span>
                 </div>
               </sc-for>
             </div>
@@ -2195,7 +2338,7 @@
 
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Material balance &amp; convergence</h6>
+            <h6 style="margin:0;color:var(--color-text)">Material balance &amp; convergence</h6>
             <div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityHead }}</div>
             <div style="font-size:11.5px;font-variant-numeric:tabular-nums;line-height:1.7;color:color-mix(in srgb,var(--color-text) 75%,transparent)">
               <div>F = D + B → {{ mb.total }}</div>
@@ -2210,7 +2353,7 @@
 
           <section class="card blueprint dx-noprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">What happens if?</h6>
+            <h6 style="margin:0;color:var(--color-text)">What happens if?</h6>
             <div style="display:flex;gap:6px">
               <select class="input" value="{{ v.wiVar }}" data-k="wiVar" onChange="{{ setStr }}" style="flex:1" aria-label="Variable to change">
                 <sc-for list="{{ wiOptions }}" as="o" hint-placeholder-count="5">
@@ -2249,15 +2392,15 @@
         <div class="dx-stack" style="display:flex;flex-direction:column">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Column configuration</h6>
+            <h6 style="margin:0;color:var(--color-text)">Column configuration</h6>
             <div class="field">
               <label>Internals</label>
-              <div class="input" style="display:flex;align-items:center;background:transparent;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Trays — stagewise model</div>
+              <div class="dx-fixed">Trays — stagewise model<i>fixed</i></div>
               <details class="dx-dis"><summary>Why there is no choice here</summary><div class="dx-dis-b">The stage calculation is internals-agnostic and the tray column is the only case this model completes. Packed columns are not modelled — no HETP, packed height or transfer-unit (HTU/NTU) calculation is performed — so no selector is offered rather than one that changes nothing.</div></details>
             </div>
             <div class="field">
               <label>Condenser</label>
-              <div class="input" style="display:flex;align-items:center;background:transparent;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Total condenser — y₁ = x_D</div>
+              <div class="dx-fixed">Total condenser — y₁ = x_D<i>fixed</i></div>
               <details class="dx-dis"><summary>Why there is no choice here</summary><div class="dx-dis-b">Only the total condenser is implemented. A partial condenser would add one equilibrium stage, and that is not modelled — so no selector is offered rather than one that changes nothing.</div></details>
             </div>
             <div class="field">
@@ -2277,7 +2420,7 @@
           </section>
           <section class="card blueprint dx-noprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">View</h6>
+            <h6 style="margin:0;color:var(--color-text)">View</h6>
             <div class="seg" style="width:100%">
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxview" value="stages" checked="{{ isStageView }}" data-k="colView" onChange="{{ setStr }}"><span>Stage table</span></label>
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxview" value="industrial" checked="{{ isIndView }}" data-k="colView" onChange="{{ setStr }}"><span>Industrial</span></label>
@@ -2289,7 +2432,7 @@
           <sc-if value="{{ isStageView }}">
             <section class="card blueprint" style="padding:14px;gap:8px">
               <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              <h6 style="margin:0;color:var(--dx-ink-accent)">Stage-by-stage results</h6>
+              <h6 style="margin:0;color:var(--color-text)">Stage-by-stage results</h6>
               <div style="overflow:auto;max-height:620px">
                 <table class="table">
                   <thead><tr><th>Stage</th><th>Section</th><th>x (liquid)</th><th>y (vapour)</th><th>T °C</th><th>α local</th><th>L kmol/h</th><th>V kmol/h</th></tr></thead>
@@ -2305,7 +2448,7 @@
           <sc-if value="{{ isIndView }}">
             <section class="card blueprint" style="padding:14px;gap:10px">
               <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              <div style="display:flex;align-items:baseline;gap:10px"><h6 style="margin:0;color:var(--dx-ink-accent)">Industrial flowsheet</h6><span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Click an item for its engineering information</span></div>
+              <div style="display:flex;align-items:baseline;gap:10px"><h6 style="margin:0;color:var(--color-text)">Industrial flowsheet</h6><span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Click an item for its engineering information</span></div>
               <svg viewBox="0 0 900 420" style="width:100%;height:auto" role="img" aria-label="Process flow diagram of the distillation unit">
                 <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1"><path d="M0 60 H900 M0 140 H900 M0 220 H900 M0 300 H900 M0 380 H900 M100 0 V420 M300 0 V420 M500 0 V420 M700 0 V420"></path></g>
                 <defs><marker id="dxA2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--color-accent)"></path></marker></defs>
@@ -2341,7 +2484,7 @@
         <div class="dx-stack" style="display:flex;flex-direction:column">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Equilibrium parameters</h6>
+            <h6 style="margin:0;color:var(--color-text)">Equilibrium parameters</h6>
             <div class="field">
               <label for="dx-vmix">Binary mixture</label>
               <select class="input" id="dx-vmix" value="{{ v.mixKey }}" data-k="mixKey" onChange="{{ setStr }}">
@@ -2371,7 +2514,7 @@
           <sc-if value="{{ isCustom }}">
             <section class="card blueprint" style="padding:14px;gap:10px">
               <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              <h6 style="margin:0;color:var(--dx-ink-accent)">Custom binary — Antoine data</h6>
+              <h6 style="margin:0;color:var(--color-text)">Custom binary — Antoine data</h6>
               <div style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">log₁₀ P<sup>sat</sup>[mmHg] = A − B/(T[°C] + C). Component A must be the more volatile one.</div>
               <div class="dx-grid2" style="gap:8px">
                 <div class="field"><label>Name A</label><input class="input" value="{{ cust.aName }}" data-side="a" data-f="name" onChange="{{ setCust }}"></div>
@@ -2392,13 +2535,12 @@
 
           <section class="card blueprint" style="padding:14px;gap:6px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Model facts</h6>
-            <sc-for list="{{ vleFacts }}" as="fct" hint-placeholder-count="5">
-              <div style="display:flex;flex-direction:column;gap:1px;padding:4px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 7%,transparent)">
-                <span style="font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ fct.k }}</span>
-                <span style="font-size:12.5px">{{ fct.v }}</span>
-              </div>
-            </sc-for>
+            <h6 style="margin:0;color:var(--color-text)">Model facts</h6>
+            <div class="dx-kv stack">
+              <sc-for list="{{ vleFacts }}" as="fct" hint-placeholder-count="5">
+                <div><span class="k">{{ fct.k }}</span><span class="v">{{ fct.v }}</span></div>
+              </sc-for>
+            </div>
           </section>
         </div>
 
@@ -2406,31 +2548,31 @@
           <section class="card blueprint" style="padding:14px;gap:10px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <h6 style="margin:0;color:var(--dx-ink-accent)">Vapour–liquid equilibrium</h6>
+              <h6 style="margin:0;color:var(--color-text)">Vapour–liquid equilibrium</h6>
               <div class="seg" style="margin-left:auto">
                 <label class="seg-opt"><input type="radio" name="dxvle" value="xy" checked="{{ isXY }}" onChange="{{ setVleShow }}"><span>x–y diagram</span></label>
                 <label class="seg-opt"><input type="radio" name="dxvle" value="txy" checked="{{ isTXY }}" onChange="{{ setVleShow }}"><span>T–x–y diagram</span></label>
               </div>
             </div>
             <svg viewBox="0 0 500 480" style="width:100%;max-width:760px;height:auto;margin:0 auto;touch-action:none" onPointerMove="{{ vleMove }}" onPointerLeave="{{ vleLeave }}" role="img" aria-label="Equilibrium diagram">
-              <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1">
+              <g stroke="var(--dx-plot-grid)" stroke-width="1">
                 <path d="M60 340 H460 M60 260 H460 M60 180 H460 M60 100 H460 M140 20 V420 M220 20 V420 M300 20 V420 M380 20 V420"></path>
               </g>
-              <path d="M60 20 V420 H460" fill="none" stroke="var(--color-divider)" stroke-width="1.4"></path>
+              <path d="M60 20 V420 H460" fill="none" stroke="var(--dx-plot-axis)" stroke-width="1.4"></path>
               <sc-if value="{{ isXY }}">
                 <sc-if value="{{ eqBandOn }}">
                   <polygon class="dx-eqband" points="{{ eqBand }}"></polygon>
                 </sc-if>
-                <line x1="60" y1="420" x2="460" y2="20" stroke="color-mix(in srgb,var(--color-text) 45%,transparent)" stroke-width="1.2"></line>
-                <polyline points="{{ eqPoints }}" fill="none" stroke="var(--color-accent)" stroke-width="2"></polyline>
-                <text x="70" y="36" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-accent)">EQUILIBRIUM y* = f(x)</text>
-                <text x="352" y="404" font-size="11" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">y = x</text>
-                <text x="70" y="52" font-size="10" letter-spacing=".06em" fill="color-mix(in srgb,var(--color-text) 78%,transparent)">shaded: y* − x, the driving force for the separation</text>
+                <line x1="60" y1="420" x2="460" y2="20" stroke="var(--dx-plot-ref)" stroke-width="1.2"></line>
+                <polyline points="{{ eqPoints }}" fill="none" stroke="var(--dx-plot-phys)" stroke-width="2.2"></polyline>
+                <text x="70" y="36" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-text)">EQUILIBRIUM y* = f(x)</text>
+                <text x="352" y="404" font-size="11" fill="var(--dx-plot-tick)">y = x</text>
+                <text x="70" y="52" font-size="10" letter-spacing=".06em" fill="var(--dx-ink2)">shaded: y* − x, the driving force for the separation</text>
                 <sc-if value="{{ vleHoverOn }}">
                   <g>
-                    <line x1="{{ vleHover.cx }}" y1="420" x2="{{ vleHover.cx }}" y2="{{ vleHover.cy }}" stroke="var(--color-accent)" stroke-dasharray="3 3" stroke-width="1"></line>
-                    <line x1="60" y1="{{ vleHover.cy }}" x2="{{ vleHover.cx }}" y2="{{ vleHover.cy }}" stroke="var(--color-accent)" stroke-dasharray="3 3" stroke-width="1"></line>
-                    <circle cx="{{ vleHover.cx }}" cy="{{ vleHover.cy }}" r="4" fill="var(--color-accent)"></circle>
+                    <line x1="{{ vleHover.cx }}" y1="420" x2="{{ vleHover.cx }}" y2="{{ vleHover.cy }}" stroke="var(--dx-mark)" stroke-dasharray="3 3" stroke-width="1"></line>
+                    <line x1="60" y1="{{ vleHover.cy }}" x2="{{ vleHover.cx }}" y2="{{ vleHover.cy }}" stroke="var(--dx-mark)" stroke-dasharray="3 3" stroke-width="1"></line>
+                    <circle cx="{{ vleHover.cx }}" cy="{{ vleHover.cy }}" r="4" fill="var(--dx-mark)"></circle>
                     <text x="{{ vleHover.lx }}" y="{{ vleHover.cy }}" font-size="11" font-variant-numeric="tabular-nums" fill="var(--color-text)">{{ vleHover.label }}</text>
                   </g>
                 </sc-if>
@@ -2438,21 +2580,21 @@
                 <text x="18" y="220" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 18 220)">VAPOUR MOLE FRACTION y_A</text>
               </sc-if>
               <sc-if value="{{ isTXY }}">
-                <polyline points="{{ bubPoints }}" fill="none" stroke="var(--color-accent)" stroke-width="2"></polyline>
-                <polyline points="{{ dewPoints }}" fill="none" stroke="var(--color-accent-700)" stroke-width="2" stroke-dasharray="6 4"></polyline>
-                <text x="70" y="36" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-accent)">BUBBLE (solid) / DEW (dashed) — VAPOUR REGION ABOVE</text>
+                <polyline points="{{ bubPoints }}" fill="none" stroke="var(--dx-plot-liq)" stroke-width="2.2"></polyline>
+                <polyline points="{{ dewPoints }}" fill="none" stroke="var(--dx-plot-phys)" stroke-width="2.2" stroke-dasharray="6 4"></polyline>
+                <text x="70" y="36" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-text)">BUBBLE (solid) / DEW (dashed) — VAPOUR REGION ABOVE</text>
                 <sc-for list="{{ tTicks }}" as="t" hint-placeholder-count="5">
-                  <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
+                  <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text>
                 </sc-for>
                 <text x="260" y="458" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)">MOLE FRACTION A (x, y)</text>
                 <text x="18" y="220" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 18 220)">TEMPERATURE °C</text>
               </sc-if>
               <sc-for list="{{ axTicks }}" as="t" hint-placeholder-count="6">
-                <g><text x="{{ t.x }}" y="438" text-anchor="middle" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text></g>
+                <g><text x="{{ t.x }}" y="438" text-anchor="middle" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text></g>
               </sc-for>
               <sc-if value="{{ isXY }}">
                 <sc-for list="{{ axTicks }}" as="t" hint-placeholder-count="6">
-                  <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
+                  <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text>
                 </sc-for>
               </sc-if>
             </svg>
@@ -2461,7 +2603,7 @@
 
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Component data</h6>
+            <h6 style="margin:0;color:var(--color-text)">Component data</h6>
             <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Component data table, scrolls horizontally">
             <table class="table">
               <thead><tr><th>Component</th><th>CAS</th><th>Role</th><th>MW g/mol</th><th>T<sub>b</sub> °C</th><th>Antoine A / B / C</th><th>Valid range</th><th>Check</th><th>λ kJ/mol</th></tr></thead>
@@ -2483,7 +2625,7 @@
         <div class="dx-stack" style="display:flex;flex-direction:column">
           <section class="card blueprint" style="padding:14px;gap:12px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Construction inputs</h6>
+            <h6 style="margin:0;color:var(--color-text)">Construction inputs</h6>
             <div class="field">
               <label style="display:flex;justify-content:space-between"><span>Distillate x<sub>D</sub><i class="dx-why" data-tip="xD" tabindex="0" role="button" aria-label="What is the distillate purity x_D?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.xD }}</span></label>
               <input type="range" min="0.05" max="0.999" step="0.001" value="{{ v.xD }}" data-k="xD" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Distillate composition x_D, mole fraction">
@@ -2509,7 +2651,7 @@
           </section>
           <section class="card blueprint dx-noprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Stage stepping</h6>
+            <h6 style="margin:0;color:var(--color-text)">Stage stepping</h6>
             <button class="btn btn-primary btn-block" onClick="{{ runSteps }}" style="margin-top:0">▶ Run stage calculation</button>
             <div style="display:flex;gap:6px">
               <button class="btn btn-secondary" onClick="{{ stepBack }}" style="flex:1">‹ Back</button>
@@ -2522,31 +2664,31 @@
           </section>
           <section class="card blueprint" style="padding:14px;gap:4px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Construction results</h6>
-            <sc-for list="{{ mtSummary }}" as="row" hint-placeholder-count="8">
-              <div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:3px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 7%,transparent)">
-                <span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ row.k }}</span><span style="font-variant-numeric:tabular-nums">{{ row.v }}</span>
-              </div>
-            </sc-for>
+            <h6 style="margin:0;color:var(--color-text)">Construction results</h6>
+            <div class="dx-kv">
+              <sc-for list="{{ mtSummary }}" as="row" hint-placeholder-count="8">
+                <div><span class="k">{{ row.k }}</span><span class="v">{{ row.v }}</span></div>
+              </sc-for>
+            </div>
           </section>
         </div>
 
         <section class="card blueprint" style="padding:14px;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--dx-ink-accent)">McCabe–Thiele diagram</h6>
+          <h6 style="margin:0;color:var(--color-text)">McCabe–Thiele diagram</h6>
           <svg viewBox="0 0 500 480" style="width:100%;height:auto;touch-action:none;user-select:none" onPointerMove="{{ mtMove }}" onPointerUp="{{ mtUp }}" onPointerLeave="{{ mtUp }}" role="img" aria-label="McCabe-Thiele construction">
-            <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1">
+            <g stroke="var(--dx-plot-grid)" stroke-width="1">
               <path d="M60 340 H460 M60 260 H460 M60 180 H460 M60 100 H460 M140 20 V420 M220 20 V420 M300 20 V420 M380 20 V420"></path>
             </g>
-            <path d="M60 20 V420 H460" fill="none" stroke="var(--color-divider)" stroke-width="1.4"></path>
-            <line x1="60" y1="420" x2="460" y2="20" stroke="color-mix(in srgb,var(--color-text) 45%,transparent)" stroke-width="1.2"></line>
-            <polyline points="{{ eqPoints }}" fill="none" stroke="var(--color-accent)" stroke-width="2"></polyline>
+            <path d="M60 20 V420 H460" fill="none" stroke="var(--dx-plot-axis)" stroke-width="1.4"></path>
+            <line x1="60" y1="420" x2="460" y2="20" stroke="var(--dx-plot-ref)" stroke-width="1.2"></line>
+            <polyline points="{{ eqPoints }}" fill="none" stroke="var(--dx-plot-phys)" stroke-width="2.2"></polyline>
             <sc-if value="{{ mtOk }}">
               <g>
-                <line x1="{{ rminLine.x1 }}" y1="{{ rminLine.y1 }}" x2="{{ rminLine.x2 }}" y2="{{ rminLine.y2 }}" stroke="color-mix(in srgb,var(--color-text) 40%,transparent)" stroke-width="1" stroke-dasharray="2 4"></line>
-                <line x1="{{ qLine.x1 }}" y1="{{ qLine.y1 }}" x2="{{ qLine.x2 }}" y2="{{ qLine.y2 }}" stroke="var(--dx-magenta)" stroke-width="1.8" stroke-dasharray="7 4"></line>
-                <line x1="{{ rectLine.x1 }}" y1="{{ rectLine.y1 }}" x2="{{ rectLine.x2 }}" y2="{{ rectLine.y2 }}" stroke="var(--color-accent-800)" stroke-width="1.8"></line>
-                <line x1="{{ stripLine.x1 }}" y1="{{ stripLine.y1 }}" x2="{{ stripLine.x2 }}" y2="{{ stripLine.y2 }}" stroke="var(--color-accent-800)" stroke-width="1.8"></line>
+                <line x1="{{ rminLine.x1 }}" y1="{{ rminLine.y1 }}" x2="{{ rminLine.x2 }}" y2="{{ rminLine.y2 }}" stroke="var(--dx-plot-ref)" stroke-width="1" stroke-dasharray="2 4"></line>
+                <line x1="{{ qLine.x1 }}" y1="{{ qLine.y1 }}" x2="{{ qLine.x2 }}" y2="{{ qLine.y2 }}" stroke="var(--dx-plot-feed)" stroke-width="1.7" stroke-dasharray="7 4"></line>
+                <line x1="{{ rectLine.x1 }}" y1="{{ rectLine.y1 }}" x2="{{ rectLine.x2 }}" y2="{{ rectLine.y2 }}" stroke="var(--dx-plot-spec)" stroke-width="1.9"></line>
+                <line x1="{{ stripLine.x1 }}" y1="{{ stripLine.y1 }}" x2="{{ stripLine.x2 }}" y2="{{ stripLine.y2 }}" stroke="var(--dx-plot-spec)" stroke-width="1.9"></line>
                 <sc-for list="{{ mtSegs }}" as="g" hint-placeholder-count="10">
                   <line class="{{ g.cls }}" x1="{{ g.x1 }}" y1="{{ g.y1 }}" x2="{{ g.x2 }}" y2="{{ g.y2 }}" stroke="{{ g.c }}" stroke-width="{{ g.w }}"></line>
                 </sc-for>
@@ -2571,24 +2713,25 @@
                 </sc-if>
                 <sc-for list="{{ mtPoints }}" as="p" hint-placeholder-count="3">
                   <g data-k="{{ p.k }}" onPointerDown="{{ mtDown }}" style="cursor:ew-resize">
-                    <rect x="{{ p.cx }}" y="{{ p.cy }}" width="11" height="11" transform="translate(-5.5,-5.5)" fill="var(--color-bg)" stroke="var(--color-accent)" stroke-width="1.8"></rect>
-                    <text x="{{ p.cx }}" y="{{ p.cy }}" dx="10" dy="-8" font-size="11" font-family="var(--font-heading)" fill="var(--color-accent-800)">{{ p.label }}</text>
+                    <rect x="{{ p.cx }}" y="{{ p.cy }}" width="11" height="11" transform="translate(-5.5,-5.5)" fill="var(--color-surface)" stroke="var(--dx-plot-spec)" stroke-width="1.8"></rect>
+                    <text x="{{ p.cx }}" y="{{ p.cy }}" dx="10" dy="-8" font-size="11" font-family="var(--font-heading)" fill="var(--dx-ink-accent)">{{ p.label }}</text>
                   </g>
                 </sc-for>
               </g>
             </sc-if>
             <sc-for list="{{ axTicks }}" as="t" hint-placeholder-count="6">
-              <g><text x="{{ t.x }}" y="438" text-anchor="middle" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
-                 <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text></g>
+              <g><text x="{{ t.x }}" y="438" text-anchor="middle" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text>
+                 <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text></g>
             </sc-for>
             <text x="260" y="458" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)">LIQUID MOLE FRACTION x_A</text>
             <text x="18" y="220" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 18 220)">VAPOUR MOLE FRACTION y_A</text>
           </svg>
-          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:color-mix(in srgb,var(--color-text) 65%,transparent)">
-            <span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:2px;background:var(--color-accent)"></span>Equilibrium curve</span>
-            <span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:2px;background:var(--color-accent-800)"></span>Operating lines</span>
-            <span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:2px;background:var(--color-accent-700)"></span>q-line</span>
-            <span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:1px;background:color-mix(in srgb,var(--color-text) 40%,transparent)"></span>Minimum-reflux line</span>
+          <div class="dx-leg">
+            <span style="--c:var(--dx-plot-phys)"><i></i>Equilibrium curve</span>
+            <span style="--c:var(--dx-plot-spec)"><i></i>Operating lines</span>
+            <span style="--c:var(--dx-plot-feed)"><i class="dash"></i>q-line</span>
+            <span style="--c:var(--dx-plot-work)"><i></i>Stage construction</span>
+            <span style="--c:var(--dx-plot-ref)"><i class="dash thin"></i>Minimum-reflux line</span>
           </div>
         </section>
       </div>
@@ -2599,7 +2742,7 @@
         <section class="card blueprint dx-noprint" style="padding:14px;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Export</h6>
+            <h6 style="margin:0;color:var(--color-text)">Export</h6>
             <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap">
               <button class="btn btn-secondary" onClick="{{ exportCSV }}">Export CSV</button>
               <button class="btn btn-secondary" onClick="{{ exportJSON }}">Export JSON</button>
@@ -2609,31 +2752,31 @@
           <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Exports are generated in the browser — no data leaves this machine. The printable report contains inputs, model, assumptions, results and the mass balance.</div>
         </section>
 
-        <div class="dx-grid2">
+        <div class="dx-grid2 top">
           <section class="card blueprint" style="padding:14px;gap:6px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">User inputs</h6>
-            <sc-for list="{{ inputRows }}" as="row" hint-placeholder-count="10">
-              <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:3px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 7%,transparent)">
-                <span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ row.k }}</span><span style="font-variant-numeric:tabular-nums;text-align:right">{{ row.v }}</span>
-              </div>
-            </sc-for>
+            <h6 style="margin:0;color:var(--color-text)">User inputs</h6>
+            <div class="dx-kv wrap">
+              <sc-for list="{{ inputRows }}" as="row" hint-placeholder-count="10">
+                <div><span class="k">{{ row.k }}</span><span class="v">{{ row.v }}</span></div>
+              </sc-for>
+            </div>
           </section>
           <section class="card blueprint" style="padding:14px;gap:6px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Calculated values</h6>
-            <sc-for list="{{ calcRows }}" as="row" hint-placeholder-count="12">
-              <div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:3px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 7%,transparent)">
-                <span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ row.k }}</span><span style="font-variant-numeric:tabular-nums;text-align:right">{{ row.v }}</span>
-              </div>
-            </sc-for>
+            <h6 style="margin:0;color:var(--color-text)">Calculated values</h6>
+            <div class="dx-kv wrap">
+              <sc-for list="{{ calcRows }}" as="row" hint-placeholder-count="12">
+                <div><span class="k">{{ row.k }}</span><span class="v">{{ row.v }}</span></div>
+              </sc-for>
+            </div>
           </section>
         </div>
 
-        <div class="dx-grid2">
+        <div class="dx-grid2 top">
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Material balance &amp; numerical convergence</h6>
+            <h6 style="margin:0;color:var(--color-text)">Material balance &amp; numerical convergence</h6>
             <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityHead }}</div>
             <div style="font-size:12px;font-variant-numeric:tabular-nums;line-height:1.8;color:color-mix(in srgb,var(--color-text) 75%,transparent)">
               <div>Overall: F = D + B → {{ mb.total }}</div>
@@ -2647,9 +2790,9 @@
           </section>
           <section class="card blueprint" style="padding:14px;gap:6px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Model assumptions</h6>
+            <h6 style="margin:0;color:var(--color-text)">Model assumptions</h6>
             <sc-for list="{{ assumptions }}" as="a" hint-placeholder-count="8">
-              <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--dx-ink-accent)">—</span><span>{{ a }}</span></div>
+              <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--color-text)">—</span><span>{{ a }}</span></div>
             </sc-for>
           </section>
         </div>
@@ -2660,7 +2803,7 @@
       <div class="dx-side">
         <section class="card blueprint" style="padding:14px;gap:12px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--dx-ink-accent)">Study definition</h6>
+          <h6 style="margin:0;color:var(--color-text)">Study definition</h6>
           <div class="field">
             <label for="dx-si">Independent variable</label>
             <select class="input" id="dx-si" value="{{ sv.ind }}" data-k="ind" onChange="{{ setSens }}">
@@ -2684,7 +2827,7 @@
 
         <section class="card blueprint" style="padding:14px;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--dx-ink-accent)">{{ sensTitle }}</h6>
+          <h6 style="margin:0;color:var(--color-text)">{{ sensTitle }}</h6>
           <svg viewBox="0 0 660 300" style="width:100%;height:auto" role="img" aria-label="Sensitivity chart">
             <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1"><path d="M70 40 H620 M70 92 H620 M70 145 H620 M70 197 H620"></path></g>
             <path d="M70 30 V250 H620" fill="none" stroke="var(--color-divider)" stroke-width="1.4"></path>
@@ -2714,7 +2857,7 @@
             <text x="16" y="140" text-anchor="middle" font-size="11.5" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 16 140)">{{ sensYLabel }}</text>
           </svg>
           <div class="blueprint" style="padding:10px 12px;background:var(--color-surface)">
-            <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dx-ink-accent)">Key observation</div>
+            <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-text)">Key observation</div>
             <p style="margin:4px 0 0;font-size:13px;line-height:1.55">{{ sensNote }}</p>
           </div>
         </section>
@@ -2724,7 +2867,7 @@
     <sc-if value="{{ isTheory }}">
       <div style="max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:8px">
         <div style="padding:4px 0 12px">
-          <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dx-ink-accent)">Reference</div>
+          <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text)">Reference</div>
           <h2 style="margin:4px 0 6px">Theory of fractional distillation</h2>
           <p style="max-width:76ch;font-size:14px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ theoryCount }}</p>
           <div class="dx-tfind">
@@ -2742,7 +2885,7 @@
             <sc-for list="{{ ch.items }}" as="t" hint-placeholder-count="5">
               <div class="{{ t.cls }}" style="padding:2px 16px">
                 <button data-k="{{ t.k }}" onClick="{{ setTheory }}" aria-expanded="{{ t.open }}" style="{{ t.headStyle }}">
-                  <span class="dx-num" style="font-size:12px;color:var(--dx-ink-accent);min-width:20px">{{ t.no }}</span>
+                  <span class="dx-num" style="font-size:12px;color:var(--color-text);min-width:20px">{{ t.no }}</span>
                   <span style="flex:1">{{ t.title }}</span>
                   <i class="dx-chev" aria-hidden="true"></i>
                 </button>
@@ -2766,13 +2909,14 @@
     </sc-if>
 
     <sc-if value="{{ isExam }}">
-      <div style="max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:14px">
+      <div class="dx-short" style="max-width:860px;margin:0 auto;gap:14px">
         <section class="card blueprint" style="padding:18px;gap:12px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="display:flex;align-items:center;gap:10px">
             <span class="tag tag-accent"><span>Question&#160;{{ examNo }}&#160;of&#160;{{ examTotal }}</span></span>
-            <span style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Generated from the current simulation — answers are the engine's own values</span>
+            <span style="font-size:11.5px;color:var(--dx-ink2)">Generated from the current simulation — answers are the engine's own values</span>
           </div>
+          <div class="dx-prog" role="presentation"><i style="{{ examProg }}"></i></div>
           <p style="margin:0;font-size:18px;font-family:var(--font-heading);line-height:1.3">{{ examQ }}</p>
           <sc-if value="{{ examNumeric }}">
             <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
@@ -2795,13 +2939,13 @@
           </div>
           <sc-if value="{{ showHint }}">
             <div class="blueprint" style="padding:10px 12px;background:var(--color-surface)">
-              <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dx-ink-accent)">Hint</div>
+              <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-text)">Hint</div>
               <p style="margin:4px 0 0;font-size:13.5px;line-height:1.55">{{ examHint }}</p>
             </div>
           </sc-if>
           <sc-if value="{{ showSol }}">
             <div class="blueprint" style="padding:10px 12px;background:var(--color-surface)">
-              <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dx-ink-accent)">Worked solution</div>
+              <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-text)">Worked solution</div>
               <p style="margin:4px 0 0;font-size:13.5px;line-height:1.6">{{ examSol }}</p>
             </div>
           </sc-if>
@@ -2824,7 +2968,7 @@
         <sc-for list="{{ val.groups }}" as="g" hint-placeholder-count="4">
           <section class="card blueprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">{{ g.name }}</h6>
+            <h6 style="margin:0;color:var(--color-text)">{{ g.name }}</h6>
             <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Validation results, scrolls horizontally">
             <table class="table">
               <thead><tr><th>Result</th><th>Check</th><th>Computed</th><th>Reference</th><th>Error</th><th>Tolerance</th></tr></thead>
@@ -2842,7 +2986,7 @@
         </sc-for>
         <section class="card blueprint" style="padding:14px;gap:6px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--dx-ink-accent)">Reproducing this outside the browser</h6>
+          <h6 style="margin:0;color:var(--color-text)">Reproducing this outside the browser</h6>
           <p style="margin:0;font-size:13px;line-height:1.6">The same checks, plus a 648-case numerical fingerprint, the hostile-input matrix, the save/load round-trip and a build-reproducibility check, run headless against the source: <code>node tools/test.js</code>. It exits non-zero on any failure.</p>
         </section>
       </div>
@@ -2858,24 +3002,22 @@
         <div class="dx-grid2">
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Engineering models</h6>
+            <h6 style="margin:0;color:var(--color-text)">Engineering models</h6>
             <p style="margin:0;font-size:13px;line-height:1.6">Ideal VLE (Raoult's law) with Antoine vapour pressures in mmHg and °C, and a constant-relative-volatility model. Stage calculations follow McCabe–Thiele under constant molar overflow; minimum reflux includes a tangent-pinch check; minimum stages use Fenske with a geometric-mean α. Activity-coefficient models (Wilson, NRTL, UNIQUAC) are <strong>not</strong> implemented — mixtures that need them are flagged rather than silently approximated.</p>
           </section>
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Data provenance &amp; validation</h6>
+            <h6 style="margin:0;color:var(--color-text)">Data provenance &amp; validation</h6>
             <p style="margin:0;font-size:13px;line-height:1.6">Antoine constants are the Reid–Prausnitz–Poling / Lange sets in mmHg and °C, each stored with the temperature range it was fitted over; the VLE Explorer prints that range and re-derives each pure-component vapour pressure at its own normal boiling point as a self-check (benzene 759.0 mmHg at 80.0 °C, water 757.6 mmHg at 100.0 °C — both ≈ 760). Latent heats are values at the normal boiling point. Stage temperatures outside a fitted range raise an extrapolation warning rather than silently degrading. Known azeotropes are recorded per mixture — ethanol/water at 95.6 wt% ethanol (x ≈ 0.894), boiling at 78.2 °C at 1 atm — and any specification that crosses one is flagged as physically unreachable, whatever the ideal model computes.</p>
           </section>
-          <section class="card blueprint" style="padding:16px;gap:8px">
+          <section class="card blueprint dx-span2" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Limitations</h6>
+            <h6 style="margin:0;color:var(--color-text)">Limitations</h6>
             <p style="margin:0;font-size:13px;line-height:1.6">Binary systems only. No column hydraulics (flooding, weeping, pressure drop, diameter). Duties are latent-heat only. Tray efficiency is applied as a single overall value. Packed columns are not modelled: no HETP, packed height or transfer-unit (HTU/NTU) calculation is performed. Azeotropic systems cannot be represented by either model offered.</p>
           </section>
-        </div>
-        <div class="dx-grid2">
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Deployment</h6>
+            <h6 style="margin:0;color:var(--color-text)">Deployment</h6>
             <ol style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">
               <li>Create a GitHub repository and push this project.</li>
               <li>Import the repository into Vercel — it is a static client-side app, so no build configuration or environment variables are required.</li>
@@ -2885,20 +3027,20 @@
           </section>
           <section class="card blueprint" style="padding:16px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--dx-ink-accent)">Extending it</h6>
+            <h6 style="margin:0;color:var(--color-text)">Extending it</h6>
             <p style="margin:0;font-size:13px;line-height:1.6">The thermodynamic layer (vapour pressure, equilibrium, temperatures), the unit-operation engine (balances, stage stepping, duties), the visualisation layer and the mixture data are separate concerns. A new unit operation — absorption, extraction, evaporation, a heat exchanger — needs a new engine module and view; the thermodynamic and data layers are reused unchanged.</p>
           </section>
         </div>
         <section class="card blueprint" style="padding:16px;gap:6px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--dx-ink-accent)">Standing assumptions</h6>
+          <h6 style="margin:0;color:var(--color-text)">Standing assumptions</h6>
           <sc-for list="{{ assumptions }}" as="a" hint-placeholder-count="8">
-            <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--dx-ink-accent)">—</span><span>{{ a }}</span></div>
+            <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--color-text)">—</span><span>{{ a }}</span></div>
           </sc-for>
         </section>
         <section class="card blueprint" style="padding:16px;gap:6px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--dx-ink-accent)">Developer</h6>
+          <h6 style="margin:0;color:var(--color-text)">Developer</h6>
           <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
             <div style="font-family:var(--font-heading);font-size:19px">Shafin Ahamed Neon</div>
             <a href="https://www.linkedin.com/in/shafin-ahamed-neon-aa9596213" target="_blank" rel="noopener noreferrer external"
@@ -3098,7 +3240,7 @@
               <!-- the tower: shell, thermal bands, trays, outline -->
               <g opacity="{{ rigD2.tower.op }}">
                 <rect x="{{ rigD2.tower.x }}" y="{{ rigD2.tower.y }}" width="{{ rigD2.tower.w }}"
-                      height="{{ rigD2.tower.h }}" rx="{{ rigD2.tower.rx }}" fill="#0c1424"></rect>
+                      height="{{ rigD2.tower.h }}" rx="{{ rigD2.tower.rx }}" fill="{{ rigD2.tower.fill }}"></rect>
                 <sc-for list="{{ rigD2.bands }}" as="bd" hint-placeholder-count="16">
                   <rect x="{{ bd.x }}" y="{{ bd.y }}" width="{{ bd.w }}" height="{{ bd.h }}"
                         fill="{{ bd.fill }}" opacity="{{ bd.op }}"></rect>
@@ -4026,9 +4168,9 @@ class Component extends DCLogic {
     const gridPath='M46 58 H352 M46 92 H352 M46 127 H352';
     const ticksFor=(lo,hi)=>[0,1,2,3].map(i=>({x:42,y:166-i*46,anchor:'end',label:(lo+(hi-lo)*i/3).toFixed(hi-lo<5?1:0)}));
     const profiles = hasR? [
-      {title:'TEMPERATURE vs STAGE  [\u00b0C]',grid:gridPath,series:[{pts:this.poly(mk(Ts,tl,th)),color:'var(--color-accent)',dash:'0'}],ticks:ticksFor(tl,th).concat([{x:200,y:176,anchor:'middle',label:''}]),legend:[{x:250,color:'var(--color-accent)',tx:268,label:'bubble T'}]},
-      {title:'COMPOSITION vs STAGE  [mol frac]',grid:gridPath,series:[{pts:this.poly(mk(xs,0,1)),color:'var(--color-accent)',dash:'0'},{pts:this.poly(mk(ys,0,1)),color:'var(--color-accent-700)',dash:'5 3'}],ticks:ticksFor(0,1),legend:[{x:210,color:'var(--color-accent)',tx:228,label:'x liquid'},{x:280,color:'var(--color-accent-700)',tx:298,label:'y vapour'}]},
-      {title:'INTERNAL FLOWS vs STAGE  [kmol/h]',grid:gridPath,series:[{pts:this.poly(mk(st.map(a=>a.L),0,Math.max(r.Lb,r.V)*1.1)),color:'var(--color-accent)',dash:'0'},{pts:this.poly(mk(st.map(a=>a.V),0,Math.max(r.Lb,r.V)*1.1)),color:'var(--color-accent-700)',dash:'5 3'}],ticks:ticksFor(0,Math.max(r.Lb,r.V)*1.1),legend:[{x:210,color:'var(--color-accent)',tx:228,label:'L'},{x:270,color:'var(--color-accent-700)',tx:288,label:'V'}]},
+      {title:'TEMPERATURE vs STAGE  [\u00b0C]',grid:gridPath,series:[{pts:this.poly(mk(Ts,tl,th)),color:'var(--dx-plot-temp)',dash:'0'}],ticks:ticksFor(tl,th).concat([{x:200,y:176,anchor:'middle',label:''}]),legend:[{x:250,color:'var(--dx-plot-temp)',tx:268,label:'bubble T'}]},
+      {title:'COMPOSITION vs STAGE  [mol frac]',grid:gridPath,series:[{pts:this.poly(mk(xs,0,1)),color:'var(--dx-plot-liq)',dash:'0'},{pts:this.poly(mk(ys,0,1)),color:'var(--dx-plot-phys)',dash:'5 3'}],ticks:ticksFor(0,1),legend:[{x:210,color:'var(--dx-plot-liq)',tx:228,label:'x liquid'},{x:280,color:'var(--dx-plot-phys)',tx:298,label:'y vapour'}]},
+      {title:'INTERNAL FLOWS vs STAGE  [kmol/h]',grid:gridPath,series:[{pts:this.poly(mk(st.map(a=>a.L),0,Math.max(r.Lb,r.V)*1.1)),color:'var(--dx-plot-liq)',dash:'0'},{pts:this.poly(mk(st.map(a=>a.V),0,Math.max(r.Lb,r.V)*1.1)),color:'var(--dx-plot-phys)',dash:'5 3'}],ticks:ticksFor(0,Math.max(r.Lb,r.V)*1.1),legend:[{x:210,color:'var(--dx-plot-liq)',tx:228,label:'L'},{x:270,color:'var(--dx-plot-phys)',tx:288,label:'V'}]},
       {title:'STAGE ENRICHMENT \u03b1_eff vs STAGE',grid:gridPath,series:[{pts:this.poly(mk(enr,1,eHi)),color:'var(--color-accent)',dash:'0'}],ticks:ticksFor(1,eHi),legend:[{x:250,color:'var(--color-accent)',tx:268,label:'(y/x)/((1-y)/(1-x))'}]}
     ] : [];
 
@@ -4097,7 +4239,7 @@ class Component extends DCLogic {
     const keyRows=[
       {k:'Distillate', v:f(r.xD,4), n:hasR?String(this.num(r.xD)):'', u:'x_D', c:'var(--dx-liquid)'},
       {k:'Bottoms',    v:f(r.xB,4), n:hasR?String(this.num(r.xB)):'', u:'x_B', c:'var(--dx-vapour)'},
-      {k:'Stages',     v:f(r.N,0),  n:hasR?String(this.num(r.N)):'',  u:hasR?('feed '+f(r.feedStage,0)):'\u2014', c:'var(--dx-magenta)'}
+      {k:'Stages',     v:f(r.N,0),  n:hasR?String(this.num(r.N)):'',  u:hasR?('feed '+f(r.feedStage,0)):'\u2014', c:'var(--color-text)'}
     ];
     const mkRow=rows=>rows.map(row=>({k:row[0],v:row[1],
       style:'display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--dx-hairline)'}));
@@ -4152,7 +4294,10 @@ class Component extends DCLogic {
       isApp:s.view!=='landing'&&s.view!=='rig',
       isSim:s.view==='sim', isColumn:s.view==='column',
       navItems, issues, hasIssues:issues.length>0,
-      themeClass:s.theme==='dark'?'dx-dark':'', themeLabel:s.theme==='dark'?'Light mode':'Dark mode', themeIcon:s.theme==='dark'?'\u2600':'\u25d1',
+      themeClass:s.theme==='dark'?'dx-dark':'', themeLabel:s.theme==='dark'?'Light mode':'Dark mode', themeIconD: s.theme==='dark'
+        ? 'M12 7.4a4.6 4.6 0 100 9.2 4.6 4.6 0 000-9.2zM12 1.8v2.4M12 19.8v2.4M4.8 4.8l1.7 1.7'
+          + 'M17.5 17.5l1.7 1.7M1.8 12h2.4M19.8 12h2.4M4.8 19.2l1.7-1.7M17.5 6.5l1.7-1.7'
+        : 'M20 14.2A8.4 8.4 0 019.8 4 8.8 8.8 0 1020 14.2z',
       mixOptions:Object.keys(S.MIX).map(k=>({k,label:S.MIX[k].label})),
       isRaoult:s.model==='raoult', isAlpha:s.model==='alpha',
       isDesign:s.calcMode==='design', isRating:s.calcMode==='rating',
@@ -4185,7 +4330,9 @@ class Component extends DCLogic {
       openRig:()=>{ this.pushRoute(true); this.setState({view:'rig'}); this.toTop(); },
       leaveRig:()=>{ this.pushRoute(false); this.rigTourStop(); this.setState({view:'landing'}); this.toTop(); },
       tryExample:()=>this.setState({view:'sim',mixKey:'bt',model:'raoult',P:101.325,F:100,zF:0.45,q:1,xD:0.96,xB:0.04,R:2.2,calcMode:'design'}),
-      toggleTheme:()=>this.setState({theme:s.theme==='dark'?'light':'dark'}),
+      toggleTheme:()=>{ const t = s.theme==='dark'?'light':'dark';
+                       try { THEME.set(t); } catch (e) { /* presentation only */ }
+                       this.setState({theme:t}); },
       setNum:(e)=>{const k=e.target.dataset.k, raw=e.target.value, val=parseFloat(raw);
         // Keep the raw entry when it will not parse so validation reports it.
         // Silently retaining the previous number would leave a valid-looking
@@ -4792,10 +4939,14 @@ class Component extends DCLogic {
    *  presented as a passed check. */
   balanceReport(r,hasR){
     const f=(v,d)=>this.f(v,d);
-    const box=(kind)=>'font-size:13px;font-family:var(--font-heading);padding:5px 9px;border:1px '+
-      (kind==='ok'?'solid var(--color-accent)':kind==='bad'?'solid var(--color-accent-700)':'dashed var(--color-divider)')+
-      ';color:'+(kind==='none'?'inherit':'var(--color-accent-800)')+
-      ';background:'+(kind==='none'?'transparent':'color-mix(in srgb,var(--color-accent) 14%,transparent)');
+    const box=(kind)=>{
+      const role = kind==='ok' ? 'var(--dx-ok)' : kind==='bad' ? 'var(--dx-err)' : null;
+      return 'font-size:13px;font-family:var(--font-heading);font-weight:600;'+
+        'padding:6px 10px;border-radius:var(--dx-r-sm);border:1px '+
+        (role ? 'solid color-mix(in srgb,'+role+' 45%,transparent)' : 'dashed var(--color-divider)')+
+        ';color:'+(role || 'var(--dx-ink2)')+
+        ';background:'+(role ? 'color-mix(in srgb,'+role+' 11%,transparent)' : 'transparent');
+    };
     if(!hasR){
       const rr=(r&&r.ratingResid!=null)? Math.abs(r.ratingResid).toExponential(3)+
         '  (tolerance '+Component.RATING_TOL.toExponential(0)+' mole fraction \u2014 exceeded)' : '\u2014';
@@ -4936,7 +5087,7 @@ class Component extends DCLogic {
       out.rminLine={x1:MX(r.xD),y1:MY(r.xD),x2:MX(r.pinch.x),y2:MY(r.pinch.y)};
       const segs=[], marks=[], nodes=[]; let prev=r.xD;
       r.stages.forEach(st=>{
-        const c = st.rect?'var(--dx-vapour)':'var(--dx-liquid)';
+        const c = st.rect?'var(--dx-plot-work)':'var(--dx-plot-work2)';
         segs.push({n:st.n,x1:MX(prev),y1:MY(st.y),x2:MX(st.x),y2:MY(st.y),c});
         segs.push({n:st.n,x1:MX(st.x),y1:MY(st.y),x2:MX(st.x),y2:MY(st.yn),c});
         marks.push({x:(MX(st.x)-5).toFixed(1),y:(MY(st.y)-5).toFixed(1),n:st.n,feed:st.n===r.feedStage});
@@ -4948,8 +5099,8 @@ class Component extends DCLogic {
       // construction instead of hunting for what changed
       const freshN = shown>0 ? r.stages[shown-1].n : null;
       out.mtSegs=segs.slice(0,shown*2).map(g=>({x1:g.x1,y1:g.y1,x2:g.x2,y2:g.y2,c:g.c,
-        cls:'dx-mtseg'+(g.n===freshN?' fresh':''), w:(g.n===freshN?2.8:1.3)}));
-      out.mtMarks=marks.slice(0,shown).map(m=>({x:m.x,y:m.y,n:m.n,fill:m.feed?'var(--dx-magenta)':'color-mix(in srgb,var(--color-text) 62%,transparent)'}));
+        cls:'dx-mtseg'+(g.n===freshN?' fresh':''), w:(g.n===freshN?2.8:1.5)}));
+      out.mtMarks=marks.slice(0,shown).map(m=>({x:m.x,y:m.y,n:m.n,fill:m.feed?'var(--dx-plot-feed)':'var(--dx-plot-tick)'}));
       // one hit target per drawn stage corner, so the construction can be
       // interrogated as well as watched
       const hovN = s.mtHover===null||s.mtHover===undefined ? null : Math.round(s.mtHover);
@@ -5226,6 +5377,7 @@ class Component extends DCLogic {
     const cur=qs[ei];
     out.examOk=qs.length>0;
     out.examNo=String(ei+1); out.examTotal=String(qs.length);
+    out.examProg='--p:'+(qs.length? ((ei+1)/qs.length*100).toFixed(1) : 0)+'%';
     out.examQ=cur?cur.q:''; out.examUnit=cur?cur.unit:'';
     out.examNumeric=!!(cur&&cur.a!==null);
     out.examInput=s.exam.input;
