@@ -1839,6 +1839,156 @@
                  margin:10px auto 4px }
   .dx-loop-note { margin:6px 0 0; font-size:11.5px; line-height:1.55; color:var(--dx-ink3) }
 
+  /* ── the process schematic ─────────────────────────────────────────
+     A drawn plate, not a wireframe: the vessel is shaded across its width so
+     it reads as round, washed top-to-bottom with the temperature it is
+     actually at, and filled with the internals that do the work — decks,
+     weirs, downcomers, and the liquid sitting on each tray. Everything that
+     moves is a transform or a dash offset, so the whole drawing costs one
+     layout and then nothing. */
+
+  /* gradient stops, so the palette lives in one place */
+  #plShell .s0  { stop-color:color-mix(in srgb, var(--color-text) 6%, transparent) }
+  #plShell .s1  { stop-color:color-mix(in srgb, var(--color-text) 15%, transparent) }
+  #plShell .s2  { stop-color:color-mix(in srgb, var(--color-text) 5%, transparent) }
+  #plShell .s3  { stop-color:color-mix(in srgb, var(--color-text) 13%, transparent) }
+  #plMetal .s0  { stop-color:color-mix(in srgb, var(--color-text) 12%, transparent) }
+  #plMetal .s2  { stop-color:color-mix(in srgb, var(--color-text) 4%, transparent) }
+  #plMetal .s3  { stop-color:color-mix(in srgb, var(--color-text) 10%, transparent) }
+  #plTherm .t0  { stop-color:color-mix(in srgb, var(--dx-plot-phys) 26%, transparent) }
+  #plTherm .t1  { stop-color:color-mix(in srgb, var(--dx-plot-liq) 16%, transparent) }
+  #plTherm .t2  { stop-color:color-mix(in srgb, var(--dx-orange) 30%, transparent) }
+
+  .pl-therm { fill:url(#plTherm); stroke:none }
+  .pl-shell { fill:url(#plShell); stroke:none }
+  /* the outline goes on last, over the internals, so the vessel contains them */
+  .pl-shell-edge { fill:none; stroke:color-mix(in srgb, var(--color-text) 38%, transparent);
+                   stroke-width:2 }
+  .pl-vess  { fill:url(#plMetal); stroke:color-mix(in srgb, var(--color-text) 34%, transparent);
+              stroke-width:1.8 }
+  .pl-vess.hot { stroke:color-mix(in srgb, var(--dx-orange) 62%, transparent);
+                 fill:color-mix(in srgb, var(--dx-orange) 9%, transparent) }
+  .pl-tube  { fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round;
+              stroke-linejoin:round; opacity:.75 }
+  .pl-level { stroke:color-mix(in srgb, var(--dx-plot-liq) 70%, transparent); stroke-width:2.4;
+              stroke-linecap:round; animation:plLevel 5.2s var(--dx-ease) infinite }
+  .pl-level.hot { stroke:color-mix(in srgb, var(--dx-orange) 62%, transparent) }
+
+  /* tray internals */
+  .pl-deck { fill:none; stroke:color-mix(in srgb, var(--color-text) 52%, transparent);
+             stroke-width:2; stroke-linecap:round }
+  .pl-weir { fill:none; stroke:color-mix(in srgb, var(--color-text) 46%, transparent);
+             stroke-width:1.8; stroke-linecap:round }
+  .pl-dc   { fill:none; stroke:color-mix(in srgb, var(--color-text) 34%, transparent);
+             stroke-width:1.6; stroke-linecap:round }
+  .pl-pool { fill:color-mix(in srgb, var(--dx-plot-liq) 52%, transparent); stroke:none }
+  /* the stage the feed actually enters, from the solved case */
+  .pl-tray[data-feed="1"] .pl-deck { stroke:var(--dx-plot-feed); stroke-width:2.6 }
+  .pl-tray[data-feed="1"] .pl-pool { fill:color-mix(in srgb, var(--dx-plot-feed) 40%, transparent) }
+
+  .pl-pipe   { fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round;
+               stroke-linejoin:round }
+  .pl-pipe.pl-thin { stroke-width:1.8 }
+  .pl-head   { fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round;
+               stroke-linejoin:round }
+  .pl-valve path { fill:color-mix(in srgb, var(--color-surface) 90%, transparent);
+                   stroke:color-mix(in srgb, var(--color-text) 52%, transparent); stroke-width:1.6 }
+  .pl-pump circle { fill:color-mix(in srgb, var(--color-surface) 92%, transparent);
+                    stroke:color-mix(in srgb, var(--color-text) 52%, transparent); stroke-width:1.6 }
+  .pl-pump path { fill:color-mix(in srgb, var(--color-text) 52%, transparent); stroke:none }
+  .feed { color:var(--dx-plot-feed) }
+  .vap  { color:var(--dx-plot-phys) }
+  .liq  { color:var(--dx-plot-liq) }
+  .cw   { color:color-mix(in srgb, var(--dx-plot-phys) 70%, var(--color-text)) }
+  .pl-flame  { fill:none; stroke:var(--dx-orange); stroke-width:2.2; stroke-linecap:round;
+               stroke-linejoin:round; transform-box:fill-box; transform-origin:50% 100%;
+               animation:plFlame 1.9s var(--dx-ease) infinite }
+  .pl-lab { fill:var(--dx-ink3); font-family:var(--font-heading); font-size:10px;
+            letter-spacing:.13em }
+  .pl-val { fill:var(--color-text); font-size:11.5px; font-variant-numeric:tabular-nums }
+  .pl-mid { text-anchor:middle }
+  .pl-end { text-anchor:end }
+
+  /* the flow: one dash offset, shared by every pipe */
+  .pl-flow { stroke-dasharray:9 7; animation:plFlow 1.05s linear infinite }
+  .pl-flow.rev { animation-direction:reverse }
+  @keyframes plFlow { to { stroke-dashoffset:-16 } }
+
+  /* counter-current traffic: vapour through the perforations of each deck,
+     liquid over the weir and down the downcomer of the same tray. Each
+     particle travels exactly one tray pitch, which is why the drawing reads
+     as stage-by-stage rather than as a pipe with beads in it. */
+  /* transform-origin on an SVG element defaults to the origin of the whole
+     drawing, so a scale() in a keyframe drags the shape across the plate as
+     well as resizing it. Boxing each particle to its own fill box is what
+     keeps a bubble growing where it is. */
+  .pl-b, .pl-d, .pl-boil, .pl-drip { stroke:none;
+                                     transform-box:fill-box; transform-origin:50% 50% }
+  .pl-b    { fill:var(--dx-plot-phys); animation:plBub 2.3s linear infinite }
+  .pl-d    { fill:var(--dx-plot-liq);  animation:plDrop 2.4s linear infinite }
+  .pl-boil { fill:var(--dx-orange);    animation:plBoil 2.1s linear infinite }
+  .pl-drip { fill:var(--dx-plot-liq);  animation:plDrip 1.9s linear infinite }
+  @keyframes plBub  { 0% { transform:translateY(0); opacity:0 } 18% { opacity:.92 }
+                     80% { opacity:.92 }
+                    100% { transform:translateY(calc(-1 * var(--pl-h, 20px))); opacity:0 } }
+  @keyframes plDrop { 0% { transform:translateY(0); opacity:0 } 18% { opacity:.85 }
+                     80% { opacity:.85 }
+                    100% { transform:translateY(var(--pl-h, 20px)); opacity:0 } }
+  @keyframes plBoil { 0% { transform:translateY(0) scale(.6); opacity:0 } 20% { opacity:.9 }
+                     75% { opacity:.7 }
+                    100% { transform:translateY(-15px) scale(1); opacity:0 } }
+  @keyframes plDrip { 0% { transform:translateY(0); opacity:0 } 25% { opacity:.85 }
+                    100% { transform:translateY(11px); opacity:0 } }
+  @keyframes plLevel { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-1.2px) } }
+  @keyframes plFlame { 0%,100% { transform:scaleY(1) }   50% { transform:scaleY(.72) } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pl-flow, .pl-flame, .pl-level { animation:none }
+    .pl-flow { stroke-dasharray:none }
+    .pl-b, .pl-d, .pl-boil, .pl-drip { animation:none; opacity:.85 }
+  }
+  /* SVG font-size is in user units, so a phone override is scaled by the same
+     factor as the drawing — 13 units on a 358px-wide render is 5.8 CSS px.
+     The sizes here are the user-unit values that land at readable CSS px, and
+     the equipment names go, because the shapes are recognisable in context and
+     seven more labels at that size would collide. */
+  @media (max-width:620px) {
+    .dx-loop-cap, .dx-loop-sub { display:none }
+    /* Equipment names and the two stream names go: at the size a phone needs
+       them to be, each is a quarter of the drawing wide, and the arrow plus
+       the composition beside it already says which stream it is. */
+    .pl-eq, .pl-st { display:none }
+    .pl-lab { font-size:23px; letter-spacing:.06em }
+    .pl-val { font-size:25px }
+    .dx-loop svg { margin-top:4px }
+  }
+
+  /* ═══ signature ═══════════════════════════════════════════════════════
+     The last line of every page. It is a signature, not a banner: no panel,
+     no rule across the full width, no weight. Two short hairlines give it the
+     separation it needs, and the name itself is set in an italic serif
+     against the page's sans — enough contrast to read as a hand rather than
+     as another label, at a size that keeps it out of the way. */
+  /* ═══ the process loop ═══════════════════════════════════════════════
+     The arrangement a column actually has, drawn once and animated: feed in,
+     vapour up to the condenser, distillate out, reflux back, reboiler at the
+     sump. Two animations carry all of it — a dash offset along every pipe and
+     a set of particles inside the vessel — so the whole band is two
+     compositor-friendly properties, not thirty. */
+  .dx-loop { position:relative; margin-top:10px; padding:18px clamp(14px,2.4vw,24px) 16px;
+             border-radius:var(--dx-r-lg); border:1px solid var(--dx-hairline);
+             background:var(--dx-raised); box-shadow:var(--shadow-sm) }
+  .dx-loop-head { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:6px }
+  .dx-loop-sub { font-size:12.5px; color:var(--dx-ink2) }
+  .dx-loop-cap { margin-left:auto; font-size:11.5px; font-variant-numeric:tabular-nums;
+                 color:var(--dx-ink3); white-space:nowrap }
+  /* The drawing keeps its own aspect ratio and a sensible ceiling: a
+     max-height letterboxed it and shrank the whole schematic to the middle of
+     a very wide band. */
+  .dx-loop svg { display:block; width:100%; max-width:900px; height:auto; overflow:visible;
+                 margin:10px auto 4px }
+  .dx-loop-note { margin:6px 0 0; font-size:11.5px; line-height:1.55; color:var(--dx-ink3) }
+
   .pl-vessel { fill:color-mix(in srgb, var(--dx-plot-liq) 7%, transparent);
                stroke:var(--color-divider); stroke-width:2 }
   .pl-box    { fill:var(--color-surface); stroke:var(--color-divider); stroke-width:1.8 }
@@ -2182,54 +2332,118 @@
       <span class="dx-loop-sub">Boil, rise, condense, return &mdash; the cycle every tray repeats</span>
       <span class="dx-loop-cap">{{ loop.caption }}</span>
     </div>
-    <svg viewBox="0 0 800 264" role="img" aria-label="Schematic of a fractionating column: feed enters the middle, vapour rises to a condenser and reflux drum, distillate leaves the top, the reboiler boils the sump and bottoms leave the base.">
-      <!-- feed -->
-      <text class="pl-lab" x="16" y="124">FEED</text>
-      <text class="pl-val" x="16" y="156">z_F {{ loop.zF }}</text>
-      <path class="pl-pipe pl-flow feed" d="M16 136 H218"></path>
-      <path class="pl-head feed" d="M210 130 l10 6 l-10 6"></path>
+    <svg viewBox="0 0 900 400" role="img" aria-label="Sectioned schematic of a fractionating column: feed enters at the computed feed stage, vapour rises through the trays to an overhead condenser and reflux drum, distillate leaves and reflux returns, the reboiler boils the sump and bottoms leave the base.">
+      <defs>
+        <!-- The stop colours are set in CSS, so the drawing follows the theme
+             without a second copy of the palette living in the markup. -->
+        <linearGradient id="plShell" x1="0" y1="0" x2="1" y2="0">
+          <stop class="s0" offset="0"></stop><stop class="s1" offset=".34"></stop>
+          <stop class="s2" offset=".68"></stop><stop class="s3" offset="1"></stop>
+        </linearGradient>
+        <linearGradient id="plTherm" x1="0" y1="0" x2="0" y2="1">
+          <stop class="t0" offset="0"></stop><stop class="t1" offset=".5"></stop>
+          <stop class="t2" offset="1"></stop>
+        </linearGradient>
+        <linearGradient id="plMetal" x1="0" y1="0" x2="0" y2="1">
+          <stop class="s0" offset="0"></stop><stop class="s2" offset=".55"></stop>
+          <stop class="s3" offset="1"></stop>
+        </linearGradient>
+      </defs>
 
-      <!-- column -->
-      <rect class="pl-vessel" x="220" y="50" width="84" height="164" rx="42"></rect>
-      <g class="pl-trays"><line class="pl-tray" x1="232" y1="72" x2="292" y2="72"></line><line class="pl-tray" x1="232" y1="94" x2="292" y2="94"></line><line class="pl-tray" x1="232" y1="116" x2="292" y2="116"></line><line class="pl-tray" x1="232" y1="138" x2="292" y2="138"></line><line class="pl-tray" x1="232" y1="160" x2="292" y2="160"></line><line class="pl-tray" x1="232" y1="182" x2="292" y2="182"></line></g>
-      <g class="pl-parts"><circle class="pl-p up" cx="242" cy="196" r="2.6" style="animation-delay:0ms"></circle><circle class="pl-p up" cx="260" cy="196" r="2.6" style="animation-delay:520ms"></circle><circle class="pl-p up" cx="278" cy="196" r="2.6" style="animation-delay:1040ms"></circle><circle class="pl-p up" cx="250" cy="196" r="2.6" style="animation-delay:1560ms"></circle><circle class="pl-p up" cx="268" cy="196" r="2.6" style="animation-delay:260ms"></circle><circle class="pl-p up" cx="286" cy="196" r="2.6" style="animation-delay:780ms"></circle> <circle class="pl-p down" cx="248" cy="64" r="2.4" style="animation-delay:300ms"></circle><circle class="pl-p down" cx="266" cy="64" r="2.4" style="animation-delay:900ms"></circle><circle class="pl-p down" cx="284" cy="64" r="2.4" style="animation-delay:1500ms"></circle><circle class="pl-p down" cx="256" cy="64" r="2.4" style="animation-delay:1800ms"></circle><circle class="pl-p down" cx="274" cy="64" r="2.4" style="animation-delay:600ms"></circle><circle class="pl-p down" cx="240" cy="64" r="2.4" style="animation-delay:1200ms"></circle></g>
-      <text class="pl-lab pl-eq pl-end" x="230" y="240">COLUMN</text>
-
-      <!-- overhead, condenser, drum: one run along the top, nothing crossing -->
-      <path class="pl-pipe pl-flow vap" d="M262 50 V26 H404"></path>
-      <text class="pl-val" x="272" y="20">{{ loop.tTop }} &deg;C</text>
-      <rect class="pl-box" x="404" y="10" width="86" height="32" rx="6"></rect>
-      <path class="pl-coil vap" d="M416 26 h9 m7 0 h9 m7 0 h9 m7 0 h9"></path>
-      <text class="pl-lab pl-eq pl-mid" x="447" y="4">CONDENSER</text>
-      <path class="pl-pipe pl-flow liq" d="M490 26 H560"></path>
-      <rect class="pl-box" x="560" y="9" width="98" height="34" rx="17"></rect>
-      <text class="pl-lab pl-eq pl-mid" x="609" y="4">REFLUX DRUM</text>
-
-      <!-- distillate leaves to the right; reflux drops and returns underneath -->
-      <path class="pl-pipe pl-flow liq" d="M658 26 H752"></path>
-      <path class="pl-head liq" d="M744 20 l10 6 l-10 6"></path>
-      <g class="pl-out">
-        <text class="pl-lab pl-end" x="762" y="20">DISTILLATE</text>
-        <text class="pl-val pl-end" x="762" y="44">x_D {{ loop.xD }}</text>
+      <!-- ── the column ──────────────────────────────────────────────── -->
+      <!-- shell first as a thermal wash, then the metal over it, so the
+           temperature reads through the vessel rather than beside it -->
+      <path class="pl-therm" d="{{ loop.shellD }}"></path>
+      <path class="pl-shell" d="{{ loop.shellD }}"></path>
+      <g class="pl-internals">
+        <sc-for list="{{ loop.trays }}" as="tr" hint-placeholder-count="12">
+          <g class="pl-tray" data-feed="{{ tr.feed }}">
+            <path class="pl-pool" d="{{ tr.pool }}"></path>
+            <path class="pl-deck" d="{{ tr.deck }}"></path>
+            <path class="pl-weir" d="{{ tr.weir }}"></path>
+            <path class="pl-dc"   d="{{ tr.down }}"></path>
+          </g>
+        </sc-for>
       </g>
-      <path class="pl-pipe pl-flow liq rev" d="M609 43 V74 H304"></path>
-      <text class="pl-lab pl-eq" x="330" y="66">REFLUX &middot; R {{ loop.R }}</text>
+      <g class="pl-traffic">
+        <sc-for list="{{ loop.rise }}" as="bu" hint-placeholder-count="36">
+          <circle class="pl-b" cx="{{ bu.cx }}" cy="{{ bu.cy }}" r="{{ bu.r }}" style="{{ bu.style }}"></circle>
+        </sc-for>
+        <sc-for list="{{ loop.fall }}" as="dr" hint-placeholder-count="12">
+          <circle class="pl-d" cx="{{ dr.cx }}" cy="{{ dr.cy }}" r="{{ dr.r }}" style="{{ dr.style }}"></circle>
+        </sc-for>
+      </g>
+      <path class="pl-shell-edge" d="{{ loop.shellD }}"></path>
+      <text class="pl-lab pl-eq pl-end" x="292" y="338">COLUMN</text>
 
-      <!-- sump, reboiler, and the vapour it returns -->
-      <path class="pl-pipe pl-flow liq" d="M262 214 V236 H352"></path>
-      <rect class="pl-box hot" x="352" y="220" width="86" height="32" rx="6"></rect>
-      <path class="pl-flame" d="M368 244 l8 -13 l8 13 l8 -13 l8 13"></path>
-      <text class="pl-lab pl-eq pl-mid" x="395" y="264">REBOILER</text>
-      <path class="pl-pipe pl-flow vap rev" d="M395 220 V198 H304"></path>
-      <text class="pl-val" x="312" y="186">{{ loop.tBot }} &deg;C</text>
+      <!-- ── feed ────────────────────────────────────────────────────── -->
+      <text class="pl-lab" x="16" y="{{ loop.feedLabY }}">FEED</text>
+      <text class="pl-val" x="16" y="{{ loop.feedValY }}">z_F {{ loop.zF }}</text>
+      <path class="pl-pipe pl-flow feed" d="{{ loop.feedLineD }}"></path>
+      <path class="pl-head feed" d="{{ loop.feedArrowD }}"></path>
+
+      <!-- ── overhead, condenser, reflux drum ────────────────────────── -->
+      <path class="pl-pipe pl-flow vap" d="M342 57 V35 H466"></path>
+      <text class="pl-val" x="352" y="28">{{ loop.tTop }} &deg;C</text>
+      <g class="pl-ex">
+        <rect class="pl-vess" x="470" y="16" width="150" height="38" rx="19"></rect>
+        <path class="pl-tube vap" d="M482 35 h12 m0 -9 v18 m0 -9 h14 m0 -9 v18 m0 -9 h14 m0 -9 v18 m0 -9 h14 m0 -9 v18 m0 -9 h14 m0 -9 v18 m0 -9 h14 m0 -9 v18 m0 -9 h12"></path>
+        <sc-for list="{{ loop.cond }}" as="cd" hint-placeholder-count="6">
+          <circle class="pl-drip" cx="{{ cd.cx }}" cy="{{ cd.cy }}" r="{{ cd.r }}" style="{{ cd.style }}"></circle>
+        </sc-for>
+      </g>
+      <text class="pl-lab pl-eq pl-mid" x="545" y="10">CONDENSER</text>
+      <!-- cooling water across the shell, the reason the vapour condenses -->
+      <path class="pl-pipe pl-thin pl-flow cw" d="M510 68 V56"></path>
+      <path class="pl-pipe pl-thin pl-flow cw rev" d="M580 56 V68"></path>
+      <text class="pl-lab pl-eq pl-mid" x="545" y="78">COOLING WATER</text>
+
+      <path class="pl-pipe pl-flow liq" d="M620 35 H648 V96"></path>
+      <g class="pl-ex">
+        <rect class="pl-vess" x="648" y="96" width="162" height="46" rx="23"></rect>
+        <path class="pl-level" d="M654 124 H804"></path>
+      </g>
+      <text class="pl-lab pl-eq pl-mid" x="729" y="90">REFLUX DRUM</text>
+
+      <!-- distillate out; reflux drops back under it -->
+      <path class="pl-pipe pl-flow liq" d="M810 119 H856"></path>
+      <path class="pl-head liq" d="M848 113 l10 6 l-10 6"></path>
+      <g class="pl-valve" transform="translate(830,119)">
+        <path d="M-7 -6 L7 6 L7 -6 L-7 6 Z"></path>
+      </g>
+      <text class="pl-lab pl-st pl-end" x="884" y="104">DISTILLATE</text>
+      <text class="pl-val pl-end" x="884" y="164">x_D {{ loop.xD }}</text>
+      <path class="pl-pipe pl-flow liq rev" d="M690 142 V172 H384"></path>
+      <g class="pl-pump" transform="translate(560,172)">
+        <circle r="9"></circle><path d="M-4 -6 L7 0 L-4 6 Z"></path>
+      </g>
+      <text class="pl-lab pl-eq" x="400" y="165">REFLUX &middot; R {{ loop.R }}</text>
+
+      <!-- ── sump, reboiler and the vapour it returns ────────────────── -->
+      <path class="pl-pipe pl-flow liq" d="M342 339 V364 H466"></path>
+      <g class="pl-ex">
+        <rect class="pl-vess hot" x="470" y="330" width="170" height="48" rx="24"></rect>
+        <path class="pl-level hot" d="M476 344 H634"></path>
+        <path class="pl-tube hot" d="M492 362 h16 m0 -8 v16 m0 -8 h16 m0 -8 v16 m0 -8 h16 m0 -8 v16 m0 -8 h16 m0 -8 v16 m0 -8 h16"></path>
+        <sc-for list="{{ loop.boil }}" as="bo" hint-placeholder-count="7">
+          <circle class="pl-boil" cx="{{ bo.cx }}" cy="{{ bo.cy }}" r="{{ bo.r }}" style="{{ bo.style }}"></circle>
+        </sc-for>
+      </g>
+      <path class="pl-flame" d="M528 396 l9 -14 l9 14 l9 -14 l9 14"></path>
+      <text class="pl-lab pl-eq pl-mid" x="516" y="324">REBOILER</text>
+      <path class="pl-pipe pl-flow vap rev" d="M612 330 V306 H384"></path>
+      <text class="pl-val" x="394" y="298">{{ loop.tBot }} &deg;C</text>
 
       <!-- bottoms out -->
-      <path class="pl-pipe pl-flow liq" d="M438 236 H752"></path>
-      <path class="pl-head liq" d="M744 230 l10 6 l-10 6"></path>
-      <text class="pl-lab pl-end" x="762" y="230">BOTTOMS</text>
-      <text class="pl-val pl-end" x="762" y="254">x_B {{ loop.xB }}</text>
+      <path class="pl-pipe pl-flow liq" d="M640 364 H856"></path>
+      <path class="pl-head liq" d="M848 358 l10 6 l-10 6"></path>
+      <g class="pl-valve" transform="translate(700,364)">
+        <path d="M-7 -6 L7 6 L7 -6 L-7 6 Z"></path>
+      </g>
+      <text class="pl-lab pl-st pl-end" x="884" y="348">BOTTOMS</text>
+      <text class="pl-val pl-end" x="884" y="392">x_B {{ loop.xB }}</text>
     </svg>
-    <p class="dx-loop-note">Every label is the engine's own answer for {{ loop.mixName }}, solved in this browser. The drawing is a schematic &mdash; it shows the arrangement, not the tray count.</p>
+    <p class="dx-loop-note">Every label is the engine's own answer for {{ loop.mixName }}, solved in this browser. {{ loop.trayNote }}</p>
   </div>
 
   <div class="dx-grid3b dx-reveal" style="margin-top:20px">
@@ -5355,9 +5569,82 @@ class Component extends DCLogic {
    *  The drawing is a schematic — it does not change shape with the case — so
    *  it only ever carries numbers the engine actually produced, and says a
    *  plain dash when there is no solution to report. */
+  /** The process, drawn as the loop it is.
+   *
+   *  A schematic rather than a model: fixed geometry, with only the numbers on
+   *  it — and the feed's height, and how many trays are drawn — coming from the
+   *  solved case. Everything that moves is a CSS animation on a shape this
+   *  function placed, so the drawing costs one layout and then nothing.
+   *
+   *  The layout is a 900 x 400 frame: the column down the middle-left, the
+   *  overhead circuit across the top right, the reboiler circuit across the
+   *  bottom right, and the two product lines leaving to the right edge.
+   */
   processLoop(s, r, ok){
     const f = (v, d) => this.f(v, d);
     const mix = Component.MIX[s.mixKey] || {};
+
+    /* ── the column body ─────────────────────────────────────────────── */
+    const CX = 300, CW = 84, CR = CX + CW;           // left, width, right
+    const TOP = 74, BOT = 322;                       // tangent lines
+    const HD = 17;                                   // head depth
+    const MAXT = 14;
+    const N = ok ? Math.max(2, Math.round(r.N)) : 10;
+    const nT = Math.min(N, MAXT);
+    const fs = ok ? Math.max(1, Math.min(N, Math.round(this.num(r.feedStage)))) : 5;
+    // where the feed lands as a fraction of the way down the column
+    const fFrac = (fs - 0.5) / N;
+    const feedY = +(TOP + (BOT - TOP) * fFrac).toFixed(1);
+
+    const pitch = (BOT - TOP) / (nT + 1);
+    const trays = [], rise = [], fall = [];
+    const feedTray = Math.min(nT, Math.max(1, Math.round(fFrac * nT + 0.5)));
+    for (let i = 1; i <= nT; i++){
+      const y = +(TOP + pitch * i).toFixed(1);
+      const side = (i % 2) ? 1 : -1;                 // which side the downcomer is on
+      const inL = CX + 7, inR = CR - 7;
+      const dcW = 13;
+      // the deck, with the chord the downcomer takes out of it
+      const deck = side > 0
+        ? 'M' + inL + ' ' + y + ' H' + (inR - dcW)
+        : 'M' + (inL + dcW) + ' ' + y + ' H' + inR;
+      // the outlet weir: a short upstand at the far end of the deck
+      const wx = side > 0 ? inL + 1.5 : inR - 1.5;
+      const weir = 'M' + wx + ' ' + y + ' V' + (y - 3.4);
+      // the downcomer apron, hanging to just above the next deck
+      const dx = side > 0 ? inR - dcW : inL + dcW;
+      const down = 'M' + dx + ' ' + y + ' V' + (y + pitch * 0.66).toFixed(1);
+      // the liquid held on the deck
+      const pool = side > 0
+        ? 'M' + inL + ' ' + (y - 2.6) + ' H' + (inR - dcW) + ' V' + y + ' H' + inL + ' Z'
+        : 'M' + (inL + dcW) + ' ' + (y - 2.6) + ' H' + inR + ' V' + y + ' H' + (inL + dcW) + ' Z';
+      trays.push({ y, deck, weir, down, pool,
+                   feed: i === feedTray ? '1' : '0',
+                   delay: 'animation-delay:' + (i * 170 % 1900) + 'ms' });
+      // vapour through the perforations of this deck, liquid over its weir
+      for (let b = 0; b < 3; b++){
+        const bx = +((side > 0 ? inL + 6 : inL + 6 + dcW) + b * 15).toFixed(1);
+        rise.push({ cx: bx, cy: y, r: (2.3 - b * 0.25).toFixed(2),
+                    style: 'animation-delay:' + ((i * 260 + b * 430) % 2300) + 'ms;'
+                         + '--pl-h:' + pitch.toFixed(1) + 'px' });
+      }
+      if (i < nT)
+        fall.push({ cx: +(dx + (side > 0 ? 5.5 : -5.5)).toFixed(1), cy: y + 2,
+                    r: 1.9, style: 'animation-delay:' + ((i * 330) % 2400) + 'ms;'
+                                 + '--pl-h:' + pitch.toFixed(1) + 'px' });
+    }
+
+    /* ── the two exchangers ──────────────────────────────────────────── */
+    // condenser: a horizontal shell with a serpentine bundle through it
+    const boil = [], cond = [];
+    for (let i = 0; i < 7; i++)
+      boil.push({ cx: 498 + i * 17, cy: 352, r: (2.6 - (i % 3) * 0.45).toFixed(2),
+                  style: 'animation-delay:' + (i * 290 % 2100) + 'ms' });
+    for (let i = 0; i < 6; i++)
+      cond.push({ cx: 492 + i * 19, cy: 40, r: 1.8,
+                  style: 'animation-delay:' + (i * 310 % 1900) + 'ms' });
+
+    const nOver = ok && N > MAXT;
     return {
       ok: !!ok,
       zF: ok ? f(r.zF, 3) : '\u2014',
@@ -5368,9 +5655,24 @@ class Component extends DCLogic {
       feedStage: ok ? String(this.num(r.feedStage)) : '\u2014',
       tTop: ok ? f(r.Ttop, 1) : '\u2014',
       tBot: ok ? f(r.Tbot, 1) : '\u2014',
+      trays, rise, fall, boil, cond,
+      feedY, feedArrowD: 'M' + (CX - 10) + ' ' + (feedY - 6) + ' l10 6 l-10 6',
+      feedLineD: 'M60 ' + feedY + ' H' + (CX - 2),
+      feedLabY: +(feedY - 13).toFixed(1), feedValY: +(feedY + 26).toFixed(1),
+      // the shell outline: tangent lines closed by a 2:1 head at each end
+      shellD: 'M' + CX + ' ' + TOP + ' V' + BOT +
+              ' A' + (CW / 2) + ' ' + HD + ' 0 0 0 ' + CR + ' ' + BOT +
+              ' V' + TOP +
+              ' A' + (CW / 2) + ' ' + HD + ' 0 0 0 ' + CX + ' ' + TOP + ' Z',
+      sectionD: 'M' + CX + ' ' + feedY + ' H' + CR,
       caption: ok ? (r.N + ' stages \u00b7 feed on ' + this.num(r.feedStage) + ' \u00b7 R ' + f(r.R, 2))
                   : 'No solved case',
-      mixName: mix.label || 'the selected mixture'
+      mixName: mix.label || 'the selected mixture',
+      // The drawing is honest about itself: it shows the engine's stage count
+      // when that fits, and says so when it does not.
+      trayNote: !ok ? 'The tray count is illustrative until a case is solved.'
+                    : (nOver ? 'The column is drawn with ' + nT + ' of the ' + N + ' stages the engine returned; the feed sits where the engine put it.'
+                             : 'The column is drawn with the ' + N + ' stages the engine returned, feed on ' + fs + '.')
     };
   }
 
