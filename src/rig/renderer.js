@@ -270,7 +270,7 @@ var RIGGL = (function () {
         cb: buf(cData, gl.ARRAY_BUFFER, gl.DYNAMIC_DRAW),
         fb: buf(fData, gl.ARRAY_BUFFER, gl.DYNAMIC_DRAW),
         pb: buf(pData, gl.ARRAY_BUFFER),
-        cData: cData, fData: fData
+        cData: cData, fData: fData, mData: mData
       });
     }
     if (!gl.getExtension('OES_element_index_uint'))
@@ -475,6 +475,22 @@ var RIGGL = (function () {
     /** Push the per-instance colour and effect data that selection, product
      *  emphasis and thermal mode change. Only the two small buffers are
      *  re-uploaded; the geometry and matrices never move. */
+    /** Re-upload every instance matrix from the plant.
+     *
+     *  The instance buffers are written once at build, which is right for a
+     *  plant that does not move. An exploded view does move: each piece slides
+     *  along its own vector and back. Rewriting the matrix buffers is one
+     *  bufferData per mesh group per frame — twelve calls — against rebuilding
+     *  the whole scene, which would mean new programs and a new context. */
+    function remap() {
+      for (var gi = 0; gi < G.length; gi++) {
+        var grp = G[gi];
+        for (var q = 0; q < grp.n; q++) grp.mData.set(grp.list[q].m, q * 16);
+        gl.bindBuffer(gl.ARRAY_BUFFER, grp.mb);
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, grp.mData);
+      }
+    }
+
     function refresh() {
       for (var gi = 0; gi < G.length; gi++) {
         var grp = G[gi], changed = false;
@@ -691,7 +707,7 @@ var RIGGL = (function () {
     return {
       gl: gl, cam: cam, state: st, render: render, pickAt: pickAt,
       setTheme: setTheme,
-      toScreen: toScreen, refresh: refresh, setFlow: setFlow,
+      toScreen: toScreen, refresh: refresh, remap: remap, setFlow: setFlow,
       instanced: !!inst, groups: G.length,
       tris: G.reduce(function (a, g) { return a + g.geo.count / 3 * g.n; }, 0),
       objects: objects.length,

@@ -856,6 +856,25 @@
   .dx-vp-front { transform: none }
   .dx-vp-iso   { transform: rotateX(16deg) rotateY(-22deg) rotateZ(1deg) scale(.92) }
   .dx-stage-hero .dx-vp-iso { transform: rotateX(15deg) rotateY(-24deg) rotateZ(1deg) scale(1.0) }
+
+  /* The hero's real model. It sits under the caption and over the ruled grid,
+     and it only becomes visible once the renderer has actually produced a
+     frame — a canvas that never paints is worse than the drawing it replaced,
+     so the drawing stays until there is something to put in its place. */
+  .dx-hero-gl { position:absolute; inset:0; width:100%; height:100%; display:block;
+                opacity:0; transition:opacity var(--dx-t-reveal) var(--dx-ease-out);
+                border-radius:inherit }
+  .dx-hero-3d .dx-hero-gl { opacity:1 }
+  /* the drawing carries an inline display, so taking it down has to outrank
+     that — a stylesheet rule alone loses to the attribute and both pictures
+     end up stacked on each other */
+  .dx-hero-3d .dx-hero-fb, .dx-hero-3d .dx-stage-grid { display:none !important }
+  .dx-hero-3d { perspective:none }
+  /* the caption strip reads over the sky, so it carries its own scrim */
+  .dx-hero-3d .dx-hero-cap { background:color-mix(in srgb, #05070c 46%, transparent);
+                             border:1px solid color-mix(in srgb, #fff 12%, transparent);
+                             border-radius:999px; padding:5px 11px 5px 9px; color:#eef4ff }
+  .dx-hero-3d .dx-hero-cap .dx-num { color:#dce6f7 !important }
   .dx-vp-sec   { transform: rotateX(9deg) rotateY(-7deg) scale(1.04) }
   .dx-vp-sec .dx-slat.near { opacity:.05 }
   .dx-vp-sec .dx-tray { border-width:2px }
@@ -925,11 +944,17 @@
     box-shadow:0 0 28px color-mix(in srgb, var(--dx-cursor) var(--dx-3d-glow), transparent),
                0 0 0 1px color-mix(in srgb, var(--dx-cursor) 55%, transparent);
   }
-  .dx-cm-split .dx-note { font-size:8.5px; letter-spacing:.04em }
-  .dx-cm-split .dx-note b { font-size:10px }
-  .dx-cm-split .dx-note::before { width:11px }
-  .dx-cm-split .dx-note.l::before { right:-13px }
-  .dx-cm-split .dx-note.r::before { left:-13px }
+  .dx-cm-split .dx-note, .dx-cm-tight .dx-note { font-size:8.5px; letter-spacing:.04em }
+  .dx-cm-split .dx-note b, .dx-cm-tight .dx-note b { font-size:10px }
+  .dx-cm-split .dx-note::before, .dx-cm-tight .dx-note::before { width:11px }
+  .dx-cm-split .dx-note.l::before, .dx-cm-tight .dx-note.l::before { right:-13px }
+  .dx-cm-split .dx-note.r::before, .dx-cm-tight .dx-note.r::before { left:-13px }
+  /* a phone is not a cramped half-panel: the callouts come in close, but the
+     type stays at a size a person can actually read */
+  @media (max-width: 900px) {
+    .dx-cm-tight .dx-note   { font-size:10px; letter-spacing:.05em }
+    .dx-cm-tight .dx-note b { font-size:11.5px }
+  }
   .dx-why { display:inline-flex; width:14px; height:14px; margin-left:5px;
             border:1px solid var(--color-divider); border-radius:50%;
             align-items:center; justify-content:center; font-size:9px; font-style:normal;
@@ -1129,6 +1154,58 @@
   svg text span.sc-interp { display:none }
 
   .dx-crude { position:relative }
+
+  /* The model sits in the same box the drawing did, at the aspect the
+     assembly actually has: tall, because a crude tower is. */
+  /* Tall, because the assembly is — but capped, because a panel a thousand
+     pixels high pushes everything after it off the page. */
+  .dx-crude-gl { display:block; width:100%; aspect-ratio:5/6; max-height:min(72vh, 620px);
+                 border-radius:var(--dx-r-lg);
+                 opacity:0; transition:opacity var(--dx-t-reveal) var(--dx-ease-out) }
+  .dx-crude-3d .dx-crude-gl { opacity:1 }
+  .dx-crude-3d .dx-crude-fb { display:none !important }
+  .dx-crude-tags { position:absolute; inset:0; pointer-events:none }
+  .dx-crude-3d .dx-crude-tags { pointer-events:auto }
+  /* Until the model mounts the tags have nowhere to be, so they stay out of
+     the flow; the drawing carries its own labels in the meantime. */
+  .dx-crude-tags > button { display:none }
+  .dx-crude-3d .dx-crude-tags > button { display:block }
+  .dx-ctag {
+    position:absolute; left:0; top:0; will-change:transform;
+    /* an absolutely positioned flex box does not always shrink-to-fit the
+       way it looks like it should; asking for the content width outright
+       is what keeps the name from collapsing to nothing */
+    width:max-content; max-width:min(52%, 190px);
+    /* A block with nowrap children, not a flex column: an absolutely
+       positioned column flex box reports a zero intrinsic width in Chromium
+       once its second child is display:none, and the label collapses to its
+       own padding. */
+    display:block; white-space:nowrap;
+    padding:3px 7px 4px; margin:0; border-radius:7px; cursor:pointer;
+    background:color-mix(in srgb, var(--color-surface) 80%, transparent);
+    border:1px solid color-mix(in srgb, var(--ct) 46%, transparent);
+    backdrop-filter:blur(3px);
+    transition:opacity var(--dx-t-base) var(--dx-ease),
+               border-color var(--dx-t-base) var(--dx-ease),
+               background var(--dx-t-base) var(--dx-ease);
+  }
+  .dx-ctag b { display:block; font-size:11.5px; font-weight:600; letter-spacing:.01em; color:var(--ct); line-height:1.2 }
+  .dx-ctag > span { display:block; font-size:10px; font-variant-numeric:tabular-nums; line-height:1.25;
+                    color:color-mix(in srgb, var(--color-text) 70%, transparent) }
+  .dx-ctag[data-on="1"] { border-color:var(--ct);
+                          background:color-mix(in srgb, var(--ct) 16%, var(--color-surface)) }
+  /* The chip is one line of type on a phone, which is a 20px-tall target. It
+     keeps its size and grows its touch area instead: a transparent extension
+     takes the tappable box past the 44px floor without turning eight labels
+     into eight pills over a 356px picture. */
+  .dx-ctag::before { content:''; position:absolute; inset:-12px -10px; border-radius:12px }
+  .dx-ctag:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px }
+  @media (max-width: 900px) {
+    /* a phone has no room for eight two-line labels over a 300px picture */
+    .dx-ctag > span { display:none }
+    .dx-ctag b { font-size:10.5px }
+    .dx-ctag { padding:2px 5px 3px }
+  }
   .dx-crude svg { width:100%; height:auto; display:block; overflow:visible }
   .dx-band { transition: transform var(--dx-t-slow) var(--dx-ease),
                          opacity var(--dx-t-base) var(--dx-ease);
@@ -1630,6 +1707,18 @@
             font-weight: 650 }
   .d2-tag { letter-spacing: .15em; pointer-events: none }
   .d2-tray { stroke: var(--r-line2); stroke-width: 1 }
+  /* Equipment internals: tube bundles, radiant tubes, burners, trays and
+     nozzles. Never interactive — the block behind them carries the pick. */
+  .d2-det { fill: none; stroke-linecap: round; stroke-linejoin: round; pointer-events: none }
+  /* The gateway is a preview: at phone width its 980-unit sheet is drawn in
+     356 CSS px, so an 8.5-unit equipment name lands at three pixels. The
+     shapes still read at that size; the naming does not, and the card's own
+     heading says what it is. The product column stays — the live rates are
+     the point of showing it at all. */
+  @media (max-width: 620px) {
+    .dx-gate-v .d2-lbl, .dx-gate-v .d2-sub,
+    .dx-gate-v .d2-tag, .dx-gate-v .d2-tin { display: none }
+  }
   .d2-pipe { fill: none; stroke-linecap: round; stroke-linejoin: round; cursor: pointer }
   .d2-pipe:hover { filter: drop-shadow(0 0 6px currentColor) }
   .d2-halo { fill: none; stroke-linecap: round; stroke-linejoin: round; opacity: .16;
@@ -1739,6 +1828,156 @@
     .dx-rig, .rig-info, .rig-tour { animation: none }
     .d2-trace { animation: none !important }
     .rig-pill.busy i { animation: none }
+  }
+
+  /* ═══ signature ═══════════════════════════════════════════════════════
+     The last line of every page. It is a signature, not a banner: no panel,
+     no rule across the full width, no weight. Two short hairlines give it the
+     separation it needs, and the name itself is set in an italic serif
+     against the page's sans — enough contrast to read as a hand rather than
+     as another label, at a size that keeps it out of the way. */
+  /* ═══ the process loop ═══════════════════════════════════════════════
+     The arrangement a column actually has, drawn once and animated: feed in,
+     vapour up to the condenser, distillate out, reflux back, reboiler at the
+     sump. Two animations carry all of it — a dash offset along every pipe and
+     a set of particles inside the vessel — so the whole band is two
+     compositor-friendly properties, not thirty. */
+  .dx-loop { position:relative; margin-top:10px; padding:18px clamp(14px,2.4vw,24px) 16px;
+             border-radius:var(--dx-r-lg); border:1px solid var(--dx-hairline);
+             background:var(--dx-raised); box-shadow:var(--shadow-sm) }
+  .dx-loop-head { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:6px }
+  .dx-loop-sub { font-size:12.5px; color:var(--dx-ink2) }
+  .dx-loop-cap { margin-left:auto; font-size:11.5px; font-variant-numeric:tabular-nums;
+                 color:var(--dx-ink3); white-space:nowrap }
+  /* The drawing keeps its own aspect ratio and a sensible ceiling: a
+     max-height letterboxed it and shrank the whole schematic to the middle of
+     a very wide band. */
+  .dx-loop svg { display:block; width:100%; max-width:900px; height:auto; overflow:visible;
+                 margin:10px auto 4px }
+  .dx-loop-note { margin:6px 0 0; font-size:11.5px; line-height:1.55; color:var(--dx-ink3) }
+
+  /* ── the process schematic ─────────────────────────────────────────
+     A drawn plate, not a wireframe: the vessel is shaded across its width so
+     it reads as round, washed top-to-bottom with the temperature it is
+     actually at, and filled with the internals that do the work — decks,
+     weirs, downcomers, and the liquid sitting on each tray. Everything that
+     moves is a transform or a dash offset, so the whole drawing costs one
+     layout and then nothing. */
+
+  /* gradient stops, so the palette lives in one place */
+  #plShell .s0  { stop-color:color-mix(in srgb, var(--color-text) 6%, transparent) }
+  #plShell .s1  { stop-color:color-mix(in srgb, var(--color-text) 15%, transparent) }
+  #plShell .s2  { stop-color:color-mix(in srgb, var(--color-text) 5%, transparent) }
+  #plShell .s3  { stop-color:color-mix(in srgb, var(--color-text) 13%, transparent) }
+  #plMetal .s0  { stop-color:color-mix(in srgb, var(--color-text) 12%, transparent) }
+  #plMetal .s2  { stop-color:color-mix(in srgb, var(--color-text) 4%, transparent) }
+  #plMetal .s3  { stop-color:color-mix(in srgb, var(--color-text) 10%, transparent) }
+  #plTherm .t0  { stop-color:color-mix(in srgb, var(--dx-plot-phys) 26%, transparent) }
+  #plTherm .t1  { stop-color:color-mix(in srgb, var(--dx-plot-liq) 16%, transparent) }
+  #plTherm .t2  { stop-color:color-mix(in srgb, var(--dx-orange) 30%, transparent) }
+
+  .pl-therm { fill:url(#plTherm); stroke:none }
+  .pl-shell { fill:url(#plShell); stroke:none }
+  /* the outline goes on last, over the internals, so the vessel contains them */
+  .pl-shell-edge { fill:none; stroke:color-mix(in srgb, var(--color-text) 38%, transparent);
+                   stroke-width:2 }
+  .pl-vess  { fill:url(#plMetal); stroke:color-mix(in srgb, var(--color-text) 34%, transparent);
+              stroke-width:1.8 }
+  .pl-vess.hot { stroke:color-mix(in srgb, var(--dx-orange) 62%, transparent);
+                 fill:color-mix(in srgb, var(--dx-orange) 9%, transparent) }
+  .pl-tube  { fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round;
+              stroke-linejoin:round; opacity:.75 }
+  .pl-level { stroke:color-mix(in srgb, var(--dx-plot-liq) 70%, transparent); stroke-width:2.4;
+              stroke-linecap:round; animation:plLevel 5.2s var(--dx-ease) infinite }
+  .pl-level.hot { stroke:color-mix(in srgb, var(--dx-orange) 62%, transparent) }
+
+  /* tray internals */
+  .pl-deck { fill:none; stroke:color-mix(in srgb, var(--color-text) 52%, transparent);
+             stroke-width:2; stroke-linecap:round }
+  .pl-weir { fill:none; stroke:color-mix(in srgb, var(--color-text) 46%, transparent);
+             stroke-width:1.8; stroke-linecap:round }
+  .pl-dc   { fill:none; stroke:color-mix(in srgb, var(--color-text) 34%, transparent);
+             stroke-width:1.6; stroke-linecap:round }
+  .pl-pool { fill:color-mix(in srgb, var(--dx-plot-liq) 52%, transparent); stroke:none }
+  /* the stage the feed actually enters, from the solved case */
+  .pl-tray[data-feed="1"] .pl-deck { stroke:var(--dx-plot-feed); stroke-width:2.6 }
+  .pl-tray[data-feed="1"] .pl-pool { fill:color-mix(in srgb, var(--dx-plot-feed) 40%, transparent) }
+
+  .pl-pipe   { fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round;
+               stroke-linejoin:round }
+  .pl-pipe.pl-thin { stroke-width:1.8 }
+  .pl-head   { fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round;
+               stroke-linejoin:round }
+  .pl-valve path { fill:color-mix(in srgb, var(--color-surface) 90%, transparent);
+                   stroke:color-mix(in srgb, var(--color-text) 52%, transparent); stroke-width:1.6 }
+  .pl-pump circle { fill:color-mix(in srgb, var(--color-surface) 92%, transparent);
+                    stroke:color-mix(in srgb, var(--color-text) 52%, transparent); stroke-width:1.6 }
+  .pl-pump path { fill:color-mix(in srgb, var(--color-text) 52%, transparent); stroke:none }
+  .feed { color:var(--dx-plot-feed) }
+  .vap  { color:var(--dx-plot-phys) }
+  .liq  { color:var(--dx-plot-liq) }
+  .cw   { color:color-mix(in srgb, var(--dx-plot-phys) 70%, var(--color-text)) }
+  .pl-flame  { fill:none; stroke:var(--dx-orange); stroke-width:2.2; stroke-linecap:round;
+               stroke-linejoin:round; transform-box:fill-box; transform-origin:50% 100%;
+               animation:plFlame 1.9s var(--dx-ease) infinite }
+  .pl-lab { fill:var(--dx-ink3); font-family:var(--font-heading); font-size:10px;
+            letter-spacing:.13em }
+  .pl-val { fill:var(--color-text); font-size:11.5px; font-variant-numeric:tabular-nums }
+  .pl-mid { text-anchor:middle }
+  .pl-end { text-anchor:end }
+
+  /* the flow: one dash offset, shared by every pipe */
+  .pl-flow { stroke-dasharray:9 7; animation:plFlow 1.05s linear infinite }
+  .pl-flow.rev { animation-direction:reverse }
+  @keyframes plFlow { to { stroke-dashoffset:-16 } }
+
+  /* counter-current traffic: vapour through the perforations of each deck,
+     liquid over the weir and down the downcomer of the same tray. Each
+     particle travels exactly one tray pitch, which is why the drawing reads
+     as stage-by-stage rather than as a pipe with beads in it. */
+  /* transform-origin on an SVG element defaults to the origin of the whole
+     drawing, so a scale() in a keyframe drags the shape across the plate as
+     well as resizing it. Boxing each particle to its own fill box is what
+     keeps a bubble growing where it is. */
+  .pl-b, .pl-d, .pl-boil, .pl-drip { stroke:none;
+                                     transform-box:fill-box; transform-origin:50% 50% }
+  .pl-b    { fill:var(--dx-plot-phys); animation:plBub 2.3s linear infinite }
+  .pl-d    { fill:var(--dx-plot-liq);  animation:plDrop 2.4s linear infinite }
+  .pl-boil { fill:var(--dx-orange);    animation:plBoil 2.1s linear infinite }
+  .pl-drip { fill:var(--dx-plot-liq);  animation:plDrip 1.9s linear infinite }
+  @keyframes plBub  { 0% { transform:translateY(0); opacity:0 } 18% { opacity:.92 }
+                     80% { opacity:.92 }
+                    100% { transform:translateY(calc(-1 * var(--pl-h, 20px))); opacity:0 } }
+  @keyframes plDrop { 0% { transform:translateY(0); opacity:0 } 18% { opacity:.85 }
+                     80% { opacity:.85 }
+                    100% { transform:translateY(var(--pl-h, 20px)); opacity:0 } }
+  @keyframes plBoil { 0% { transform:translateY(0) scale(.6); opacity:0 } 20% { opacity:.9 }
+                     75% { opacity:.7 }
+                    100% { transform:translateY(-15px) scale(1); opacity:0 } }
+  @keyframes plDrip { 0% { transform:translateY(0); opacity:0 } 25% { opacity:.85 }
+                    100% { transform:translateY(11px); opacity:0 } }
+  @keyframes plLevel { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-1.2px) } }
+  @keyframes plFlame { 0%,100% { transform:scaleY(1) }   50% { transform:scaleY(.72) } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pl-flow, .pl-flame, .pl-level { animation:none }
+    .pl-flow { stroke-dasharray:none }
+    .pl-b, .pl-d, .pl-boil, .pl-drip { animation:none; opacity:.85 }
+  }
+  /* SVG font-size is in user units, so a phone override is scaled by the same
+     factor as the drawing — 13 units on a 358px-wide render is 5.8 CSS px.
+     The sizes here are the user-unit values that land at readable CSS px, and
+     the equipment names go, because the shapes are recognisable in context and
+     seven more labels at that size would collide. */
+  @media (max-width:620px) {
+    .dx-loop-cap, .dx-loop-sub { display:none }
+    /* Equipment names and the two stream names go: at the size a phone needs
+       them to be, each is a quarter of the drawing wide, and the arrow plus
+       the composition beside it already says which stream it is. */
+    .pl-eq, .pl-st { display:none }
+    .pl-lab { font-size:23px; letter-spacing:.06em }
+    .pl-val { font-size:25px }
+    .dx-loop svg { margin-top:4px }
   }
 
   /* ═══ signature ═══════════════════════════════════════════════════════
@@ -2013,7 +2252,7 @@
     .dx-grid2 { grid-template-columns:minmax(0,1fr) } .dx-side { grid-template-columns:minmax(0,1fr) }
     /* The hero stage is sized by aspect-ratio, so it must keep its own
        sizing — forcing a height on it makes it wider than the viewport. */
-    .dx-stage:not(.dx-stage-hero) { height:340px !important }
+    .dx-stage:not(.dx-stage-hero) { height:360px !important }
   }
   @media print { .dx-noprint { display:none !important } }
 </style>
@@ -2066,9 +2305,12 @@
       </div>
       <div class="dx-in dx-in-5" style="margin-top:22px;font-size:12px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Runs entirely client-side · Ideal VLE (Raoult) and constant-volatility models · No account, no server</div>
     </div>
-    <div class="dx-stage dx-stage-hero dx-lit dx-in dx-in-4" style="aspect-ratio:6/5;display:grid;place-items:center" role="img" aria-label="Three-dimensional cutaway of a fractionating column showing its trays, the feed stage and counter-current vapour and liquid traffic.">
+    <div class="dx-stage dx-stage-hero dx-lit dx-in dx-in-4" id="hero-stage" style="aspect-ratio:6/5;display:grid;place-items:center" role="img" aria-label="Three-dimensional cutaway model of a fractionating column: a skirt-mounted vessel with sieve trays and downcomers behind a sectioned shell, an overhead condenser and reflux drum above it and a reboiler beside the sump, turning slowly on a turntable.">
       <i class="dx-stage-grid" aria-hidden="true"></i>
-      <div class="dx-stage-inner dx-vp-iso" style="position:absolute;inset:0;display:grid;place-items:center">
+      <!-- The real model. It replaces the drawing below as soon as it mounts;
+           if WebGL is unavailable the drawing is simply left in place. -->
+      <canvas id="hero-gl" class="dx-hero-gl" aria-hidden="true"></canvas>
+      <div class="dx-stage-inner dx-vp-iso dx-hero-fb" style="position:absolute;inset:0;display:grid;place-items:center">
         <div class="dx-col" style="width:{{ scene.W }}px;height:{{ scene.H }}px">
           <div class="dx-col-mid" style="height:{{ scene.H }}px">
             <sc-for list="{{ scene.slats }}" as="sl" hint-placeholder-count="16">
@@ -2089,7 +2331,7 @@
           </div>
         </div>
       </div>
-      <div style="position:absolute;left:18px;bottom:16px;display:flex;align-items:center;gap:8px">
+      <div class="dx-hero-cap" style="position:absolute;left:14px;bottom:13px;display:flex;align-items:center;gap:8px">
         <span class="dx-dot live" aria-hidden="true"></span>
         <span class="dx-num" style="font-size:11px;letter-spacing:.05em;color:color-mix(in srgb,var(--color-text) 74%,transparent)">{{ scene.caption }}</span>
       </div>
@@ -2107,54 +2349,118 @@
       <span class="dx-loop-sub">Boil, rise, condense, return &mdash; the cycle every tray repeats</span>
       <span class="dx-loop-cap">{{ loop.caption }}</span>
     </div>
-    <svg viewBox="0 0 800 264" role="img" aria-label="Schematic of a fractionating column: feed enters the middle, vapour rises to a condenser and reflux drum, distillate leaves the top, the reboiler boils the sump and bottoms leave the base.">
-      <!-- feed -->
-      <text class="pl-lab" x="16" y="124">FEED</text>
-      <text class="pl-val" x="16" y="156">z_F {{ loop.zF }}</text>
-      <path class="pl-pipe pl-flow feed" d="M16 136 H218"></path>
-      <path class="pl-head feed" d="M210 130 l10 6 l-10 6"></path>
+    <svg viewBox="0 0 900 400" role="img" aria-label="Sectioned schematic of a fractionating column: feed enters at the computed feed stage, vapour rises through the trays to an overhead condenser and reflux drum, distillate leaves and reflux returns, the reboiler boils the sump and bottoms leave the base.">
+      <defs>
+        <!-- The stop colours are set in CSS, so the drawing follows the theme
+             without a second copy of the palette living in the markup. -->
+        <linearGradient id="plShell" x1="0" y1="0" x2="1" y2="0">
+          <stop class="s0" offset="0"></stop><stop class="s1" offset=".34"></stop>
+          <stop class="s2" offset=".68"></stop><stop class="s3" offset="1"></stop>
+        </linearGradient>
+        <linearGradient id="plTherm" x1="0" y1="0" x2="0" y2="1">
+          <stop class="t0" offset="0"></stop><stop class="t1" offset=".5"></stop>
+          <stop class="t2" offset="1"></stop>
+        </linearGradient>
+        <linearGradient id="plMetal" x1="0" y1="0" x2="0" y2="1">
+          <stop class="s0" offset="0"></stop><stop class="s2" offset=".55"></stop>
+          <stop class="s3" offset="1"></stop>
+        </linearGradient>
+      </defs>
 
-      <!-- column -->
-      <rect class="pl-vessel" x="220" y="50" width="84" height="164" rx="42"></rect>
-      <g class="pl-trays"><line class="pl-tray" x1="232" y1="72" x2="292" y2="72"></line><line class="pl-tray" x1="232" y1="94" x2="292" y2="94"></line><line class="pl-tray" x1="232" y1="116" x2="292" y2="116"></line><line class="pl-tray" x1="232" y1="138" x2="292" y2="138"></line><line class="pl-tray" x1="232" y1="160" x2="292" y2="160"></line><line class="pl-tray" x1="232" y1="182" x2="292" y2="182"></line></g>
-      <g class="pl-parts"><circle class="pl-p up" cx="242" cy="196" r="2.6" style="animation-delay:0ms"></circle><circle class="pl-p up" cx="260" cy="196" r="2.6" style="animation-delay:520ms"></circle><circle class="pl-p up" cx="278" cy="196" r="2.6" style="animation-delay:1040ms"></circle><circle class="pl-p up" cx="250" cy="196" r="2.6" style="animation-delay:1560ms"></circle><circle class="pl-p up" cx="268" cy="196" r="2.6" style="animation-delay:260ms"></circle><circle class="pl-p up" cx="286" cy="196" r="2.6" style="animation-delay:780ms"></circle> <circle class="pl-p down" cx="248" cy="64" r="2.4" style="animation-delay:300ms"></circle><circle class="pl-p down" cx="266" cy="64" r="2.4" style="animation-delay:900ms"></circle><circle class="pl-p down" cx="284" cy="64" r="2.4" style="animation-delay:1500ms"></circle><circle class="pl-p down" cx="256" cy="64" r="2.4" style="animation-delay:1800ms"></circle><circle class="pl-p down" cx="274" cy="64" r="2.4" style="animation-delay:600ms"></circle><circle class="pl-p down" cx="240" cy="64" r="2.4" style="animation-delay:1200ms"></circle></g>
-      <text class="pl-lab pl-eq pl-end" x="230" y="240">COLUMN</text>
-
-      <!-- overhead, condenser, drum: one run along the top, nothing crossing -->
-      <path class="pl-pipe pl-flow vap" d="M262 50 V26 H404"></path>
-      <text class="pl-val" x="272" y="20">{{ loop.tTop }} &deg;C</text>
-      <rect class="pl-box" x="404" y="10" width="86" height="32" rx="6"></rect>
-      <path class="pl-coil vap" d="M416 26 h9 m7 0 h9 m7 0 h9 m7 0 h9"></path>
-      <text class="pl-lab pl-eq pl-mid" x="447" y="4">CONDENSER</text>
-      <path class="pl-pipe pl-flow liq" d="M490 26 H560"></path>
-      <rect class="pl-box" x="560" y="9" width="98" height="34" rx="17"></rect>
-      <text class="pl-lab pl-eq pl-mid" x="609" y="4">REFLUX DRUM</text>
-
-      <!-- distillate leaves to the right; reflux drops and returns underneath -->
-      <path class="pl-pipe pl-flow liq" d="M658 26 H752"></path>
-      <path class="pl-head liq" d="M744 20 l10 6 l-10 6"></path>
-      <g class="pl-out">
-        <text class="pl-lab pl-end" x="762" y="20">DISTILLATE</text>
-        <text class="pl-val pl-end" x="762" y="44">x_D {{ loop.xD }}</text>
+      <!-- ── the column ──────────────────────────────────────────────── -->
+      <!-- shell first as a thermal wash, then the metal over it, so the
+           temperature reads through the vessel rather than beside it -->
+      <path class="pl-therm" d="{{ loop.shellD }}"></path>
+      <path class="pl-shell" d="{{ loop.shellD }}"></path>
+      <g class="pl-internals">
+        <sc-for list="{{ loop.trays }}" as="tr" hint-placeholder-count="12">
+          <g class="pl-tray" data-feed="{{ tr.feed }}">
+            <path class="pl-pool" d="{{ tr.pool }}"></path>
+            <path class="pl-deck" d="{{ tr.deck }}"></path>
+            <path class="pl-weir" d="{{ tr.weir }}"></path>
+            <path class="pl-dc"   d="{{ tr.down }}"></path>
+          </g>
+        </sc-for>
       </g>
-      <path class="pl-pipe pl-flow liq rev" d="M609 43 V74 H304"></path>
-      <text class="pl-lab pl-eq" x="330" y="66">REFLUX &middot; R {{ loop.R }}</text>
+      <g class="pl-traffic">
+        <sc-for list="{{ loop.rise }}" as="bu" hint-placeholder-count="36">
+          <circle class="pl-b" cx="{{ bu.cx }}" cy="{{ bu.cy }}" r="{{ bu.r }}" style="{{ bu.style }}"></circle>
+        </sc-for>
+        <sc-for list="{{ loop.fall }}" as="dr" hint-placeholder-count="12">
+          <circle class="pl-d" cx="{{ dr.cx }}" cy="{{ dr.cy }}" r="{{ dr.r }}" style="{{ dr.style }}"></circle>
+        </sc-for>
+      </g>
+      <path class="pl-shell-edge" d="{{ loop.shellD }}"></path>
+      <text class="pl-lab pl-eq pl-end" x="292" y="338">COLUMN</text>
 
-      <!-- sump, reboiler, and the vapour it returns -->
-      <path class="pl-pipe pl-flow liq" d="M262 214 V236 H352"></path>
-      <rect class="pl-box hot" x="352" y="220" width="86" height="32" rx="6"></rect>
-      <path class="pl-flame" d="M368 244 l8 -13 l8 13 l8 -13 l8 13"></path>
-      <text class="pl-lab pl-eq pl-mid" x="395" y="264">REBOILER</text>
-      <path class="pl-pipe pl-flow vap rev" d="M395 220 V198 H304"></path>
-      <text class="pl-val" x="312" y="186">{{ loop.tBot }} &deg;C</text>
+      <!-- ── feed ────────────────────────────────────────────────────── -->
+      <text class="pl-lab" x="16" y="{{ loop.feedLabY }}">FEED</text>
+      <text class="pl-val" x="16" y="{{ loop.feedValY }}">z_F {{ loop.zF }}</text>
+      <path class="pl-pipe pl-flow feed" d="{{ loop.feedLineD }}"></path>
+      <path class="pl-head feed" d="{{ loop.feedArrowD }}"></path>
+
+      <!-- ── overhead, condenser, reflux drum ────────────────────────── -->
+      <path class="pl-pipe pl-flow vap" d="M342 57 V35 H466"></path>
+      <text class="pl-val" x="352" y="28">{{ loop.tTop }} &deg;C</text>
+      <g class="pl-ex">
+        <rect class="pl-vess" x="470" y="16" width="150" height="38" rx="19"></rect>
+        <path class="pl-tube vap" d="M482 35 h12 m0 -9 v18 m0 -9 h14 m0 -9 v18 m0 -9 h14 m0 -9 v18 m0 -9 h14 m0 -9 v18 m0 -9 h14 m0 -9 v18 m0 -9 h14 m0 -9 v18 m0 -9 h12"></path>
+        <sc-for list="{{ loop.cond }}" as="cd" hint-placeholder-count="6">
+          <circle class="pl-drip" cx="{{ cd.cx }}" cy="{{ cd.cy }}" r="{{ cd.r }}" style="{{ cd.style }}"></circle>
+        </sc-for>
+      </g>
+      <text class="pl-lab pl-eq pl-mid" x="545" y="10">CONDENSER</text>
+      <!-- cooling water across the shell, the reason the vapour condenses -->
+      <path class="pl-pipe pl-thin pl-flow cw" d="M510 68 V56"></path>
+      <path class="pl-pipe pl-thin pl-flow cw rev" d="M580 56 V68"></path>
+      <text class="pl-lab pl-eq pl-mid" x="545" y="78">COOLING WATER</text>
+
+      <path class="pl-pipe pl-flow liq" d="M620 35 H648 V96"></path>
+      <g class="pl-ex">
+        <rect class="pl-vess" x="648" y="96" width="162" height="46" rx="23"></rect>
+        <path class="pl-level" d="M654 124 H804"></path>
+      </g>
+      <text class="pl-lab pl-eq pl-mid" x="729" y="90">REFLUX DRUM</text>
+
+      <!-- distillate out; reflux drops back under it -->
+      <path class="pl-pipe pl-flow liq" d="M810 119 H856"></path>
+      <path class="pl-head liq" d="M848 113 l10 6 l-10 6"></path>
+      <g class="pl-valve" transform="translate(830,119)">
+        <path d="M-7 -6 L7 6 L7 -6 L-7 6 Z"></path>
+      </g>
+      <text class="pl-lab pl-st pl-end" x="884" y="104">DISTILLATE</text>
+      <text class="pl-val pl-end" x="884" y="164">x_D {{ loop.xD }}</text>
+      <path class="pl-pipe pl-flow liq rev" d="M690 142 V172 H384"></path>
+      <g class="pl-pump" transform="translate(560,172)">
+        <circle r="9"></circle><path d="M-4 -6 L7 0 L-4 6 Z"></path>
+      </g>
+      <text class="pl-lab pl-eq" x="400" y="165">REFLUX &middot; R {{ loop.R }}</text>
+
+      <!-- ── sump, reboiler and the vapour it returns ────────────────── -->
+      <path class="pl-pipe pl-flow liq" d="M342 339 V364 H466"></path>
+      <g class="pl-ex">
+        <rect class="pl-vess hot" x="470" y="330" width="170" height="48" rx="24"></rect>
+        <path class="pl-level hot" d="M476 344 H634"></path>
+        <path class="pl-tube hot" d="M492 362 h16 m0 -8 v16 m0 -8 h16 m0 -8 v16 m0 -8 h16 m0 -8 v16 m0 -8 h16 m0 -8 v16 m0 -8 h16"></path>
+        <sc-for list="{{ loop.boil }}" as="bo" hint-placeholder-count="7">
+          <circle class="pl-boil" cx="{{ bo.cx }}" cy="{{ bo.cy }}" r="{{ bo.r }}" style="{{ bo.style }}"></circle>
+        </sc-for>
+      </g>
+      <path class="pl-flame" d="M528 396 l9 -14 l9 14 l9 -14 l9 14"></path>
+      <text class="pl-lab pl-eq pl-mid" x="516" y="324">REBOILER</text>
+      <path class="pl-pipe pl-flow vap rev" d="M612 330 V306 H384"></path>
+      <text class="pl-val" x="394" y="298">{{ loop.tBot }} &deg;C</text>
 
       <!-- bottoms out -->
-      <path class="pl-pipe pl-flow liq" d="M438 236 H752"></path>
-      <path class="pl-head liq" d="M744 230 l10 6 l-10 6"></path>
-      <text class="pl-lab pl-end" x="762" y="230">BOTTOMS</text>
-      <text class="pl-val pl-end" x="762" y="254">x_B {{ loop.xB }}</text>
+      <path class="pl-pipe pl-flow liq" d="M640 364 H856"></path>
+      <path class="pl-head liq" d="M848 358 l10 6 l-10 6"></path>
+      <g class="pl-valve" transform="translate(700,364)">
+        <path d="M-7 -6 L7 6 L7 -6 L-7 6 Z"></path>
+      </g>
+      <text class="pl-lab pl-st pl-end" x="884" y="348">BOTTOMS</text>
+      <text class="pl-val pl-end" x="884" y="392">x_B {{ loop.xB }}</text>
     </svg>
-    <p class="dx-loop-note">Every label is the engine's own answer for {{ loop.mixName }}, solved in this browser. The drawing is a schematic &mdash; it shows the arrangement, not the tray count.</p>
+    <p class="dx-loop-note">Every label is the engine's own answer for {{ loop.mixName }}, solved in this browser. {{ loop.trayNote }}</p>
   </div>
 
   <div class="dx-grid3b dx-reveal" style="margin-top:20px">
@@ -2264,8 +2570,24 @@
         <p style="margin:0;font-size:11px;line-height:1.55;color:color-mix(in srgb,var(--color-text) 66%,transparent)">{{ crude.hint }} Boiling ranges are the conventional approximate cut points for an atmospheric unit &mdash; they describe the industry, and are not computed by this simulator.</p>
       </div>
 
-      <div class="dx-crude dx-reveal dx-lit" onPointerOver="{{ crudeOver }}" onPointerLeave="{{ crudeOut }}" onClick="{{ crudePick }}" onFocus="{{ crudeOver }}">
-        <svg viewBox="0 0 700 {{ crude.height }}" role="img" aria-label="Atmospheric crude-oil distillation tower, showing eight fractions drawn off from refinery gas at the overhead down to residue at the sump.">
+      <div class="dx-crude dx-reveal dx-lit" id="crude-stage" onPointerOver="{{ crudeOver }}" onPointerLeave="{{ crudeOut }}" onClick="{{ crudePick }}" onFocus="{{ crudeOver }}">
+        <!-- The model. Same renderer as the hero and the industrial simulator;
+             the drawing below stays in place if WebGL is unavailable. -->
+        <canvas id="crude-gl" class="dx-crude-gl" aria-hidden="true"></canvas>
+        <!-- The eight draws, as real buttons pinned to their own nozzles. They
+             are in the document whether or not the model mounts, so the cuts
+             are reachable by keyboard either way. -->
+        <!-- No handlers here: the events bubble to .dx-crude, which already
+             carries them. Binding both fires the toggle twice and it cancels. -->
+        <div class="dx-crude-tags">
+          <sc-for list="{{ crude.rows }}" as="ct" hint-placeholder-count="8">
+            <button class="dx-ctag" data-ck="{{ ct.k }}" data-on="{{ ct.on }}"
+                    aria-pressed="{{ ct.cur }}" style="--ct:{{ ct.tone }}">
+              <b>{{ ct.name }}</b><span>{{ ct.range }} &deg;C</span>
+            </button>
+          </sc-for>
+        </div>
+        <svg class="dx-crude-fb" viewBox="0 0 700 {{ crude.height }}" role="img" aria-label="Atmospheric crude-oil distillation tower, showing eight fractions drawn off from refinery gas at the overhead down to residue at the sump.">
           <g class="tower" style="{{ crude.shellStyle }}">
             <!-- shell -->
             <rect x="{{ crude.towerX }}" y="{{ crude.top }}" width="{{ crude.towerW }}" height="{{ crude.shellH }}" rx="10"
@@ -2339,8 +2661,25 @@
           <rect class="d2-shell" x="{{ gateD2.tower.x }}" y="{{ gateD2.tower.y }}" width="{{ gateD2.tower.w }}"
                 height="{{ gateD2.tower.h }}" rx="{{ gateD2.tower.rx }}"></rect>
           <sc-for list="{{ gateD2.blocks }}" as="gk" hint-placeholder-count="7">
-            <rect class="d2-blk" x="{{ gk.x }}" y="{{ gk.y }}" width="{{ gk.w }}" height="{{ gk.h }}"
-                  rx="{{ gk.rx }}" style="pointer-events:none"></rect>
+            <g opacity="{{ gk.op }}" style="pointer-events:none">
+              <rect class="d2-blk" x="{{ gk.x }}" y="{{ gk.y }}" width="{{ gk.w }}" height="{{ gk.h }}"
+                    rx="{{ gk.rx }}"></rect>
+              <text class="d2-lbl" x="{{ gk.lx }}" y="{{ gk.ly }}" text-anchor="{{ gk.anchor }}">{{ gk.label }}</text>
+              <text class="d2-sub" x="{{ gk.lx }}" y="{{ gk.sy }}" text-anchor="{{ gk.anchor }}">{{ gk.sub }}</text>
+            </g>
+          </sc-for>
+          <sc-for list="{{ gateD2.detail }}" as="gd" hint-placeholder-count="18">
+            <path class="d2-det" d="{{ gd.d }}" stroke="{{ gd.col }}" stroke-width="{{ gd.w }}"
+                  opacity="{{ gd.op }}" style="pointer-events:none"></path>
+          </sc-for>
+          <sc-for list="{{ gateD2.tags }}" as="gg" hint-placeholder-count="9">
+            <text class="d2-tag" x="{{ gg.x }}" y="{{ gg.y }}" font-size="{{ gg.size }}"
+                  text-anchor="{{ gg.anchor }}" fill="{{ gg.col }}" opacity="{{ gg.op }}"
+                  style="pointer-events:none">{{ gg.text }}</text>
+          </sc-for>
+          <sc-for list="{{ gateD2.temps }}" as="gm" hint-placeholder-count="6">
+            <text class="d2-tin" x="{{ gm.x }}" y="{{ gm.y }}" text-anchor="{{ gm.anchor }}"
+                  style="pointer-events:none">{{ gm.text }}</text>
           </sc-for>
           <sc-for list="{{ gateD2.out }}" as="go" hint-placeholder-count="6">
             <g class="d2-out" style="pointer-events:none">
@@ -2636,7 +2975,7 @@
             </div>
             </sc-if>
             <sc-if value="{{ show3D }}">
-            <div class="dx-stage dx-lit" style="height:462px" role="img" aria-label="Three-dimensional schematic of the distillation column. {{ scene.caption }}. {{ scene.thermLabel }}.">
+            <div class="{{ scene.cls }}" style="height:462px" role="img" aria-label="Three-dimensional schematic of the distillation column. {{ scene.caption }}. {{ scene.thermLabel }}.">
               <i class="dx-stage-grid" aria-hidden="true"></i>
               <sc-if value="{{ scene.empty }}">
                 <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:24px">
@@ -3545,21 +3884,6 @@
           <section class="card blueprint" style="padding:16px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             
-            <details class="dx-fold" open="{{ folds.aboutDeploy }}" data-f="aboutDeploy" onToggle="{{ setFold }}">
-            <summary><h6>Deployment</h6></summary>
-            <div class="dx-foldbody" style="--fg:8px">
-            <ol style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">
-              <li>Create a GitHub repository and push this project.</li>
-              <li>Import the repository into Vercel — it is a static client-side app, so no build configuration or environment variables are required.</li>
-              <li>Deploy, then open the generated Vercel URL.</li>
-              <li>To update the live site, push to the tracked branch: Vercel rebuilds and redeploys automatically.</li>
-            </ol>
-          </div>
-            </details>
-          </section>
-          <section class="card blueprint" style="padding:16px">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            
             <details class="dx-fold" open="{{ folds.aboutExtend }}" data-f="aboutExtend" onToggle="{{ setFold }}">
             <summary><h6>Extending it</h6></summary>
             <div class="dx-foldbody" style="--fg:8px">
@@ -3804,9 +4128,15 @@
                 <g opacity="{{ bl.op }}">
                   <rect class="{{ bl.cls }}" x="{{ bl.x }}" y="{{ bl.y }}" width="{{ bl.w }}" height="{{ bl.h }}"
                         rx="{{ bl.rx }}" data-k="{{ bl.pick }}" onClick="{{ rigPick2d }}"></rect>
-                  <text class="d2-lbl" x="{{ bl.lx }}" y="{{ bl.ly }}" text-anchor="middle">{{ bl.label }}</text>
-                  <text class="d2-sub" x="{{ bl.lx }}" y="{{ bl.sy }}" text-anchor="middle">{{ bl.sub }}</text>
+                  <text class="d2-lbl" x="{{ bl.lx }}" y="{{ bl.ly }}" text-anchor="{{ bl.anchor }}">{{ bl.label }}</text>
+                  <text class="d2-sub" x="{{ bl.lx }}" y="{{ bl.sy }}" text-anchor="{{ bl.anchor }}">{{ bl.sub }}</text>
                 </g>
+              </sc-for>
+
+              <!-- the internals that tell one grey box from another -->
+              <sc-for list="{{ rigD2.detail }}" as="dt" hint-placeholder-count="18">
+                <path class="d2-det" d="{{ dt.d }}" stroke="{{ dt.col }}"
+                      stroke-width="{{ dt.w }}" opacity="{{ dt.op }}"></path>
               </sc-for>
 
               <sc-for list="{{ rigD2.tags }}" as="tg" hint-placeholder-count="7">
@@ -4043,6 +4373,8 @@
 // @include rig/glmath.js
 // @include rig/geometry.js
 // @include rig/plant.js
+// @include rig/column3d.js
+// @include rig/crude3d.js
 // @include rig/renderer.js
 // @include rig/engine.js
 // @include rig/info.js
@@ -4122,7 +4454,7 @@ class Component extends DCLogic {
     'colConfig','colView',
     'sensStudy','sensMethod','sensKey',
     'resExport','resInputs','resCalc','resBalance','resAssume',
-    'aboutLead','aboutModels','aboutData','aboutLimits','aboutDeploy','aboutExtend','aboutAssume','aboutDev',
+    'aboutLead','aboutModels','aboutData','aboutLimits','aboutExtend','aboutAssume','aboutDev',
     'valNotes'
   ];
   static PHONE_CLOSED = new Set([
@@ -4132,7 +4464,7 @@ class Component extends DCLogic {
     'colConfig',
     'sensMethod',
     'resInputs','resBalance','resAssume',
-    'aboutModels','aboutData','aboutDeploy','aboutExtend','aboutAssume',
+    'aboutModels','aboutData','aboutExtend','aboutAssume',
     'valNotes'
   ]);
   static NAV = [['sim','Simulation'],['vle','VLE Explorer'],['mt','McCabe\u2013Thiele'],['column','Column'],['results','Results'],['sens','Sensitivity'],['theory','Theory'],['exam','Exam Mode'],['validate','Validation'],['about','About']];
@@ -4417,6 +4749,8 @@ class Component extends DCLogic {
       this._bindPointer(); this._tickReveal();
       if (this._rigTheme()) this._rigApplyResult();
       this._rigMount(); this._rigCollectTags();
+      this._heroMount();
+      this._crudeMount();
     } catch (e) { /* presentation only — never let it reach the engine */ }
   }
   /** The industrial page is the one view with a URL of its own. Everything
@@ -5172,6 +5506,7 @@ class Component extends DCLogic {
         hy: (mid - Math.max(bandH - 3, 86) / 2).toFixed(1),
         grp: 'transform:translate(' + dx + 'px,' + dy.toFixed(1) + 'px)',
         cls: 'dx-band' + (on ? ' on' : '') + (hov && !on ? ' dim' : ''),
+        on: on ? '1' : '0', cur: on ? 'true' : 'false',
         // trays inside the band — three per section, purely indicative
         trays: [0.3, 0.5, 0.7].map(t => ({ y: (y + bandH * t).toFixed(1),
           x1: (towerX + 12), x2: (towerX + towerW - 12) })),
@@ -5274,9 +5609,82 @@ class Component extends DCLogic {
    *  The drawing is a schematic — it does not change shape with the case — so
    *  it only ever carries numbers the engine actually produced, and says a
    *  plain dash when there is no solution to report. */
+  /** The process, drawn as the loop it is.
+   *
+   *  A schematic rather than a model: fixed geometry, with only the numbers on
+   *  it — and the feed's height, and how many trays are drawn — coming from the
+   *  solved case. Everything that moves is a CSS animation on a shape this
+   *  function placed, so the drawing costs one layout and then nothing.
+   *
+   *  The layout is a 900 x 400 frame: the column down the middle-left, the
+   *  overhead circuit across the top right, the reboiler circuit across the
+   *  bottom right, and the two product lines leaving to the right edge.
+   */
   processLoop(s, r, ok){
     const f = (v, d) => this.f(v, d);
     const mix = Component.MIX[s.mixKey] || {};
+
+    /* ── the column body ─────────────────────────────────────────────── */
+    const CX = 300, CW = 84, CR = CX + CW;           // left, width, right
+    const TOP = 74, BOT = 322;                       // tangent lines
+    const HD = 17;                                   // head depth
+    const MAXT = 14;
+    const N = ok ? Math.max(2, Math.round(r.N)) : 10;
+    const nT = Math.min(N, MAXT);
+    const fs = ok ? Math.max(1, Math.min(N, Math.round(this.num(r.feedStage)))) : 5;
+    // where the feed lands as a fraction of the way down the column
+    const fFrac = (fs - 0.5) / N;
+    const feedY = +(TOP + (BOT - TOP) * fFrac).toFixed(1);
+
+    const pitch = (BOT - TOP) / (nT + 1);
+    const trays = [], rise = [], fall = [];
+    const feedTray = Math.min(nT, Math.max(1, Math.round(fFrac * nT + 0.5)));
+    for (let i = 1; i <= nT; i++){
+      const y = +(TOP + pitch * i).toFixed(1);
+      const side = (i % 2) ? 1 : -1;                 // which side the downcomer is on
+      const inL = CX + 7, inR = CR - 7;
+      const dcW = 13;
+      // the deck, with the chord the downcomer takes out of it
+      const deck = side > 0
+        ? 'M' + inL + ' ' + y + ' H' + (inR - dcW)
+        : 'M' + (inL + dcW) + ' ' + y + ' H' + inR;
+      // the outlet weir: a short upstand at the far end of the deck
+      const wx = side > 0 ? inL + 1.5 : inR - 1.5;
+      const weir = 'M' + wx + ' ' + y + ' V' + (y - 3.4);
+      // the downcomer apron, hanging to just above the next deck
+      const dx = side > 0 ? inR - dcW : inL + dcW;
+      const down = 'M' + dx + ' ' + y + ' V' + (y + pitch * 0.66).toFixed(1);
+      // the liquid held on the deck
+      const pool = side > 0
+        ? 'M' + inL + ' ' + (y - 2.6) + ' H' + (inR - dcW) + ' V' + y + ' H' + inL + ' Z'
+        : 'M' + (inL + dcW) + ' ' + (y - 2.6) + ' H' + inR + ' V' + y + ' H' + (inL + dcW) + ' Z';
+      trays.push({ y, deck, weir, down, pool,
+                   feed: i === feedTray ? '1' : '0',
+                   delay: 'animation-delay:' + (i * 170 % 1900) + 'ms' });
+      // vapour through the perforations of this deck, liquid over its weir
+      for (let b = 0; b < 3; b++){
+        const bx = +((side > 0 ? inL + 6 : inL + 6 + dcW) + b * 15).toFixed(1);
+        rise.push({ cx: bx, cy: y, r: (2.3 - b * 0.25).toFixed(2),
+                    style: 'animation-delay:' + ((i * 260 + b * 430) % 2300) + 'ms;'
+                         + '--pl-h:' + pitch.toFixed(1) + 'px' });
+      }
+      if (i < nT)
+        fall.push({ cx: +(dx + (side > 0 ? 5.5 : -5.5)).toFixed(1), cy: y + 2,
+                    r: 1.9, style: 'animation-delay:' + ((i * 330) % 2400) + 'ms;'
+                                 + '--pl-h:' + pitch.toFixed(1) + 'px' });
+    }
+
+    /* ── the two exchangers ──────────────────────────────────────────── */
+    // condenser: a horizontal shell with a serpentine bundle through it
+    const boil = [], cond = [];
+    for (let i = 0; i < 7; i++)
+      boil.push({ cx: 498 + i * 17, cy: 352, r: (2.6 - (i % 3) * 0.45).toFixed(2),
+                  style: 'animation-delay:' + (i * 290 % 2100) + 'ms' });
+    for (let i = 0; i < 6; i++)
+      cond.push({ cx: 492 + i * 19, cy: 40, r: 1.8,
+                  style: 'animation-delay:' + (i * 310 % 1900) + 'ms' });
+
+    const nOver = ok && N > MAXT;
     return {
       ok: !!ok,
       zF: ok ? f(r.zF, 3) : '\u2014',
@@ -5287,18 +5695,39 @@ class Component extends DCLogic {
       feedStage: ok ? String(this.num(r.feedStage)) : '\u2014',
       tTop: ok ? f(r.Ttop, 1) : '\u2014',
       tBot: ok ? f(r.Tbot, 1) : '\u2014',
+      trays, rise, fall, boil, cond,
+      feedY, feedArrowD: 'M' + (CX - 10) + ' ' + (feedY - 6) + ' l10 6 l-10 6',
+      feedLineD: 'M60 ' + feedY + ' H' + (CX - 2),
+      feedLabY: +(feedY - 13).toFixed(1), feedValY: +(feedY + 26).toFixed(1),
+      // the shell outline: tangent lines closed by a 2:1 head at each end
+      shellD: 'M' + CX + ' ' + TOP + ' V' + BOT +
+              ' A' + (CW / 2) + ' ' + HD + ' 0 0 0 ' + CR + ' ' + BOT +
+              ' V' + TOP +
+              ' A' + (CW / 2) + ' ' + HD + ' 0 0 0 ' + CX + ' ' + TOP + ' Z',
+      sectionD: 'M' + CX + ' ' + feedY + ' H' + CR,
       caption: ok ? (r.N + ' stages \u00b7 feed on ' + this.num(r.feedStage) + ' \u00b7 R ' + f(r.R, 2))
                   : 'No solved case',
-      mixName: mix.label || 'the selected mixture'
+      mixName: mix.label || 'the selected mixture',
+      // The drawing is honest about itself: it shows the engine's stage count
+      // when that fits, and says so when it does not.
+      trayNote: !ok ? 'The tray count is illustrative until a case is solved.'
+                    : (nOver ? 'The column is drawn with ' + nT + ' of the ' + N + ' stages the engine returned; the feed sits where the engine put it.'
+                             : 'The column is drawn with the ' + N + ' stages the engine returned, feed on ' + fs + '.')
     };
   }
 
   columnScene(s, r, ok){
-    // the split gives the column half the width, so it draws narrower there;
-    // on its own it fills the frame it is given
-    const H = 384, RAD = (s.colMode === 'split') ? 46 : 58, SLATS = 16;
+    // The scene is laid out in pixels, so it has to be laid out for the box it
+    // is given. On a phone that box is 324 x 360 against 634 x 462 on a desk,
+    // and at the desktop size the vessel ran 45px past the bottom and both
+    // callout columns were cut off at the edges.
+    const narrow = !!s.narrow;
+    const H = narrow ? 312 : 384;
+    const RAD = (s.colMode === 'split') ? 46 : (narrow ? 50 : 58);
+    const SLATS = 16;
     const top = 18, bot = H - 16;                    // usable vessel span
-    const scene = { H, RAD, W: RAD * 2, slats: [], trays: [], hits: [], parts: [], caps: [], notes: [] };
+    const scene = { H, RAD, W: RAD * 2, slats: [], trays: [], hits: [], parts: [], caps: [], notes: [],
+                    cls: 'dx-stage dx-lit' + (narrow ? ' dx-cm-tight' : '') };
 
     // vessel wall — a ring of slats at a fixed radius
     const w = (2 * Math.PI * RAD) / SLATS + 1.5;
@@ -5394,7 +5823,7 @@ class Component extends DCLogic {
     const f = (v, d) => this.f(v, d);
     // the split puts the column in half the width, so the callouts come in
     // closer and wrap rather than run off the panel
-    const tight = s.colMode === 'split';
+    const tight = s.colMode === 'split' || narrow;
     const NOFF = tight ? 13 : 52;
     // in the split the callouts have roughly a third of the room, so they
     // carry the headline number only; the full set is still on the right-hand
@@ -5655,7 +6084,10 @@ class Component extends DCLogic {
     // landing-page crude tower (illustration; see crudeScene)
     out.crude = this.crudeScene(s);
     out.setCrudeView = (e)=>{ const el=e.target.closest('[data-cv]'); if(el) this.setState({crudeView:el.dataset.cv}); };
-    out.crudeOver = (e)=>{ const el=e.target.closest('[data-ck]');
+    // The model does its own picking, so a move over the canvas must not be
+    // read here as a move onto nothing.
+    out.crudeOver = (e)=>{ if(e.target && e.target.id==='crude-gl') return;
+      const el=e.target.closest('[data-ck]');
       const k = el ? el.dataset.ck : null; if(k!==this.state.crudeHover) this.setState({crudeHover:k}); };
     out.crudeOut = ()=>{ if(this.state.crudeHover) this.setState({crudeHover:null}); };
     // A touch screen has no hover: tap selects a cut, tap it again to clear.
