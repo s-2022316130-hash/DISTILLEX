@@ -109,8 +109,14 @@
     --dx-ring: 0 0 0 3px var(--dx-glow-a);
 
     --dx-r-sm: 6px; --dx-r-md: 10px; --dx-r-lg: 14px; --dx-r-xl: 20px;
-    --dx-t-fast: 120ms; --dx-t-base: 200ms; --dx-t-slow: 340ms; --dx-t-view: 260ms;
+    /* One motion scale. Entrances use --dx-ease, which decelerates into rest;
+       anything the reader is dragging or hovering uses --dx-ease-out, which is
+       symmetrical and does not feel like it is catching up. Nothing outside
+       this scale should appear in the file. */
+    --dx-t-fast: 120ms; --dx-t-base: 200ms; --dx-t-slow: 340ms; --dx-t-view: 300ms;
+    --dx-t-reveal: 560ms; --dx-t-theme: 320ms;
     --dx-ease: cubic-bezier(.32,.72,.28,1);
+    --dx-ease-out: cubic-bezier(.4,0,.2,1);
     --dx-spring: cubic-bezier(.34,1.42,.44,1);
   }
 
@@ -460,7 +466,8 @@
     transform: translateX(-120%); opacity: 0;
   }
   .btn:hover::after { opacity: 1; transform: translateX(120%);
-                      transition: transform 620ms var(--dx-ease), opacity 120ms linear }
+                      transition: transform var(--dx-t-reveal) var(--dx-ease),
+                                  opacity var(--dx-t-fast) linear }
   .btn:active { transform: translateY(1.5px) scale(.985) }
   .btn:focus-visible { outline: none; box-shadow: var(--dx-ring) }
 
@@ -592,21 +599,47 @@
   .dx-navbtn { position: relative; z-index: 1; border-radius: var(--dx-r-sm) }
   .dx-navbtn:hover { color: var(--dx-ink-accent) }
 
-  /* ═══ view transition ═════════════════════════════════════════════════ */
-  @keyframes dxViewIn {
-    from { opacity: 0; transform: translateY(10px); filter: blur(4px) }
-    to   { opacity: 1; transform: none;             filter: none }
+  /* ═══ the theme switch ════════════════════════════════════════════════
+     Flipping the theme repainted every surface in one frame, which reads as a
+     flash. The class rides on the root only while the switch is in flight,
+     and a reader who has asked for less motion never gets it at all.
+
+     Scoped to the large flat surfaces, not to every element: transitioning
+     `*` cost a 133ms frame against a 50ms baseline, measured. The broad areas
+     carry the whole perception of the fade — the fine detail inside them (SVG
+     strokes, the 3-D slats) switches in one frame and nobody sees it. */
+  @media (prefers-reduced-motion: no-preference) {
+    .dx-tx, .dx-tx .dx-app, .dx-tx .dx-sheet, .dx-tx .dx-nav::before,
+    .dx-tx .card, .dx-tx .dx-stack, .dx-tx .dx-well, .dx-tx .dx-loop,
+    .dx-tx .dx-stage, .dx-tx .dx-navwrap, .dx-tx .btn, .dx-tx .input,
+    .dx-tx .dx-gate, .dx-tx .dx-gate-v, .dx-tx footer {
+      transition: background-color var(--dx-t-theme) var(--dx-ease-out),
+                  border-color     var(--dx-t-theme) var(--dx-ease-out),
+                  color            var(--dx-t-theme) var(--dx-ease-out),
+                  box-shadow       var(--dx-t-theme) var(--dx-ease-out) !important;
+    }
   }
-  .dx-viewin { animation: dxViewIn var(--dx-t-view) var(--dx-ease) both }
+
+  /* ═══ view transition ═════════════════════════════════════════════════ */
+  /* Opacity and transform only: both composite, so a view change never
+     re-rasters. The blur this used to animate was 4px over the whole view on
+     every single navigation — the single most expensive frame in the app. */
+  @keyframes dxViewIn {
+    from { opacity: 0; transform: translate3d(0, 10px, 0) scale(.995) }
+    to   { opacity: 1; transform: none }
+  }
+  .dx-viewin { animation: dxViewIn var(--dx-t-view) var(--dx-ease) both;
+               will-change: transform, opacity }
 
   /* ═══ scroll reveal ═══════════════════════════════════════════════════ */
-  .dx-reveal { opacity: 0; transform: translateY(16px); filter: blur(3px);
-    transition: opacity 520ms var(--dx-ease), transform 520ms var(--dx-ease), filter 520ms var(--dx-ease) }
-  .dx-reveal.seen { opacity: 1; transform: none; filter: none }
+  .dx-reveal { opacity: 0; transform: translate3d(0, 18px, 0);
+    transition: opacity var(--dx-t-reveal) var(--dx-ease),
+                transform var(--dx-t-reveal) var(--dx-ease) }
+  .dx-reveal.seen { opacity: 1; transform: none }
 
   /* ═══ entrance ════════════════════════════════════════════════════════ */
   @keyframes dxIn { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
-  .dx-in { animation: dxIn 620ms var(--dx-ease) both }
+  .dx-in { animation: dxIn var(--dx-t-reveal) var(--dx-ease) both }
   .dx-in-1 { animation-delay: 60ms }  .dx-in-2 { animation-delay: 150ms }
   .dx-in-3 { animation-delay: 240ms } .dx-in-4 { animation-delay: 330ms }
   .dx-in-5 { animation-delay: 430ms }
@@ -614,7 +647,7 @@
   /* ═══ toast ═══════════════════════════════════════════════════════════ */
   @keyframes dxToast { from { opacity:0; transform: translate(-50%, 16px) scale(.96) }
                          to { opacity:1; transform: translate(-50%, 0) scale(1) } }
-  .dx-toast { animation: dxToast 320ms var(--dx-spring) both }
+  .dx-toast { animation: dxToast var(--dx-t-slow) var(--dx-spring) both }
 
   /* ═══ progressive disclosure ══════════════════════════════════════════ */
   /* A value the model fixes rather than offers.  It used to be drawn as an
@@ -658,7 +691,21 @@
   }
   .dx-fold[open] > summary::after { transform:rotate(-135deg) translate(-2px,-2px) }
   .dx-foldbody { display:flex; flex-direction:column; gap:var(--fg, 12px) }
-  .dx-fold[open] > .dx-foldbody { animation:dxIn 220ms var(--dx-ease) both }
+  .dx-fold[open] > .dx-foldbody { animation:dxIn var(--dx-t-base) var(--dx-ease) both }
+  /* Where the browser can interpolate to auto, the card actually grows instead
+     of snapping open with the content fading in after it. Everywhere else the
+     fade is the whole effect, exactly as before. */
+  @supports (interpolate-size: allow-keywords) {
+    @media (prefers-reduced-motion: no-preference) {
+      :root { interpolate-size: allow-keywords }
+      .dx-fold::details-content {
+        block-size: 0; overflow: hidden;
+        transition: block-size var(--dx-t-slow) var(--dx-ease),
+                    content-visibility var(--dx-t-slow) allow-discrete;
+      }
+      .dx-fold[open]::details-content { block-size: auto }
+    }
+  }
   @media (prefers-reduced-motion: reduce) { .dx-fold[open] > .dx-foldbody { animation:none } }
 
   .dx-dis { border-top:1px solid var(--dx-hairline); margin-top:2px }
@@ -1700,89 +1747,118 @@
      separation it needs, and the name itself is set in an italic serif
      against the page's sans — enough contrast to read as a hand rather than
      as another label, at a size that keeps it out of the way. */
-  /* ═══ the glyph matrix ═══════════════════════════════════════════════
-     A field of glyphs with the solved column's two composition profiles
-     traced through it. The field is inert; the bright cells are the result,
-     so the block changes when the case does. One sweeping highlight is the
-     only thing that moves, and it moves by transform alone. */
-  .dx-gmx-wrap { position:relative; overflow:hidden; border-radius:var(--dx-r-lg);
-                 border:1px solid var(--dx-hairline); background:var(--dx-raised);
-                 padding:16px clamp(12px,2.4vw,22px) 14px; box-shadow:var(--shadow-sm) }
-  .dx-gmx { position:relative; z-index:1;
-            display:grid; grid-auto-flow:column;
-            grid-template-rows:repeat(9, 1fr);
-            grid-auto-columns:minmax(0,1fr);
-            font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-size:clamp(9px,1.05vw,12.5px); line-height:1.62;
-            user-select:none; -webkit-user-select:none }
-  .dx-gmx i { font-style:normal; text-align:center; color:var(--dx-ink3); opacity:.26 }
-  .dx-gmx i.near { opacity:.52 }
-  .dx-gmx i.feed { opacity:.70; color:var(--dx-plot-feed) }
-  .dx-gmx i.on   { opacity:1; font-weight:600 }
-  .dx-gmx i.liq  { color:var(--dx-plot-liq) }
-  .dx-gmx i.vap  { color:var(--dx-plot-phys) }
-  /* the sweep: one element, transform only, so it never repaints the field */
-  .dx-gmx-head { position:relative; z-index:1; display:flex; align-items:baseline;
-                 gap:14px; flex-wrap:wrap; margin-bottom:12px }
-  .dx-gmx-key { font-size:11px; letter-spacing:.04em; color:var(--dx-ink3);
-                display:flex; align-items:baseline; gap:5px }
-  .dx-gmx-key b { font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-                  font-weight:700; margin-left:7px }
-  .dx-gmx-key b:first-child { margin-left:0 }
-  .dx-gmx-key b.liq { color:var(--dx-plot-liq) }
-  .dx-gmx-key b.vap { color:var(--dx-plot-phys) }
-  .dx-gmx-key b.feed { color:var(--dx-plot-feed) }
-  .dx-gmx-cap { margin-left:auto; font-size:11px; font-variant-numeric:tabular-nums;
-                color:var(--dx-ink2); white-space:nowrap }
-  @media (max-width:620px) { .dx-gmx-cap { display:none } }
-  .dx-gmx-scan { position:absolute; inset:0 auto 0 0; width:26%; z-index:0;
-                 pointer-events:none; will-change:transform;
-                 background:linear-gradient(90deg, transparent,
-                   color-mix(in srgb, var(--color-accent) var(--dx-gmx-sweep), transparent) 52%,
-                   transparent);
-                 animation:dxSweep 7.5s linear infinite }
-  :root    { --dx-gmx-sweep: 9% }
-  .dx-dark { --dx-gmx-sweep: 16% }
-  @keyframes dxSweep { from { transform:translateX(-110%) } to { transform:translateX(420%) } }
-  /* the two profiles breathe, a column at a time, so the block reads as live
-     without anything jumping */
-  .dx-gmx i.on { animation:dxGlyph 3.6s var(--dx-ease) infinite }
-  @keyframes dxGlyph { 0%,100% { opacity:1 } 50% { opacity:.62 } }
+  /* ═══ the process loop ═══════════════════════════════════════════════
+     The arrangement a column actually has, drawn once and animated: feed in,
+     vapour up to the condenser, distillate out, reflux back, reboiler at the
+     sump. Two animations carry all of it — a dash offset along every pipe and
+     a set of particles inside the vessel — so the whole band is two
+     compositor-friendly properties, not thirty. */
+  .dx-loop { position:relative; margin-top:10px; padding:18px clamp(14px,2.4vw,24px) 16px;
+             border-radius:var(--dx-r-lg); border:1px solid var(--dx-hairline);
+             background:var(--dx-raised); box-shadow:var(--shadow-sm) }
+  .dx-loop-head { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:6px }
+  .dx-loop-sub { font-size:12.5px; color:var(--dx-ink2) }
+  .dx-loop-cap { margin-left:auto; font-size:11.5px; font-variant-numeric:tabular-nums;
+                 color:var(--dx-ink3); white-space:nowrap }
+  /* The drawing keeps its own aspect ratio and a sensible ceiling: a
+     max-height letterboxed it and shrank the whole schematic to the middle of
+     a very wide band. */
+  .dx-loop svg { display:block; width:100%; max-width:900px; height:auto; overflow:visible;
+                 margin:10px auto 4px }
+  .dx-loop-note { margin:6px 0 0; font-size:11.5px; line-height:1.55; color:var(--dx-ink3) }
+
+  .pl-vessel { fill:color-mix(in srgb, var(--dx-plot-liq) 7%, transparent);
+               stroke:var(--color-divider); stroke-width:2 }
+  .pl-box    { fill:var(--color-surface); stroke:var(--color-divider); stroke-width:1.8 }
+  .pl-box.hot{ stroke:var(--dx-orange); fill:color-mix(in srgb, var(--dx-orange) 10%, var(--color-surface)) }
+  .pl-tray   { stroke:color-mix(in srgb, var(--dx-plot-liq) 58%, transparent); stroke-width:1.6;
+               stroke-linecap:round }
+  .pl-coil   { fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round }
+  .pl-pipe   { fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round;
+               stroke-linejoin:round }
+  .pl-head   { fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round;
+               stroke-linejoin:round }
+  .feed { color:var(--dx-plot-feed) }
+  .vap  { color:var(--dx-plot-phys) }
+  .liq  { color:var(--dx-plot-liq) }
+  .pl-flame  { fill:none; stroke:var(--dx-orange); stroke-width:2; stroke-linecap:round;
+               stroke-linejoin:round; transform-box:fill-box; transform-origin:50% 100%;
+               animation:plFlame 1.9s var(--dx-ease) infinite }
+  .pl-lab { fill:var(--dx-ink3); font-family:var(--font-heading); font-size:10px;
+            letter-spacing:.13em }
+  .pl-val { fill:var(--color-text); font-size:11px; font-variant-numeric:tabular-nums }
+  .pl-mid { text-anchor:middle }
+  .pl-end { text-anchor:end }
+
+  /* the flow: one dash offset, shared by every pipe */
+  .pl-flow { stroke-dasharray:9 7; animation:plFlow 1.05s linear infinite }
+  .pl-flow.rev { animation-direction:reverse }
+  @keyframes plFlow { to { stroke-dashoffset:-16 } }
+
+  /* counter-current traffic inside the vessel */
+  .pl-p { stroke:none }
+  .pl-p.up   { fill:var(--dx-plot-phys); animation:plUp 2.6s linear infinite }
+  .pl-p.down { fill:var(--dx-plot-liq);  animation:plDown 2.9s linear infinite }
+  @keyframes plUp   { 0% { transform:translateY(0);     opacity:0 }
+                     12% { opacity:.95 }
+                     88% { opacity:.95 }
+                    100% { transform:translateY(-128px); opacity:0 } }
+  @keyframes plDown { 0% { transform:translateY(0);     opacity:0 }
+                     12% { opacity:.85 }
+                     88% { opacity:.85 }
+                    100% { transform:translateY(128px);  opacity:0 } }
+  @keyframes plFlame { 0%,100% { transform:scaleY(1) }   50% { transform:scaleY(.72) } }
+
   @media (prefers-reduced-motion: reduce) {
-    .dx-gmx-scan { display:none }
-    .dx-gmx i.on { animation:none }
+    .pl-flow, .pl-flame { animation:none }
+    .pl-flow { stroke-dasharray:none }
+    .pl-p { animation:none; opacity:.9 }
+  }
+  /* SVG font-size is in user units, so a phone override is scaled by the same
+     factor as the drawing — 13 units on a 358px-wide render is 5.8 CSS px.
+     The sizes here are the user-unit values that land at readable CSS px, and
+     the equipment names go, because the shapes are recognisable in context and
+     five more labels at that size would collide. */
+  @media (max-width:620px) {
+    .dx-loop-cap, .dx-loop-sub { display:none }
+    .pl-eq  { display:none }
+    .pl-lab { font-size:21px; letter-spacing:.06em }
+    .pl-val { font-size:23px }
+    /* at phone type sizes the distillate readout reaches back under the
+       reflux drum, so the pair drops clear of it */
+    .pl-out { transform: translateY(26px) }
+    .dx-loop svg { margin-top:4px }
   }
 
-  .dx-sig {
-    margin-top: 20px; padding: 10px 0 12px;
-    display: flex; align-items: center; justify-content: center;
-    line-height: 1.2;
+  /* ═══ signature ═══════════════════════════════════════════════════════
+     The last thing on every page: the name set to be read, with the
+     affiliation under it. Two short rules flank the name only, so the
+     department line runs at its own width without dragging them wider. */
+  .dx-sig { margin-top: 16px; padding: 8px 0 10px;
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            line-height: 1.25; text-align: center }
+  .dx-sig-n { display: flex; align-items: center; justify-content: center }
+  .dx-sig-n::before, .dx-sig-n::after {
+    content: ''; width: 34px; height: 1px; flex: 0 0 auto; background: var(--dx-hairline);
   }
-  .dx-sig::before, .dx-sig::after {
-    content: ''; width: 30px; height: 1px; flex: 0 0 auto;
-    background: var(--dx-hairline);
-  }
-  .dx-sig::before { margin-right: 13px }
-  .dx-sig::after  { margin-left: 13px }
-  .dx-sig b {
+  .dx-sig-n::before { margin-right: 14px }
+  .dx-sig-n::after  { margin-left: 14px }
+  .dx-sig-n b {
     font-family: Georgia, 'Times New Roman', 'Nimbus Roman', serif;
-    font-style: italic; font-weight: 400;
-    font-size: 11.5px; letter-spacing: .055em;
-    color: color-mix(in srgb, var(--color-text) 55%, transparent);
+    font-style: italic; font-weight: 700;
+    font-size: 14px; letter-spacing: .035em;
+    color: color-mix(in srgb, var(--color-text) 92%, transparent);
   }
-  /* On the home page it is the sign-off, not fine print: bright enough to read
-     at a glance, with the rules lengthened to carry the extra width. */
-  .dx-land .dx-sig { margin-top: 30px; padding: 14px 0 16px }
-  .dx-land .dx-sig::before, .dx-land .dx-sig::after { width: 46px }
-  .dx-land .dx-sig::before { margin-right: 18px }
-  .dx-land .dx-sig::after  { margin-left: 18px }
-  .dx-land .dx-sig b {
-    font-size: 13px; letter-spacing: .09em;
-    color: color-mix(in srgb, var(--color-text) 85%, transparent);
+  .dx-sig-d {
+    font-size: 10.5px; letter-spacing: .05em; line-height: 1.45;
+    max-width: min(92vw, 560px); text-wrap: balance;
+    color: var(--dx-ink3);
   }
-  .dx-rig .dx-sig { margin: 0; padding: 7px 0 8px; border-top: 1px solid var(--r-line) }
-  .dx-rig .dx-sig::before, .dx-rig .dx-sig::after { background: var(--r-line) }
-  .dx-rig .dx-sig b { color: var(--r-faint) }
+  .dx-rig .dx-sig { margin: 0; padding: 6px 0 7px; border-top: 1px solid var(--r-line) }
+  .dx-rig .dx-sig-n::before, .dx-rig .dx-sig-n::after { background: var(--r-line) }
+  .dx-rig .dx-sig-n b { color: var(--r-ink) }
+  .dx-rig .dx-sig-d   { color: var(--r-faint) }
+  @media (max-width: 620px) { .dx-sig-d { font-size: 11px } }
 
   /* ═══ retained motion used by the legacy SVG diagrams ═════════════════ */
   @keyframes dxRise { from { transform: translateY(10px); opacity: 0 } 25% { opacity: 1 } 75% { opacity: 1 } to { transform: translateY(-26px); opacity: 0 } }
@@ -2020,21 +2096,65 @@
     </div>
   </div>
 
-  <div class="dx-gmx-wrap dx-reveal" style="margin-top:8px">
-    <i class="dx-gmx-scan" aria-hidden="true"></i>
-    <div class="dx-gmx-head">
-      <span class="dx-kicker">Composition profile &middot; live</span>
-      <span class="dx-gmx-key" aria-hidden="true">
-        <b class="liq">x</b> liquid <b class="vap">o</b> vapour <b class="feed">&middot;</b> feed
-      </span>
-      <span class="dx-gmx-cap">{{ gmx.caption }}</span>
+
+  <!-- ══ how it works, drawn as the loop it is ══════════════════════════
+       A schematic, not a plot: the geometry is fixed, and only the numbers
+       on it come from the solved case. One flow animation, one set of
+       particles, both off under prefers-reduced-motion. ══ -->
+  <div class="dx-loop dx-reveal">
+    <div class="dx-loop-head">
+      <span class="dx-kicker">The process</span>
+      <span class="dx-loop-sub">Boil, rise, condense, return &mdash; the cycle every tray repeats</span>
+      <span class="dx-loop-cap">{{ loop.caption }}</span>
     </div>
-    <div class="dx-gmx" aria-hidden="true">
-      <sc-for list="{{ gmx.cells }}" as="gc" hint-placeholder-count="288">
-        <i class="{{ gc.cls }}" style="{{ gc.st }}">{{ gc.c }}</i>
-      </sc-for>
-    </div>
-    <p style="position:relative;z-index:1;margin:12px 0 0;font-size:11.5px;line-height:1.5;color:var(--dx-ink2)">{{ gmx.note }}</p>
+    <svg viewBox="0 0 800 264" role="img" aria-label="Schematic of a fractionating column: feed enters the middle, vapour rises to a condenser and reflux drum, distillate leaves the top, the reboiler boils the sump and bottoms leave the base.">
+      <!-- feed -->
+      <text class="pl-lab" x="16" y="124">FEED</text>
+      <text class="pl-val" x="16" y="156">z_F {{ loop.zF }}</text>
+      <path class="pl-pipe pl-flow feed" d="M16 136 H218"></path>
+      <path class="pl-head feed" d="M210 130 l10 6 l-10 6"></path>
+
+      <!-- column -->
+      <rect class="pl-vessel" x="220" y="50" width="84" height="164" rx="42"></rect>
+      <g class="pl-trays"><line class="pl-tray" x1="232" y1="72" x2="292" y2="72"></line><line class="pl-tray" x1="232" y1="94" x2="292" y2="94"></line><line class="pl-tray" x1="232" y1="116" x2="292" y2="116"></line><line class="pl-tray" x1="232" y1="138" x2="292" y2="138"></line><line class="pl-tray" x1="232" y1="160" x2="292" y2="160"></line><line class="pl-tray" x1="232" y1="182" x2="292" y2="182"></line></g>
+      <g class="pl-parts"><circle class="pl-p up" cx="242" cy="196" r="2.6" style="animation-delay:0ms"></circle><circle class="pl-p up" cx="260" cy="196" r="2.6" style="animation-delay:520ms"></circle><circle class="pl-p up" cx="278" cy="196" r="2.6" style="animation-delay:1040ms"></circle><circle class="pl-p up" cx="250" cy="196" r="2.6" style="animation-delay:1560ms"></circle><circle class="pl-p up" cx="268" cy="196" r="2.6" style="animation-delay:260ms"></circle><circle class="pl-p up" cx="286" cy="196" r="2.6" style="animation-delay:780ms"></circle> <circle class="pl-p down" cx="248" cy="64" r="2.4" style="animation-delay:300ms"></circle><circle class="pl-p down" cx="266" cy="64" r="2.4" style="animation-delay:900ms"></circle><circle class="pl-p down" cx="284" cy="64" r="2.4" style="animation-delay:1500ms"></circle><circle class="pl-p down" cx="256" cy="64" r="2.4" style="animation-delay:1800ms"></circle><circle class="pl-p down" cx="274" cy="64" r="2.4" style="animation-delay:600ms"></circle><circle class="pl-p down" cx="240" cy="64" r="2.4" style="animation-delay:1200ms"></circle></g>
+      <text class="pl-lab pl-eq pl-end" x="230" y="240">COLUMN</text>
+
+      <!-- overhead, condenser, drum: one run along the top, nothing crossing -->
+      <path class="pl-pipe pl-flow vap" d="M262 50 V26 H404"></path>
+      <text class="pl-val" x="272" y="20">{{ loop.tTop }} &deg;C</text>
+      <rect class="pl-box" x="404" y="10" width="86" height="32" rx="6"></rect>
+      <path class="pl-coil vap" d="M416 26 h9 m7 0 h9 m7 0 h9 m7 0 h9"></path>
+      <text class="pl-lab pl-eq pl-mid" x="447" y="4">CONDENSER</text>
+      <path class="pl-pipe pl-flow liq" d="M490 26 H560"></path>
+      <rect class="pl-box" x="560" y="9" width="98" height="34" rx="17"></rect>
+      <text class="pl-lab pl-eq pl-mid" x="609" y="4">REFLUX DRUM</text>
+
+      <!-- distillate leaves to the right; reflux drops and returns underneath -->
+      <path class="pl-pipe pl-flow liq" d="M658 26 H752"></path>
+      <path class="pl-head liq" d="M744 20 l10 6 l-10 6"></path>
+      <g class="pl-out">
+        <text class="pl-lab pl-end" x="762" y="20">DISTILLATE</text>
+        <text class="pl-val pl-end" x="762" y="44">x_D {{ loop.xD }}</text>
+      </g>
+      <path class="pl-pipe pl-flow liq rev" d="M609 43 V74 H304"></path>
+      <text class="pl-lab pl-eq" x="330" y="66">REFLUX &middot; R {{ loop.R }}</text>
+
+      <!-- sump, reboiler, and the vapour it returns -->
+      <path class="pl-pipe pl-flow liq" d="M262 214 V236 H352"></path>
+      <rect class="pl-box hot" x="352" y="220" width="86" height="32" rx="6"></rect>
+      <path class="pl-flame" d="M368 244 l8 -13 l8 13 l8 -13 l8 13"></path>
+      <text class="pl-lab pl-eq pl-mid" x="395" y="264">REBOILER</text>
+      <path class="pl-pipe pl-flow vap rev" d="M395 220 V198 H304"></path>
+      <text class="pl-val" x="312" y="186">{{ loop.tBot }} &deg;C</text>
+
+      <!-- bottoms out -->
+      <path class="pl-pipe pl-flow liq" d="M438 236 H752"></path>
+      <path class="pl-head liq" d="M744 230 l10 6 l-10 6"></path>
+      <text class="pl-lab pl-end" x="762" y="230">BOTTOMS</text>
+      <text class="pl-val pl-end" x="762" y="254">x_B {{ loop.xB }}</text>
+    </svg>
+    <p class="dx-loop-note">Every label is the engine's own answer for {{ loop.mixName }}, solved in this browser. The drawing is a schematic &mdash; it shows the arrangement, not the tray count.</p>
   </div>
 
   <div class="dx-grid3b dx-reveal" style="margin-top:20px">
@@ -2266,7 +2386,7 @@
     </div>
   </section>
 
-  <div class="dx-sig"><b>Shafin Ahamed Neon</b></div>
+  <div class="dx-sig"><span class="dx-sig-n"><b>Shafin Ahamed Neon</b></span><span class="dx-sig-d">Department of Applied Chemistry &amp; Chemical Engineering, University of Dhaka</span></div>
 </div>
 </div>
 </sc-if>
@@ -3486,7 +3606,7 @@
       <span style="max-width:96ch;line-height:1.5">This simulator is intended for education and conceptual engineering analysis. Results depend on the selected thermodynamic model and assumptions and should not be used as the sole basis for industrial process design.</span>
       <span style="margin-left:auto">{{ modelBadge }}</span>
     </div>
-    <div class="dx-sig"><b>Shafin Ahamed Neon</b></div>
+    <div class="dx-sig"><span class="dx-sig-n"><b>Shafin Ahamed Neon</b></span><span class="dx-sig-d">Department of Applied Chemistry &amp; Chemical Engineering, University of Dhaka</span></div>
   </footer>
 </div>
 </sc-if>
@@ -3894,7 +4014,7 @@
     </sc-for>
   </div>
 
-  <div class="dx-sig"><b>Shafin Ahamed Neon</b></div>
+  <div class="dx-sig"><span class="dx-sig-n"><b>Shafin Ahamed Neon</b></span><span class="dx-sig-d">Department of Applied Chemistry &amp; Chemical Engineering, University of Dhaka</span></div>
 </div>
 </sc-if>
 
@@ -4005,11 +4125,6 @@ class Component extends DCLogic {
     'aboutLead','aboutModels','aboutData','aboutLimits','aboutDeploy','aboutExtend','aboutAssume','aboutDev',
     'valNotes'
   ];
-  /* The reflux sweep the landing page's glyph matrix walks, as multiples of
-     the minimum reflux. It starts just above the pinch, where the column needs
-     the most stages, and opens up to where extra reflux stops buying much. */
-  static GMX_R = [1.05, 1.15, 1.3, 1.5, 1.8, 2.2, 2.8, 2.2, 1.8, 1.5, 1.3, 1.15];
-
   static PHONE_CLOSED = new Set([
     'simModel','simNotes','simProfiles','simBalance','simWhatIf',
     'vleFacts','vleComponents',
@@ -4102,7 +4217,7 @@ class Component extends DCLogic {
           open:{ feed:true, furnace:true, column:false, products:false, adv:false },
           expert:false, tour:-1, hist:[], dirty:false, gl3d:true },
     theme:(this.props||{}).defaultTheme||'dark',
-    narrow:false, moreOpen:false, folds:{}, gmxI:0,
+    narrow:false, moreOpen:false, folds:{}, themeTx:false,
     custom:{a:{name:'Component A',A:6.90565,B:1211.033,C:220.79,MW:78.11,Tb:80.1,lat:30.8},
             b:{name:'Component B',A:6.95464,B:1344.800,C:219.48,MW:92.14,Tb:110.6,lat:33.2}}
   };
@@ -4300,7 +4415,6 @@ class Component extends DCLogic {
     try {
       this._tickView(); this._tickNums(); this._tickPill(); this._tickFill(); this._tickSvgText();
       this._bindPointer(); this._tickReveal();
-      this._gmxTick();
       if (this._rigTheme()) this._rigApplyResult();
       this._rigMount(); this._rigCollectTags();
     } catch (e) { /* presentation only — never let it reach the engine */ }
@@ -4366,26 +4480,10 @@ class Component extends DCLogic {
     });
     return out;
   }
-  componentDidMount(){ this._watchWidth(); this._afterRender(); this.initRoute(); this._gmxTick(); }
+  componentDidMount(){ this._watchWidth(); this._afterRender(); this.initRoute(); }
   componentWillUnmount(){
     if (this._mq && this._onMq) { try { this._mq.removeEventListener('change', this._onMq); } catch (e) {} }
-    if (this._gmxT) { clearInterval(this._gmxT); this._gmxT = null; }
-  }
-  /** The glyph matrix walks a reflux sweep so the landing page demonstrates the
-   *  one trade-off the whole subject turns on — more reflux, fewer stages —
-   *  without the reader touching anything. Each frame is a real solve, not an
-   *  interpolation, and the timer only runs while the landing page is showing
-   *  and only if motion is wanted. */
-  _gmxTick(){
-    const want = this.state.view === 'landing' && !this._calm();
-    if (want && !this._gmxT) {
-      this._gmxT = setInterval(() => {
-        if (this.state.view !== 'landing') return;
-        this.setState({ gmxI: (this.state.gmxI + 1) % Component.GMX_R.length });
-      }, 2800);
-    } else if (!want && this._gmxT) {
-      clearInterval(this._gmxT); this._gmxT = null;
-    }
+    if (this._txT) { clearTimeout(this._txT); this._txT = null; }
   }
   /** One media query decides the phone layout, so the break point lives in one
    *  place and the view-model can fold a card without measuring anything. */
@@ -4808,7 +4906,7 @@ class Component extends DCLogic {
       isApp:s.view!=='landing'&&s.view!=='rig',
       isSim:s.view==='sim', isColumn:s.view==='column',
       navItems, issues, hasIssues:issues.length>0,
-      themeClass:s.theme==='dark'?'dx-dark':'', themeLabel:s.theme==='dark'?'Light mode':'Dark mode', themeIconD: s.theme==='dark'
+      themeClass:(s.theme==='dark'?'dx-dark':'')+(s.themeTx?' dx-tx':''), themeLabel:s.theme==='dark'?'Light mode':'Dark mode', themeIconD: s.theme==='dark'
         ? 'M12 7.4a4.6 4.6 0 100 9.2 4.6 4.6 0 000-9.2zM12 1.8v2.4M12 19.8v2.4M4.8 4.8l1.7 1.7'
           + 'M17.5 17.5l1.7 1.7M1.8 12h2.4M19.8 12h2.4M4.8 19.2l1.7-1.7M17.5 6.5l1.7-1.7'
         : 'M20 14.2A8.4 8.4 0 019.8 4 8.8 8.8 0 1020 14.2z',
@@ -4858,7 +4956,12 @@ class Component extends DCLogic {
       tryExample:()=>this.setState({view:'sim',mixKey:'bt',model:'raoult',P:101.325,F:100,zF:0.45,q:1,xD:0.96,xB:0.04,R:2.2,calcMode:'design'}),
       toggleTheme:()=>{ const t = s.theme==='dark'?'light':'dark';
                        try { THEME.set(t); } catch (e) { /* presentation only */ }
-                       this.setState({theme:t}); },
+                       // the cross-fade class rides along for one transition
+                       // and is then taken off, so the universal selector is
+                       // never live while the reader is doing anything else
+                       this.setState({theme:t, themeTx:true});
+                       if (this._txT) clearTimeout(this._txT);
+                       this._txT = setTimeout(()=>this.setState({themeTx:false}), 380); },
       setNum:(e)=>{const k=e.target.dataset.k, raw=e.target.value, val=parseFloat(raw);
         // Keep the raw entry when it will not parse so validation reports it.
         // Silently retaining the previous number would leave a valid-looking
@@ -5167,72 +5270,27 @@ class Component extends DCLogic {
     const v = s.pinStage !== null && s.pinStage !== undefined ? s.pinStage : s.hoverStage;
     return (v === null || v === undefined) ? null : Math.round(v);
   }
-  /** A field of glyphs with the solved column's two composition profiles
-   *  traced through it: the liquid as its own leading digit, the vapour as a
-   *  ring. It is a rendering of the result, not an ornament — change the
-   *  reflux and the curves move — so it says what the page claims: every
-   *  number here was computed in this browser.
-   *
-   *  The field is deterministic, seeded from the cell's own position, so two
-   *  renders of the same case are pixel-identical and the build stays
-   *  reproducible. */
-  glyphMatrix(s, r, ok){
-    const COLS = 32, ROWS = 9, step = 1 / (ROWS - 1);
-    // Walk a reflux sweep rather than repeating the base case: each frame is a
-    // real solve at R = k x Rmin, so the stage count the reader watches shorten
-    // is the engine's answer, not an animation of one.
-    let src = r, swept = null;
-    if (ok && r && isFinite(r.Rmin) && r.Rmin > 0) {
-      const k = Component.GMX_R[(s.gmxI || 0) % Component.GMX_R.length];
-      const Rk = +(r.Rmin * k).toFixed(3);
-      try {
-        // variant(), not solve(): the programmatic callers go through the same
-        // validation gate the interactive path does, and the engine keeps its
-        // two entry points.
-        const alt = this.variant(s, { R: Rk, calcMode: 'design' });
-        if (alt && alt.ok && alt.stages && alt.stages.length) { src = alt; swept = { k: k, R: Rk }; }
-      } catch (e) { /* presentation only — the base case still draws */ }
-    }
-    const st = (ok && src && src.stages) ? src.stages : [];
-    const n = st.length;
-    const at = (pick, t) => {
-      if (!n) return 0;
-      const u = t * (n - 1), i = Math.floor(u), f = u - i;
-      const a = pick(st[Math.min(i, n - 1)]), b = pick(st[Math.min(i + 1, n - 1)]);
-      return a + (b - a) * f;
+  /** The live figures the landing page's process schematic labels itself with.
+   *  The drawing is a schematic — it does not change shape with the case — so
+   *  it only ever carries numbers the engine actually produced, and says a
+   *  plain dash when there is no solution to report. */
+  processLoop(s, r, ok){
+    const f = (v, d) => this.f(v, d);
+    const mix = Component.MIX[s.mixKey] || {};
+    return {
+      ok: !!ok,
+      zF: ok ? f(r.zF, 3) : '\u2014',
+      xD: ok ? f(r.xD, 3) : '\u2014',
+      xB: ok ? f(r.xB, 3) : '\u2014',
+      R:  ok ? f(r.R, 2)  : '\u2014',
+      stages: ok ? String(r.N) : '\u2014',
+      feedStage: ok ? String(this.num(r.feedStage)) : '\u2014',
+      tTop: ok ? f(r.Ttop, 1) : '\u2014',
+      tBot: ok ? f(r.Tbot, 1) : '\u2014',
+      caption: ok ? (r.N + ' stages \u00b7 feed on ' + this.num(r.feedStage) + ' \u00b7 R ' + f(r.R, 2))
+                  : 'No solved case',
+      mixName: mix.label || 'the selected mixture'
     };
-    const feed = (n > 1) ? Math.round((this.num(src.feedStage) - 1) / (n - 1) * (COLS - 1)) : -1;
-    const cells = [];
-    for (let c = 0; c < COLS; c++) {
-      const t = COLS > 1 ? c / (COLS - 1) : 0;
-      const x = at(a => a.x, t), y = at(a => a.y, t);
-      const delay = 'animation-delay:' + (c * 62) + 'ms';
-      for (let ro = 0; ro < ROWS; ro++) {
-        const level = 1 - ro / (ROWS - 1);          // row 0 is the top of the column
-        const dx = Math.abs(x - level) / step, dy = Math.abs(y - level) / step;
-        let cls, ch;
-        if (n && dx < 0.5)                    { cls = 'on liq'; ch = String(Math.round(x * 9)); }
-        else if (n && dy < 0.5)               { cls = 'on vap'; ch = 'o'; }
-        else if (n && (dx < 1.5 || dy < 1.5)) { cls = 'near';   ch = '\u00b7'; }
-        else { cls = ''; ch = ((c * 73 + ro * 31) % 9) === 0 ? ':' : '\u00b7'; }
-        if (c === feed && !/on/.test(cls)) cls = (cls + ' feed').trim();
-        cells.push({ c: ch, cls: cls, st: delay });
-      }
-    }
-    return { cells: cells,
-      caption: n ? (swept ? ('R = ' + this.f(swept.R, 2) + '  ·  ' + this.f(swept.k, 2) + ' \u00d7 R_min  ·  '
-                             + n + ' stages')
-                          : (n + ' stages'))
-                 : '\u2014',
-      note: n ? (swept
-            ? ('Reflux walking from ' + this.f(Component.GMX_R[0], 2) + ' to '
-               + this.f(Math.max.apply(null, Component.GMX_R), 2)
-               + ' \u00d7 R_min. Every frame is solved here, in this browser, from the same '
-               + 'model the simulator uses — watch the stage count fall as the reflux opens up. '
-               + 'The digit is x to one figure, the ring is y.')
-            : ('Liquid and vapour composition across ' + n + ' stages. '
-               + 'The digit is x to one figure, the ring is y.'))
-          : 'No solved case to draw.' };
   }
 
   columnScene(s, r, ok){
@@ -5605,8 +5663,8 @@ class Component extends DCLogic {
     out.crudePick = (e)=>{ const el=e.target.closest('[data-ck]'); if(!el) return;
       const k = el.dataset.ck;
       this.setState({crudeHover: this.state.crudeHover===k ? null : k}); };
-    // the glyph matrix on the landing page, drawn from the same solved case
-    out.gmx = this.glyphMatrix(s, r, hasR);
+    // the animated process schematic on the landing page
+    out.loop = this.processLoop(s, r, hasR);
     // 3D column scene — geometry derived from the solved result
     out.scene = this.columnScene(s, r, hasR);
     // 2D elevation of the same trays, so a stage can be read flat as well

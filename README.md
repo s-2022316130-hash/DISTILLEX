@@ -5,7 +5,7 @@ equilibrium, McCabe–Thiele stage construction, column operation, stage profile
 studies, theory and an exam mode. Everything is computed in the browser — no server, no build
 step, no account, no telemetry, no stored data.
 
-**Live entry point:** `index.html` (self-contained, ~993 KB, works offline by double-click).
+**Live entry point:** `index.html` (self-contained, ~999 KB, works offline by double-click).
 
 Alongside the binary simulator there is an **industrial crude unit** at
 `/industrial-distillation` — an interactive, educational visualisation of an atmospheric
@@ -364,26 +364,54 @@ target is not. The one documented exception is the inline help marker beside a
 slider label: it sits inside the words it annotates, so it takes WCAG 2.5.8's
 24px minimum rather than 44px, which would swallow the label either side.
 
-### The glyph matrix
+### The process, drawn
 
-The landing page carries a field of glyphs with the column's two composition
-profiles traced through it — the liquid as its own leading digit, the vapour as
-a ring, the feed column marked. It is not an ornament with a data theme: the
-bright cells *are* the result.
+The landing page carries a schematic of the arrangement a column actually has:
+feed into the middle, vapour up to a condenser and reflux drum, distillate out,
+reflux back to the top, the reboiler firing the sump, bottoms out of the base.
+The geometry is fixed — it is a schematic, and says so — but every number on
+it is the engine's own answer for the loaded mixture: z_F, x_D, x_B, the reflux
+ratio, and the top and bottom temperatures.
 
-It also walks a reflux sweep, 1.05 to 2.8 times the minimum, a frame every 2.8
-seconds. Every frame is a real solve through `variant()` — the same validation
-gate the interactive path uses, so the engine keeps its two entry points and
-the `identity` suite still holds. The stage count falls from 22 to 11 as the
-reflux opens, which is the trade-off the whole subject turns on, demonstrated
-before the reader has clicked anything.
+Two animations carry all of it: one dash offset shared by every pipe, and a set
+of particles rising and falling inside the vessel. Both are properties the
+compositor can handle on its own, and both stop under
+`prefers-reduced-motion`.
 
-The field is seeded from each cell's own position rather than randomly, so two
-renders of the same case are identical and the build stays reproducible. One
-element moves — a sweeping highlight, by transform alone. Under
-`prefers-reduced-motion` the highlight is hidden, the cells stop pulsing, and
-the reflux timer never starts; the matrix simply shows the base case. The timer
-only runs while the landing page is on screen and is cleared when it is not.
+It replaced a glyph matrix that plotted the composition profile in characters.
+That was accurate and nobody could read it.
+
+### Motion
+
+The system is one scale — `--dx-t-fast` through `--dx-t-reveal`, two easings,
+no loose millisecond values — and the pass that produced it was measured rather
+than eyeballed. Frames longer than 20ms, counted over the interactions that
+animate most:
+
+| | before | after |
+| --- | --- | --- |
+| theme switch, worst frame | 133ms | 33ms |
+| view change, worst frame | 50ms | 33ms |
+| scroll the landing page | 0 long frames | 0 long frames |
+
+(Software rendering under SwiftShader, so the absolute numbers are pessimistic;
+the comparison is the point.)
+
+Three things were costing that:
+
+- **`filter: blur()` was animating on every view change and every scroll
+  reveal.** Blur cannot be composited — it re-rasters the whole element every
+  frame — and it was on the two transitions that run most often. Both are
+  opacity and transform now.
+- **The theme switch had no transition at all**, so every surface repainted in
+  one frame and it read as a flash. It cross-fades now, over a class that is on
+  the root only while the switch is in flight. Scoped to the large flat
+  surfaces: transitioning `*` was worse than the flash it fixed, at 133ms
+  against a 50ms baseline.
+- **A disclosure snapped to full height** and faded its contents in afterwards.
+  Where the browser can interpolate to `auto` it now grows — 44px to 384px over
+  340ms, measured mid-transition — and everywhere else it behaves exactly as
+  before.
 
 ### The mark and the ground
 
