@@ -7,14 +7,14 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f2f2f3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#101418" media="(prefers-color-scheme: dark)">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f2f2f3'/%3E%3Cg stroke='%235980a6' stroke-width='2' fill='none'%3E%3Crect x='12' y='6' width='8' height='20'/%3E%3Cpath d='M16 6V3h7v5'/%3E%3Cpath d='M16 26v3H9v-4'/%3E%3C/g%3E%3Cg stroke='%235980a6' stroke-width='1'%3E%3Cpath d='M13 11h6M13 15h6M13 19h6M13 23h6'/%3E%3C/g%3E%3C/svg%3E">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%234454df'/%3E%3Cpath%20d='M6.5%2025.5h6.4v-6.4h6.4v-6.4h6.2'%20fill='none'%20stroke='%23ffffff'%20stroke-width='3.2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script src="./support.js"></script>
 </head>
 <body>
 <x-dc>
 <helmet>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="stylesheet" href="_ds/industry-08239616-ce52-45e5-980b-7f63f8d653fc/styles.css">
 <script src="_ds/industry-08239616-ce52-45e5-980b-7f63f8d653fc/_ds_bundle.js"></script>
 <style>
@@ -218,55 +218,62 @@
       animation-duration: .001ms !important; animation-iteration-count: 1 !important;
       transition-duration: .001ms !important; scroll-behavior: auto !important;
     }
-    .dx-aurora, .dx-drift, .dx-spark { display: none !important }
+    .dx-drift, .dx-spark { display: none !important }
     .dx-reveal { opacity: 1 !important; transform: none !important; filter: none !important }
   }
 
-  /* ═══ L0 — the atmosphere ═════════════════════════════════════════════
-     Two slow-drifting light fields and a fine technical grid. The drift is
-     40 s and 56 s: long enough that it is never watched, short enough that
-     the page is never quite still. */
+  /* ═══ L0 — the ground ═════════════════════════════════════════════════
+     Not a wash of colour: a measured engineering sheet, which is what this
+     interface is drawn on. A fine 22px module, a 132px major rule, one soft
+     lift where the page catches the light, and a flow sheet of the unit
+     itself drawn at the scale of a real drawing and set at the edge.
+
+     The strength inverts with the theme. A glow designed on black is a stain
+     on white, which is exactly what the colour fields it replaces did.
+
+     Worst case for contrast, computed rather than guessed: --dx-ink3 over a
+     major rule is 4.73:1 in daylight and 6.01:1 at night; over the motif,
+     4.63:1 and 5.75:1. Body ink is 13.5:1 and 15.7:1. All clear of 4.5.   */
   body { background: var(--dx-l0); color: var(--color-text); }
-  .dx-app { position: relative; min-height: 100vh; isolation: isolate;
+  .dx-app { position: relative; min-height: 100dvh; isolation: isolate;
             background: var(--color-bg); overflow: clip; }
-  .dx-aurora { position: fixed; inset: -20% -10%; z-index: -2; pointer-events: none; }
-  .dx-aurora::before, .dx-aurora::after {
-    content: ''; position: absolute; inset: 0; will-change: transform;
+
+  :root {
+    --dx-rule-1: rgba(31,41,72,.038);
+    --dx-rule-2: rgba(31,41,72,.058);
+    --dx-motif: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20960%20780'%3E%3Cg%20stroke='%23223056'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='300'%20y='90'%20width='120'%20height='560'%20rx='60'%20fill='none'%20stroke-width='1.8'/%3E%3Cpath%20d='M317%20150H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20186H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20222H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20258H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20294H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20330H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20366H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20402H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20438H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20474H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20510H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20546H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20582H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20618H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M360%2090V54H600'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='600'%20y='30'%20width='110'%20height='48'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M710%2054H770V150'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='700'%20y='150'%20width='140'%20height='64'%20rx='32'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M770%20214V250H420'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20182H910'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20266H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='240'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20266H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20374H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='348'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20374H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20482H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='456'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20482H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M120%20470H300'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='60'%20y='430'%20width='120'%20height='80'%20rx='10'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M84%20496l14-22%2014%2022%2014-22%2014%2022'%20fill='none'%20stroke-width='1.6'/%3E%3Cpath%20d='M120%20430V360'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M360%20650V700H900'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='430'%20y='690'%20width='96'%20height='48'%20rx='10'%20fill='none'%20stroke-width='1.4'/%3E%3C/g%3E%3C/svg%3E");
+    --dx-motif-o: .07;
+    --dx-lift: radial-gradient(130% 62% at 50% -16%, rgba(255,255,255,.90), rgba(255,255,255,0) 60%);
   }
-  /* The strength of this has to invert with the theme. On a dark ground a
-     wash at a third opacity reads as atmosphere; on a white one the same
-     wash is a stain, and every panel floats in coloured haze. Daylight gets
-     roughly a sixth of the night value, and only the two cool hues. */
-  :root    { --dx-aur-1: 5%;  --dx-aur-2: 4%;  --dx-aur-3: 4%;  --dx-aur-4: 0% }
-  .dx-dark { --dx-aur-1: 30%; --dx-aur-2: 26%; --dx-aur-3: 24%; --dx-aur-4: 16% }
-  .dx-aurora::before {
-    background:
-      radial-gradient(46% 38% at 18% 16%, color-mix(in srgb, var(--color-accent) var(--dx-aur-1), transparent), transparent 70%),
-      radial-gradient(40% 34% at 82% 8%,  color-mix(in srgb, var(--dx-vapour)  var(--dx-aur-2), transparent), transparent 70%);
-    animation: dxDriftA 40s var(--dx-ease) infinite alternate;
+  .dx-dark {
+    --dx-rule-1: rgba(168,192,255,.042);
+    --dx-rule-2: rgba(168,192,255,.075);
+    --dx-motif: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20960%20780'%3E%3Cg%20stroke='%23a8c0ff'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='300'%20y='90'%20width='120'%20height='560'%20rx='60'%20fill='none'%20stroke-width='1.8'/%3E%3Cpath%20d='M317%20150H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20186H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20222H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20258H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20294H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20330H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20366H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20402H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20438H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20474H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20510H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20546H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20582H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20618H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M360%2090V54H600'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='600'%20y='30'%20width='110'%20height='48'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M710%2054H770V150'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='700'%20y='150'%20width='140'%20height='64'%20rx='32'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M770%20214V250H420'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20182H910'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20266H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='240'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20266H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20374H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='348'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20374H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20482H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='456'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20482H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M120%20470H300'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='60'%20y='430'%20width='120'%20height='80'%20rx='10'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M84%20496l14-22%2014%2022%2014-22%2014%2022'%20fill='none'%20stroke-width='1.6'/%3E%3Cpath%20d='M120%20430V360'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M360%20650V700H900'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='430'%20y='690'%20width='96'%20height='48'%20rx='10'%20fill='none'%20stroke-width='1.4'/%3E%3C/g%3E%3C/svg%3E");
+    --dx-motif-o: .10;
+    --dx-lift: radial-gradient(130% 62% at 50% -16%, rgba(125,149,255,.09), rgba(0,0,0,0) 60%);
   }
-  .dx-aurora::after {
-    background:
-      radial-gradient(42% 36% at 72% 82%, color-mix(in srgb, var(--dx-violet)  var(--dx-aur-3), transparent), transparent 70%),
-      radial-gradient(34% 30% at 26% 94%, color-mix(in srgb, var(--dx-magenta) var(--dx-aur-4), transparent), transparent 70%);
-    animation: dxDriftB 56s var(--dx-ease) infinite alternate;
-  }
-  @keyframes dxDriftA { from { transform: translate3d(-3%,-2%,0) scale(1) }
-                          to { transform: translate3d(4%,3%,0) scale(1.1) } }
-  @keyframes dxDriftB { from { transform: translate3d(3%,2%,0) scale(1.08) }
-                          to { transform: translate3d(-4%,-3%,0) scale(1) } }
-  /* the grid that says "instrument" rather than "web page" */
-  :root { --dx-grid-o: .34 } .dx-dark { --dx-grid-o: .5 }
-  .dx-app::before {
-    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
-    opacity: var(--dx-grid-o);
+
+  .dx-sheet { position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background-image:
-      linear-gradient(var(--dx-hairline) 1px, transparent 1px),
-      linear-gradient(90deg, var(--dx-hairline) 1px, transparent 1px);
-    background-size: 56px 56px;
-    mask-image: radial-gradient(100% 80% at 50% 0%, #000 10%, transparent 70%);
-    -webkit-mask-image: radial-gradient(100% 80% at 50% 0%, #000 10%, transparent 70%);
+      var(--dx-lift),
+      linear-gradient(to right,  var(--dx-rule-1) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--dx-rule-1) 1px, transparent 1px),
+      linear-gradient(to right,  var(--dx-rule-2) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--dx-rule-2) 1px, transparent 1px);
+    background-size: 100% 100%, 22px 22px, 22px 22px, 132px 132px, 132px 132px;
   }
+  /* The drawing is its own layer so its weight can be set per theme without
+     re-encoding it, and so a phone can drop it entirely — it is 2.4 KB of
+     path data that would never be seen behind a 390px column of cards. */
+  .dx-sheet::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: var(--dx-motif);
+    background-repeat: no-repeat;
+    background-position: right -140px top 64px;
+    background-size: min(78vw, 980px) auto;
+    opacity: var(--dx-motif-o);
+  }
+  @media (max-width: 900px) { .dx-sheet::after { display: none } }
 
   /* ═══ depth levels ════════════════════════════════════════════════════
      L1 page  · L2 surface · L3 control · L4 active. Each is treated
@@ -391,7 +398,9 @@
   .dx-fig .u { font-size: 9px; color: var(--dx-ink3); letter-spacing: .06em }
   .dx-fig .k { font-size: 9px; letter-spacing: .13em; text-transform: uppercase;
                font-weight: 620; color: var(--dx-ink3); line-height: 1.3; margin-top: 3px }
-  @media (max-width: 560px) { .dx-figs { grid-template-columns: repeat(2, minmax(0,1fr)) } }
+  /* Three tiles stay three across on a phone: each gets 108px at 390px and
+     the widest numeral measures about 92px, so they fit — and a two-up row
+     strands the third in an empty cell, which is what it used to do. */
 
   .dx-head { display:flex; align-items:flex-end; justify-content:space-between;
              gap:18px; flex-wrap:wrap; padding: 4px 0 2px }
@@ -521,14 +530,41 @@
      A translucent rail with a sliding pill behind the active destination,
      not an underline. The pill is one element that moves, so the movement
      between pages is continuous. */
-  .dx-nav {
-    position: sticky; top: 0; z-index: 40;
+  .dx-nav { position: sticky; top: 0; z-index: 40 }
+  .dx-nav::before {
+    content: ''; position: absolute; inset: 0; z-index: -1;
     background: color-mix(in srgb, var(--color-bg) 72%, transparent);
     backdrop-filter: saturate(165%) blur(16px);
     -webkit-backdrop-filter: saturate(165%) blur(16px);
     border-bottom: 1px solid var(--dx-hairline);
   }
   .dx-navwrap { position: relative; display: flex; flex-wrap: wrap; gap: 1px; margin-right: auto }
+  .dx-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap }
+
+  /* ── identity ───────────────────────────────────────────────────────────
+     The mark is the McCabe-Thiele construction: the equilibrium curve the
+     physics fixes, and the staircase stepped off against it. It is the one
+     drawing every student of this subject makes by hand, so it says what the
+     product is without a word, and it survives as a flat silhouette. */
+  .dx-brand { gap: 9px; padding: 2px 6px; margin-right: 2px; color: var(--color-text) }
+  .dx-themetxt { display: none }
+  .dx-mark  { width: 20px; height: 20px; flex: 0 0 auto; color: var(--color-accent);
+              transition: color var(--dx-t-base) var(--dx-ease) }
+  .dx-brand:hover .dx-mark { color: var(--dx-ink-accent) }
+  .dx-word  { font-family: var(--font-heading); font-size: 16px; letter-spacing: .15em }
+  /* The current destination, named in words. Only a phone needs it, because
+     only a phone hides the rail below the fold. */
+  .dx-here  { display: none }
+
+  /* ── the overflow sheet ─────────────────────────────────────────────────
+     Reset, Save, Load, Export, the detail level and the theme are used once
+     a session; on a phone they are one target, not a permanent row. On the
+     desktop the disclosure is forced open and its summary hidden, so the
+     controls sit inline exactly as they did. */
+  .dx-more { position: relative; display: contents }
+  .dx-morebtn { display: none }
+  .dx-more > summary::-webkit-details-marker { display: none }
+  .dx-more > summary::marker { content: '' }
   .dx-navpill {
     position: absolute; top: 0; left: 0; height: 100%; border-radius: var(--dx-r-sm);
     background: linear-gradient(180deg,
@@ -578,6 +614,40 @@
   .dx-fixed > i { font-style:normal; font-family:var(--font-heading); font-size:9.5px;
                   letter-spacing:.12em; text-transform:uppercase; color:var(--dx-ink3);
                   margin-left:auto; white-space:nowrap }
+
+  /* ── a card that folds ──────────────────────────────────────────────────
+     A phone reading the Simulation page scrolled 4,700px. Most of that is
+     prose and derived tables that a reader wants once, not on every visit.
+     The card's heading becomes the disclosure, so nothing is hidden behind
+     an unlabelled control, and above the break point it is simply always
+     open — a desktop reader loses nothing. */
+  .dx-fold > summary {
+    display:flex; align-items:center; gap:10px; cursor:pointer; list-style:none;
+    user-select:none; border-radius:var(--dx-r-sm);
+  }
+  /* the heading stays a heading — a <summary> is a disclosure control, and on
+     its own it would have taken 24 headings out of the document outline */
+  .dx-fold > summary > h6 { margin:0; color:var(--color-text) }
+  /* Above the break point the card is always open, so the summary is not a
+     control: without this a stray click collapses a card whose chevron is
+     hidden, leaving no visible way back. */
+  @media (min-width: 901px) {
+    .dx-fold > summary { pointer-events:none; cursor:default }
+  }
+  .dx-fold > summary::-webkit-details-marker { display:none }
+  .dx-fold > summary::marker { content:'' }
+  .dx-fold > summary:focus-visible { outline:none; box-shadow:var(--dx-ring) }
+  /* the chevron only appears where the disclosure can actually be operated */
+  .dx-fold > summary::after {
+    content:''; margin-left:auto; width:8px; height:8px; flex:0 0 auto; display:none;
+    border-right:1.8px solid var(--dx-ink3); border-bottom:1.8px solid var(--dx-ink3);
+    transform:rotate(45deg) translate(-2px,-2px);
+    transition:transform var(--dx-t-base) var(--dx-ease);
+  }
+  .dx-fold[open] > summary::after { transform:rotate(-135deg) translate(-2px,-2px) }
+  .dx-foldbody { display:flex; flex-direction:column; gap:var(--fg, 12px) }
+  .dx-fold[open] > .dx-foldbody { animation:dxIn 220ms var(--dx-ease) both }
+  @media (prefers-reduced-motion: reduce) { .dx-fold[open] > .dx-foldbody { animation:none } }
 
   .dx-dis { border-top:1px solid var(--dx-hairline); margin-top:2px }
   .dx-dis > summary {
@@ -810,6 +880,12 @@
   .dx-why:hover, .dx-why:focus-visible {
             background:color-mix(in srgb, var(--color-accent) 22%, transparent);
             border-color:var(--color-accent); outline:none }
+  /* An inline help marker sits inside the label it annotates, so it cannot be
+     given a 44px target without swallowing the words either side of it. On a
+     touch screen it grows to 24px — WCAG 2.5.8 AA — and no further. */
+  @media (pointer: coarse) {
+    .dx-why { width:24px; height:24px; font-size:12px; margin-left:7px }
+  }
 
   /* ═══ theory reference ══════════════════════════════════════ */
   .dx-tfind { display:flex; gap:8px; align-items:center; margin-top:12px; max-width:520px }
@@ -888,6 +964,13 @@
   .dx-mtseg { transition: stroke-width var(--dx-t-base) var(--dx-ease) }
   .dx-mtseg.fresh { stroke:var(--dx-mark);
                     filter: drop-shadow(0 0 5px color-mix(in srgb, var(--dx-mark) 70%, transparent)) }
+  /* The three draggable specifications are 11-unit squares — 7px of target on
+     a phone. The visible square stays exactly as drawn; a transparent 56-unit
+     rect gives the finger something to find, and only where there is a finger. */
+  .dx-ckhit { display: none }
+  @media (pointer: coarse) { .dx-ckhit { display: block } }
+  .dx-mthit { display: none }
+  @media (pointer: coarse) { .dx-mthit { display: block } }
   .dx-mtnode { cursor:crosshair }
   .dx-mtnode .hit { fill:transparent }
   .dx-mtnode .dot { fill:var(--color-surface); stroke:var(--dx-plot-ref);
@@ -1558,7 +1641,11 @@
   @media (max-width: 1000px) {
     .rig-body { grid-template-columns: minmax(0,1fr); grid-template-rows: minmax(280px,46vh) auto auto }
     .rig-stage { order: -1 }
-    .rig-rail.l, .rig-rail.r { border: 0; border-top: 1px solid var(--r-line); overflow: visible }
+    /* Stacked, the two rails are flex items in a fixed-height body: with the
+       default `flex: 0 1 auto` they shrank to 24px and 44px and their panels
+       collided. They keep their content height and the body scrolls. */
+    .rig-rail.l, .rig-rail.r { border: 0; border-top: 1px solid var(--r-line); overflow: visible;
+                               flex: 0 0 auto; min-height: auto }
     .rig-body { overflow: auto; display: flex; flex-direction: column }
     .rig-stage { flex: 0 0 46vh; min-height: 280px }
     .rig-run { position: static }
@@ -1640,8 +1727,131 @@
   .dx-side { display:grid; grid-template-columns:minmax(0,320px) minmax(0,1fr); gap:20px; align-items:start }
   .dx-hero { display:grid; grid-template-columns:minmax(0,1.02fr) minmax(0,1fr); gap:48px; align-items:center; padding:40px 0 52px }
   @media (max-width:1180px){ .dx-grid3 { grid-template-columns:minmax(0,1fr) } .dx-grid3b { grid-template-columns:minmax(0,1fr) } }
+  /* ═══ the phone ═══════════════════════════════════════════════════════
+     Chrome was 229px of an 844px viewport — a wordmark row, a rail, and a
+     toolbar that wrapped to two rows. Navigation now docks to the bottom,
+     where the thumb is, and everything occasional goes behind one target. */
+  :root { --dx-bottombar: 0px }
+
   @media (max-width:900px){
-    .dx-hero { grid-template-columns:minmax(0,1fr); gap:28px; padding:28px 0 26px }
+    :root, .dx-dark { --dx-bottombar: 58px }
+
+    .dx-nav { padding: 7px 12px !important; gap: 10px !important;
+              flex-wrap: nowrap !important;
+              padding-top: calc(7px + env(safe-area-inset-top, 0px)) !important }
+    .dx-brand { padding: 2px 2px; margin: 0 }
+    .dx-word { font-size: 14px; letter-spacing: .13em }
+    .dx-here { display: block; flex: 1 1 auto; min-width: 0; text-align: right;
+               font-family: var(--font-heading); font-size: 11px; letter-spacing: .13em;
+               text-transform: uppercase; color: var(--dx-ink3);
+               overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+
+    /* the destination rail, docked to the bottom and scrolled to wherever
+       you are — six of the ten used to sit off-screen with nothing marked */
+    .dx-navwrap {
+      position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 60;
+      flex-wrap: nowrap; overflow-x: auto; gap: 2px; margin: 0;
+      padding: 7px 10px calc(7px + env(safe-area-inset-bottom, 0px));
+      /* A docked bar must read as a surface, not as a pane of glass: at 90%
+         the page scrolled visibly through the labels. */
+      background: color-mix(in srgb, var(--color-surface) 97%, transparent);
+      backdrop-filter: saturate(160%) blur(18px);
+      -webkit-backdrop-filter: saturate(160%) blur(18px);
+      border-top: 1px solid var(--color-divider);
+      box-shadow: 0 -10px 28px -22px rgba(0,0,0,.65);
+      scroll-snap-type: x proximity; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      /* fade only the trailing edge — the leading one is the start of the
+         list, and fading it makes the first destination look disabled */
+      -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 26px), transparent 100%);
+              mask-image: linear-gradient(90deg, #000 calc(100% - 26px), transparent 100%);
+    }
+    .dx-navwrap::-webkit-scrollbar { display: none }
+    .dx-navwrap .btn { flex: none; scroll-snap-align: start; min-height: 44px !important;
+                       border-radius: var(--dx-r-md) }
+    .dx-navpill { display: none }
+    .dx-navbtn[data-on='1'] { background: color-mix(in srgb, var(--color-accent) 18%, transparent) }
+
+    /* the sheet */
+    .dx-more { display: block; position: static; margin-left: auto }
+    .dx-morebtn { display: grid; place-items: center; width: 44px; height: 44px;
+                  border: 1px solid var(--dx-hairline); border-radius: var(--dx-r-md);
+                  background: var(--dx-ctrl); color: var(--color-text);
+                  cursor: pointer; list-style: none }
+    .dx-morebtn svg { width: 20px; height: 20px; fill: currentColor }
+    .dx-more[open] .dx-morebtn { background: var(--color-accent); color: var(--color-accent-100);
+                                 border-color: var(--color-accent); fill: currentColor }
+    .dx-more[open] .dx-morebtn svg { fill: currentColor }
+    .dx-more > .dx-actions {
+      position: absolute; right: 12px; top: calc(100% - 2px); z-index: 70;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      width: min(300px, calc(100vw - 24px));
+      padding: 12px; border: 1px solid var(--color-divider);
+      border-radius: var(--dx-r-lg); background: var(--dx-raised);
+      box-shadow: var(--shadow-lg);
+      animation: dxIn 180ms var(--dx-ease) both;
+    }
+    .dx-more > .dx-actions > * { min-height: 44px !important }
+    .dx-more > .dx-actions > select { grid-column: 1 / -1; width: 100% !important }
+    .dx-more > .dx-actions > .dx-themebtn { grid-column: 1 / -1; width: 100%; gap: 9px }
+    /* icon-only is fine on a toolbar you can hover; in a sheet it needs a name */
+    .dx-themetxt { display: inline }
+
+    /* the footer and the signature scroll clear of the docked rail */
+    .dx-app { padding-bottom: calc(var(--dx-bottombar) + env(safe-area-inset-bottom, 0px)) }
+    .dx-toast { bottom: calc(22px + var(--dx-bottombar) + env(safe-area-inset-bottom, 0px)) !important }
+
+    /* Simulation stacks three columns: controls, the column itself, and the
+       solved result. Read top to bottom that puts the answer last, after
+       4,000px of inputs. Stacked, the answer comes first, the column second
+       and the controls under them — which is also the order a reader uses
+       them in on a phone: look, then adjust. */
+    .dx-grid3 { display:flex; flex-direction:column; align-items:stretch }
+    .dx-grid3 > .dx-stack:nth-child(1) { order:3 }
+    .dx-grid3 > .dx-stack:nth-child(2) { order:2 }
+    .dx-grid3 > .dx-stack:nth-child(3) { order:1 }
+
+    /* Plot type is set in user units on a 500-unit viewBox that renders about
+       340px wide on a phone — a 10-unit tick label lands at 6.5px. CSS wins
+       over the presentation attribute, so the desktop drawing is untouched. */
+    .dx-tick   { font-size: 16px }
+    .dx-plabel { font-size: 17px }
+    .dx-pnote  { font-size: 15px }
+    .dx-axt    { font-size: 17px }
+    .dx-stg    { font-size: 15px }
+    .dx-stick  { font-size: 19px }
+
+    /* A phone reading McCabe-Thiele met five sliders, a note, the stage
+       stepper and a results table before the diagram — 1,660px before the
+       thing the view exists to show. Stacked, the output goes first and the
+       controls follow it. Each of these wrappers has exactly two children,
+       so reversing the column is the whole change; the desktop grid, where
+       both are visible at once, is untouched. */
+    .dx-side.dx-out-first { display:flex; flex-direction:column-reverse; align-items:stretch }
+
+    /* the fold is only a fold on a phone */
+    .dx-fold > summary { min-height:44px; padding:2px 0 }
+    .dx-fold > summary::after { display:block }
+    .dx-fold > .dx-foldbody { padding-top:10px }
+    .dx-dis > summary, .dx-topic > button { min-height:44px }
+
+    /* The landing page opened with 694px of wordmark, duplicate buttons and
+       prose before the product appeared. The column preview now sits directly
+       under the headline, the two calls to action follow it, and the top bar
+       keeps only the theme toggle — the hero already carries the rest. */
+    .dx-hero { grid-template-columns:minmax(0,1fr); gap:20px; padding:20px 0 24px;
+               display:flex; flex-direction:column; align-items:stretch }
+    /* the scene is drawn at a fixed 384px height, so a shorter box crops it
+       rather than shrinking it — the frame keeps a portrait ratio and the
+       whole assembly is scaled to fit inside it */
+    .dx-hero > .dx-stage-hero { order:-1; aspect-ratio:1/1 !important }
+    .dx-stage-hero .dx-vp-iso { transform:rotateX(15deg) rotateY(-24deg) rotateZ(1deg) scale(.78) }
+    .dx-land { padding-left:16px !important; padding-right:16px !important }
+    .dx-land-hide { display:none }
+    .dx-land section { margin-top:44px !important }
+    .dx-land .dx-gate { margin-top:24px }
+    /* the three feature cards were 640px of chrome for three links */
+    .dx-grid3b .card > svg, .dx-grid3 .card > svg { max-height:86px; margin-inline:auto; display:block }
     /* Touch target size (WCAG 2.5.8). The markup sets 30-36px heights inline
        for the desktop density, so these are scoped to narrow viewports and
        need !important to override the inline values. */
@@ -1650,21 +1860,6 @@
     .dx .seg-opt { min-height:44px }
     .dx input[type=range] { height:44px }
     .dx-grid2 { grid-template-columns:minmax(0,1fr) } .dx-side { grid-template-columns:minmax(0,1fr) }
-    /* Ten destinations wrapped to three rows on a phone and swallowed the
-       first screen. One swipeable rail instead. */
-    .dx-navwrap { flex-wrap:nowrap; overflow-x:auto; scroll-snap-type:x proximity;
-                  -webkit-overflow-scrolling:touch; scrollbar-width:none;
-                  margin-inline:-4px; padding-inline:4px }
-    .dx-navwrap::-webkit-scrollbar { display:none }
-    .dx-navwrap .btn { flex:none; scroll-snap-align:center }
-    /* the action row becomes a rail too, so the header stays two rows deep
-       on a phone instead of four */
-    .dx-actions { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
-                  margin-inline:-4px; padding-inline:4px; width:100% }
-    .dx-actions::-webkit-scrollbar { display:none }
-    .dx-actions > * { flex:none }
-    .dx-navpill { display:none }
-    .dx-navbtn[data-on='1'] { background: color-mix(in srgb, var(--color-accent) 20%, transparent) }
     /* The hero stage is sized by aspect-ratio, so it must keep its own
        sizing — forcing a height on it makes it wider than the viewport. */
     .dx-stage:not(.dx-stage-hero) { height:340px !important }
@@ -1688,24 +1883,20 @@
 </template>
 </helmet>
 
-<div class="dx {{ themeClass }}" style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:15px">
+<div class="dx {{ themeClass }}" style="min-height:100dvh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:15px">
 
 <sc-if value="{{ isLanding }}" hint-placeholder-val="{{ true }}">
-<div class="dx-app" style="padding:0 24px 44px">
-<div class="dx-aurora" aria-hidden="true"></div>
+<div class="dx-app dx-land" style="padding:0 24px 44px">
+<div class="dx-sheet" aria-hidden="true"></div>
 <div style="max-width:1180px;margin:0 auto">
   <div style="display:flex;align-items:center;gap:12px;padding:22px 0 0;flex-wrap:wrap">
-    <div style="width:22px;height:22px;border:1px solid var(--color-accent);position:relative">
-      <div style="position:absolute;inset:4px 4px auto 4px;height:1px;background:var(--color-accent)"></div>
-      <div style="position:absolute;inset:auto 4px 4px 4px;height:1px;background:var(--color-accent)"></div>
-      <div style="position:absolute;top:0;bottom:0;left:10px;width:1px;background:var(--color-accent)"></div>
-    </div>
+    <svg class="dx-mark" style="width:26px;height:26px" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M3.5 28.5C10 17 18.5 8.6 28.5 3.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".38"></path><path d="M3.5 28.5h8.34v-8.34h8.32v-8.32h8.34V3.5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
     <span style="font-family:var(--font-heading);font-size:19px;letter-spacing:.14em">DISTILLEX</span>
     <span class="tag tag-outline" style="margin-left:4px">v1.0</span>
     <div style="margin-left:auto;display:flex;gap:8px">
       <button class="btn btn-secondary" onClick="{{ toggleTheme }}">{{ themeLabel }}</button>
-      <button class="btn btn-secondary" data-v="theory" onClick="{{ go }}">Theory</button>
-      <button class="btn btn-primary" data-v="sim" onClick="{{ go }}">Launch simulator</button>
+      <button class="btn btn-secondary dx-land-hide" data-v="theory" onClick="{{ go }}">Theory</button>
+      <button class="btn btn-primary dx-land-hide" data-v="sim" onClick="{{ go }}">Launch simulator</button>
     </div>
   </div>
 
@@ -1713,9 +1904,9 @@
 
   <div class="dx-hero">
     <div>
-      <div class="dx-in dx-in-1" style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-text);margin-bottom:18px">Separation processes · Unit operations laboratory</div>
+      <div class="dx-kicker dx-in dx-in-1" style="margin-bottom:18px">Separation processes · Unit operations laboratory</div>
       <h1 class="dx-in dx-in-2" style="font-size:clamp(40px,11vw,76px);letter-spacing:.02em;margin:0 0 8px;line-height:.98">DISTILLEX</h1>
-      <h3 class="dx-in dx-in-3" style="font-weight:400;font-size:26px;margin:0 0 18px;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Interactive Fractional Distillation Laboratory</h3>
+      <h3 class="dx-in dx-in-3" style="font-weight:400;font-size:clamp(19px,5.2vw,26px);text-wrap:balance;margin:0 0 18px;color:color-mix(in srgb,var(--color-text) 78%,transparent)">Interactive Fractional Distillation Laboratory</h3>
       <p class="dx-in dx-in-3" style="max-width:52ch;font-size:16px;color:color-mix(in srgb,var(--color-text) 72%,transparent);text-wrap:pretty">Understand separation by controlling the column yourself. Explore vapour–liquid equilibrium, column operation, stagewise separation and process design — every number on screen is computed in your browser from the thermodynamic model you select.</p>
       <div class="dx-in dx-in-4" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:26px">
         <button class="btn btn-primary" data-v="sim" onClick="{{ go }}" style="padding:10px 20px;font-size:15px">Launch simulator</button>
@@ -1861,7 +2052,7 @@
         <p style="margin:0;font-size:11px;line-height:1.55;color:color-mix(in srgb,var(--color-text) 66%,transparent)">{{ crude.hint }} Boiling ranges are the conventional approximate cut points for an atmospheric unit &mdash; they describe the industry, and are not computed by this simulator.</p>
       </div>
 
-      <div class="dx-crude dx-reveal dx-lit" onPointerOver="{{ crudeOver }}" onPointerLeave="{{ crudeOut }}">
+      <div class="dx-crude dx-reveal dx-lit" onPointerOver="{{ crudeOver }}" onPointerLeave="{{ crudeOut }}" onClick="{{ crudePick }}" onFocus="{{ crudeOver }}">
         <svg viewBox="0 0 700 {{ crude.height }}" role="img" aria-label="Atmospheric crude-oil distillation tower, showing eight fractions drawn off from refinery gas at the overhead down to residue at the sump.">
           <g class="tower" style="{{ crude.shellStyle }}">
             <!-- shell -->
@@ -1887,6 +2078,8 @@
           <sc-for list="{{ crude.rows }}" as="fr" hint-placeholder-count="8">
             <g class="{{ fr.cls }}" style="{{ fr.grp }}" data-ck="{{ fr.k }}" tabindex="0" role="button" aria-label="{{ fr.name }}">
               <rect class="hit" x="{{ fr.x }}" y="{{ fr.y }}" width="{{ fr.hitW }}" height="{{ fr.h }}"
+                    fill="transparent" pointer-events="all"></rect>
+              <rect class="dx-ckhit" x="{{ fr.x }}" y="{{ fr.hy }}" width="{{ fr.hitW }}" height="{{ fr.hh }}"
                     fill="transparent" pointer-events="all"></rect>
               <rect class="shell" x="{{ fr.x }}" y="{{ fr.y }}" width="{{ fr.w }}" height="{{ fr.h }}" rx="4"
                     fill="{{ fr.tone }}" fill-opacity=".22" stroke="{{ fr.tone }}" stroke-width="1.2"></rect>
@@ -1987,21 +2180,26 @@
 </sc-if>
 
 <sc-if value="{{ isApp }}">
-<div class="dx-app" style="display:flex;flex-direction:column;min-height:100vh">
-  <div class="dx-aurora" aria-hidden="true"></div>
+<div class="dx-app" style="display:flex;flex-direction:column;min-height:100dvh">
+  <div class="dx-sheet" aria-hidden="true"></div>
 
   <header class="nav dx-nav dx-noprint" style="padding:9px 18px;gap:14px;flex-wrap:wrap">
-    <button class="btn btn-ghost" onClick="{{ home }}" style="gap:9px;padding:2px 6px;margin-right:2px;color:var(--color-text)" aria-label="DISTILLEX home">
-      <span style="display:inline-block;width:15px;height:15px;border:1.5px solid var(--color-accent);border-radius:3px;position:relative"></span>
-      <span style="font-family:var(--font-heading);font-size:16px;letter-spacing:.15em">DISTILLEX</span>
+    <button class="btn btn-ghost dx-brand" onClick="{{ home }}" aria-label="DISTILLEX home">
+      <svg class="dx-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M3.5 28.5C10 17 18.5 8.6 28.5 3.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".38"></path><path d="M3.5 28.5h8.34v-8.34h8.32v-8.32h8.34V3.5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      <span class="dx-word">DISTILLEX</span>
     </button>
+    <span class="dx-here">{{ viewLabel }}</span>
     <nav class="dx-navwrap" aria-label="Sections">
       <i class="dx-navpill" aria-hidden="true"></i>
       <sc-for list="{{ navItems }}" as="it" hint-placeholder-count="9">
         <button class="btn dx-navbtn" data-v="{{ it.k }}" data-on="{{ it.on }}" aria-current="{{ it.cur }}" onClick="{{ go }}" style="{{ it.style }}">{{ it.label }}</button>
       </sc-for>
     </nav>
-    <div class="dx-actions" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+    <details class="dx-more" open="{{ moreOn }}" onToggle="{{ setMore }}">
+      <summary class="dx-morebtn" aria-label="More actions" title="More actions">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.9"></circle><circle cx="12" cy="12" r="1.9"></circle><circle cx="19" cy="12" r="1.9"></circle></svg>
+      </summary>
+    <div class="dx-actions">
       <select class="input" value="{{ v.mode }}" data-k="mode" onChange="{{ setStr }}" style="width:auto;min-height:32px;font-size:12px" aria-label="Interface detail level">
         <option value="learning">Learning mode</option>
         <option value="engineering">Engineering mode</option>
@@ -2016,9 +2214,11 @@
           <path d="{{ themeIconD }}" stroke="currentColor" stroke-width="1.6"
                 stroke-linecap="round" stroke-linejoin="round"></path>
         </svg>
+        <span class="dx-themetxt">{{ themeLabel }}</span>
       </button>
       <input type="file" accept="application/json" ref="{{ fileRef }}" onChange="{{ loadCfg }}" style="display:none">
     </div>
+    </details>
   </header>
 
   <sc-if value="{{ hasIssues }}">
@@ -2034,9 +2234,12 @@
     <sc-if value="{{ isSim }}">
       <div class="dx-grid3">
         <div class="dx-stack" style="display:flex;flex-direction:column">
-          <section class="card blueprint" style="padding:14px;gap:12px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Mixture &amp; model</h6>
+            
+            <details class="dx-fold" open="{{ folds.simModel }}" data-f="simModel" onToggle="{{ setFold }}">
+            <summary><h6>Mixture &amp; model</h6></summary>
+            <div class="dx-foldbody" style="--fg:12px">
             <div class="field">
               <label for="dx-mix">Binary mixture</label>
               <select class="input" id="dx-mix" value="{{ v.mixKey }}" data-k="mixKey" onChange="{{ setStr }}">
@@ -2064,11 +2267,16 @@
               <label style="display:flex;justify-content:space-between;align-items:center"><span>Column pressure — kPa<i class="dx-why" data-tip="P" tabindex="0" role="button" aria-label="What is the column pressure?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.P }}</span></label>
               <input type="range" min="10" max="600" step="1" value="{{ v.P }}" data-k="P" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Column pressure, kPa">
             </div>
+          </div>
+            </details>
           </section>
 
-          <section class="card blueprint" style="padding:14px;gap:12px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Feed conditions</h6>
+            
+            <details class="dx-fold" open="{{ folds.simFeed }}" data-f="simFeed" onToggle="{{ setFold }}">
+            <summary><h6>Feed conditions</h6></summary>
+            <div class="dx-foldbody" style="--fg:10px">
             <div class="dx-grid2" style="gap:8px">
               <div class="field"><label for="dx-F">Flowrate F — kmol/h</label><input class="input" id="dx-F" type="number" min="0.1" step="1" value="{{ v.F }}" data-k="F" onChange="{{ setNum }}"></div>
               <div class="field"><label for="dx-Tf">Feed pressure — kPa</label><input class="input" id="dx-Tf" type="number" min="1" step="1" value="{{ v.P }}" disabled="{{ true }}"></div>
@@ -2082,19 +2290,29 @@
               <input type="range" min="-0.5" max="1.5" step="0.01" value="{{ v.q }}" data-k="q" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Feed quality q">
               <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)"><span>{{ r.qPhase }}</span><span>T<sub>bubble</sub> {{ r.Tfeed }} °C</span></div>
             </div>
+          </div>
+            </details>
           </section>
 
-          <section class="card blueprint" style="padding:14px;gap:8px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">{{ modeTitle }}</h6>
+            
+            <details class="dx-fold" open="{{ folds.simNotes }}" data-f="simNotes" onToggle="{{ setFold }}">
+            <summary><h6>{{ modeTitle }}</h6></summary>
+            <div class="dx-foldbody" style="--fg:8px">
             <sc-for list="{{ modeLines }}" as="ln" hint-placeholder-count="4">
               <div style="display:flex;gap:8px;font-size:12px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 78%,transparent)"><span style="color:var(--color-text)">—</span><span>{{ ln }}</span></div>
             </sc-for>
+          </div>
+            </details>
           </section>
 
-          <section class="card blueprint" style="padding:14px;gap:12px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Specification</h6>
+            
+            <details class="dx-fold" open="{{ folds.simSpec }}" data-f="simSpec" onToggle="{{ setFold }}">
+            <summary><h6>Specification</h6></summary>
+            <div class="dx-foldbody" style="--fg:10px">
             <div class="seg" style="width:100%">
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxcalc" value="design" checked="{{ isDesign }}" data-k="calcMode" onChange="{{ setStr }}"><span>Design</span></label>
               <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="dxcalc" value="rating" checked="{{ isRating }}" data-k="calcMode" onChange="{{ setStr }}"><span>Rating</span></label>
@@ -2129,6 +2347,8 @@
               <label style="display:flex;justify-content:space-between;align-items:center"><span>Overall tray efficiency <i class="dx-why" data-tip="eff" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" >i</i></span><span style="font-variant-numeric:tabular-nums">{{ r.effPct }}%</span></label>
               <input type="range" min="0.2" max="1" step="0.01" value="{{ v.eff }}" data-k="eff" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Overall tray efficiency">
             </div>
+          </div>
+            </details>
           </section>
         </div>
 
@@ -2271,10 +2491,13 @@
                 <p style="margin:0;font-size:13.5px;line-height:1.55">{{ explainText }}</p>
               </div>
             </sc-if>
-        <section class="card blueprint" style="padding:14px;gap:10px">
+        <section class="card blueprint" style="padding:14px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-            <h6 style="margin:0;color:var(--color-text)">Stage profiles</h6>
+            
+            <details class="dx-fold" open="{{ folds.simProfiles }}" data-f="simProfiles" onToggle="{{ setFold }}">
+            <summary><h6>Stage profiles</h6></summary>
+            <div class="dx-foldbody" style="--fg:10px">
             <span style="font-size:11px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Stage 1 = top tray · stage {{ r.N }} = reboiler</span>
           </div>
           <div class="dx-grid2" style="gap:14px">
@@ -2282,7 +2505,7 @@
               <figure class="blueprint" style="padding:10px 8px 6px">
                 <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
                 <svg viewBox="0 0 360 190" style="width:100%;height:auto" role="img" aria-label="{{ p.title }}">
-                  <text x="8" y="14" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-text)">{{ p.title }}</text>
+                  <text x="8" y="14" class="dx-plabel" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-text)">{{ p.title }}</text>
                   <g stroke="var(--color-divider)" stroke-width="1" fill="none"><path d="M46 24 V162 H352"></path></g>
                   <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1"><path d="{{ p.grid }}"></path></g>
                   <sc-for list="{{ p.series }}" as="s" hint-placeholder-count="1">
@@ -2299,7 +2522,9 @@
               </figure>
             </sc-for>
           </div>
-        </section>
+        </div>
+            </details>
+          </section>
           </section>
         </div>
 
@@ -2336,9 +2561,12 @@
             </details>
           </section>
 
-          <section class="card blueprint" style="padding:14px;gap:8px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Material balance &amp; convergence</h6>
+            
+            <details class="dx-fold" open="{{ folds.simBalance }}" data-f="simBalance" onToggle="{{ setFold }}">
+            <summary><h6>Material balance &amp; convergence</h6></summary>
+            <div class="dx-foldbody" style="--fg:8px">
             <div style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityHead }}</div>
             <div style="font-size:11.5px;font-variant-numeric:tabular-nums;line-height:1.7;color:color-mix(in srgb,var(--color-text) 75%,transparent)">
               <div>F = D + B → {{ mb.total }}</div>
@@ -2349,11 +2577,16 @@
             <div style="{{ mb.convStyle }}">{{ mb.convStatus }}</div>
             <div style="font-size:11.5px;font-variant-numeric:tabular-nums;line-height:1.7;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.residLabel }}: {{ mb.residValue }}</div>
             <div style="font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.residNote }}</div>
+          </div>
+            </details>
           </section>
 
-          <section class="card blueprint dx-noprint" style="padding:14px;gap:10px">
+          <section class="card blueprint dx-noprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">What happens if?</h6>
+            
+            <details class="dx-fold" open="{{ folds.simWhatIf }}" data-f="simWhatIf" onToggle="{{ setFold }}">
+            <summary><h6>What happens if?</h6></summary>
+            <div class="dx-foldbody" style="--fg:10px">
             <div style="display:flex;gap:6px">
               <select class="input" value="{{ v.wiVar }}" data-k="wiVar" onChange="{{ setStr }}" style="flex:1" aria-label="Variable to change">
                 <sc-for list="{{ wiOptions }}" as="o" hint-placeholder-count="5">
@@ -2381,6 +2614,8 @@
                 <p style="margin:6px 0 0;font-size:12px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ whatIfNote }}</p>
               </div>
             </sc-if>
+          </div>
+            </details>
           </section>
         </div>
       </div>
@@ -2388,11 +2623,14 @@
     </sc-if>
 
     <sc-if value="{{ isColumn }}">
-      <div class="dx-side">
+      <div class="dx-side dx-out-first">
         <div class="dx-stack" style="display:flex;flex-direction:column">
-          <section class="card blueprint" style="padding:14px;gap:12px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Column configuration</h6>
+            
+            <details class="dx-fold" open="{{ folds.colConfig }}" data-f="colConfig" onToggle="{{ setFold }}">
+            <summary><h6>Column configuration</h6></summary>
+            <div class="dx-foldbody" style="--fg:12px">
             <div class="field">
               <label>Internals</label>
               <div class="dx-fixed">Trays — stagewise model<i>fixed</i></div>
@@ -2417,6 +2655,8 @@
             <div style="display:flex;justify-content:space-between;font-size:12.5px;border-top:1px solid var(--color-divider);padding-top:8px"><span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">Theoretical stages</span><span style="font-variant-numeric:tabular-nums">{{ r.N }}</span></div>
             <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">{{ r.actualLabel }}</span><span style="font-variant-numeric:tabular-nums">{{ r.Nact }}</span></div>
             <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:color-mix(in srgb,var(--color-text) 70%,transparent)">Feed stage</span><span style="font-variant-numeric:tabular-nums">{{ r.feedStage }}</span></div>
+          </div>
+            </details>
           </section>
           <section class="card blueprint dx-noprint" style="padding:14px;gap:8px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -2480,11 +2720,14 @@
     </sc-if>
 
     <sc-if value="{{ isVLE }}">
-      <div class="dx-side">
+      <div class="dx-side dx-out-first">
         <div class="dx-stack" style="display:flex;flex-direction:column">
-          <section class="card blueprint" style="padding:14px;gap:12px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Equilibrium parameters</h6>
+            
+            <details class="dx-fold" open="{{ folds.vleParams }}" data-f="vleParams" onToggle="{{ setFold }}">
+            <summary><h6>Equilibrium parameters</h6></summary>
+            <div class="dx-foldbody" style="--fg:12px">
             <div class="field">
               <label for="dx-vmix">Binary mixture</label>
               <select class="input" id="dx-vmix" value="{{ v.mixKey }}" data-k="mixKey" onChange="{{ setStr }}">
@@ -2509,6 +2752,8 @@
               </div>
             </sc-if>
             <details class="dx-dis"><summary>About this mixture</summary><div class="dx-dis-b">{{ r.mixNote }}</div></details>
+          </div>
+            </details>
           </section>
 
           <sc-if value="{{ isCustom }}">
@@ -2533,14 +2778,19 @@
             </section>
           </sc-if>
 
-          <section class="card blueprint" style="padding:14px;gap:6px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Model facts</h6>
+            
+            <details class="dx-fold" open="{{ folds.vleFacts }}" data-f="vleFacts" onToggle="{{ setFold }}">
+            <summary><h6>Model facts</h6></summary>
+            <div class="dx-foldbody" style="--fg:6px">
             <div class="dx-kv stack">
               <sc-for list="{{ vleFacts }}" as="fct" hint-placeholder-count="5">
                 <div><span class="k">{{ fct.k }}</span><span class="v">{{ fct.v }}</span></div>
               </sc-for>
             </div>
+          </div>
+            </details>
           </section>
         </div>
 
@@ -2565,9 +2815,9 @@
                 </sc-if>
                 <line x1="60" y1="420" x2="460" y2="20" stroke="var(--dx-plot-ref)" stroke-width="1.2"></line>
                 <polyline points="{{ eqPoints }}" fill="none" stroke="var(--dx-plot-phys)" stroke-width="2.2"></polyline>
-                <text x="70" y="36" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-text)">EQUILIBRIUM y* = f(x)</text>
-                <text x="352" y="404" font-size="11" fill="var(--dx-plot-tick)">y = x</text>
-                <text x="70" y="52" font-size="10" letter-spacing=".06em" fill="var(--dx-ink2)">shaded: y* − x, the driving force for the separation</text>
+                <text x="70" y="36" class="dx-plabel" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-text)">EQUILIBRIUM y* = f(x)</text>
+                <text class="dx-pnote" x="352" y="404" font-size="11" fill="var(--dx-plot-tick)">y = x</text>
+                <text class="dx-pnote" x="70" y="52" font-size="10" letter-spacing=".06em" fill="var(--dx-ink2)">shaded: y* − x, the driving force for the separation</text>
                 <sc-if value="{{ vleHoverOn }}">
                   <g>
                     <line x1="{{ vleHover.cx }}" y1="420" x2="{{ vleHover.cx }}" y2="{{ vleHover.cy }}" stroke="var(--dx-mark)" stroke-dasharray="3 3" stroke-width="1"></line>
@@ -2576,34 +2826,37 @@
                     <text x="{{ vleHover.lx }}" y="{{ vleHover.cy }}" font-size="11" font-variant-numeric="tabular-nums" fill="var(--color-text)">{{ vleHover.label }}</text>
                   </g>
                 </sc-if>
-                <text x="260" y="458" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)">LIQUID MOLE FRACTION x_A</text>
-                <text x="18" y="220" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 18 220)">VAPOUR MOLE FRACTION y_A</text>
+                <text x="260" y="458" class="dx-axt" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)">LIQUID MOLE FRACTION x_A</text>
+                <text x="18" y="220" class="dx-axt" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 18 220)">VAPOUR MOLE FRACTION y_A</text>
               </sc-if>
               <sc-if value="{{ isTXY }}">
                 <polyline points="{{ bubPoints }}" fill="none" stroke="var(--dx-plot-liq)" stroke-width="2.2"></polyline>
                 <polyline points="{{ dewPoints }}" fill="none" stroke="var(--dx-plot-phys)" stroke-width="2.2" stroke-dasharray="6 4"></polyline>
-                <text x="70" y="36" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-text)">BUBBLE (solid) / DEW (dashed) — VAPOUR REGION ABOVE</text>
+                <text x="70" y="36" class="dx-plabel" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-text)">BUBBLE (solid) / DEW (dashed) — VAPOUR REGION ABOVE</text>
                 <sc-for list="{{ tTicks }}" as="t" hint-placeholder-count="5">
-                  <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text>
+                  <text x="52" y="{{ t.y }}" text-anchor="end" class="dx-tick" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text>
                 </sc-for>
-                <text x="260" y="458" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)">MOLE FRACTION A (x, y)</text>
-                <text x="18" y="220" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 18 220)">TEMPERATURE °C</text>
+                <text x="260" y="458" class="dx-axt" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)">MOLE FRACTION A (x, y)</text>
+                <text x="18" y="220" class="dx-axt" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 18 220)">TEMPERATURE °C</text>
               </sc-if>
               <sc-for list="{{ axTicks }}" as="t" hint-placeholder-count="6">
-                <g><text x="{{ t.x }}" y="438" text-anchor="middle" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text></g>
+                <g><text x="{{ t.x }}" y="438" text-anchor="middle" class="dx-tick" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text></g>
               </sc-for>
               <sc-if value="{{ isXY }}">
                 <sc-for list="{{ axTicks }}" as="t" hint-placeholder-count="6">
-                  <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text>
+                  <text x="52" y="{{ t.y }}" text-anchor="end" class="dx-tick" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text>
                 </sc-for>
               </sc-if>
             </svg>
             <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Move the pointer across the plot to read exact equilibrium values.</div>
           </section>
 
-          <section class="card blueprint" style="padding:14px;gap:8px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Component data</h6>
+            
+            <details class="dx-fold" open="{{ folds.vleComponents }}" data-f="vleComponents" onToggle="{{ setFold }}">
+            <summary><h6>Component data</h6></summary>
+            <div class="dx-foldbody" style="--fg:8px">
             <div style="overflow-x:auto" tabindex="0" role="region" aria-label="Component data table, scrolls horizontally">
             <table class="table">
               <thead><tr><th>Component</th><th>CAS</th><th>Role</th><th>MW g/mol</th><th>T<sub>b</sub> °C</th><th>Antoine A / B / C</th><th>Valid range</th><th>Check</th><th>λ kJ/mol</th></tr></thead>
@@ -2615,17 +2868,22 @@
             </table>
             </div>
             <div style="font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">The <em>Check</em> column recomputes each component's vapour pressure at its own normal boiling point — it should read ≈ 760 mmHg. Any stage temperature outside the fitted range raises an extrapolation warning at the top of the screen.</div>
+          </div>
+            </details>
           </section>
         </div>
       </div>
     </sc-if>
 
     <sc-if value="{{ isMT }}">
-      <div class="dx-side">
+      <div class="dx-side dx-out-first">
         <div class="dx-stack" style="display:flex;flex-direction:column">
-          <section class="card blueprint" style="padding:14px;gap:12px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Construction inputs</h6>
+            
+            <details class="dx-fold" open="{{ folds.mtInputs }}" data-f="mtInputs" onToggle="{{ setFold }}">
+            <summary><h6>Construction inputs</h6></summary>
+            <div class="dx-foldbody" style="--fg:12px">
             <div class="field">
               <label style="display:flex;justify-content:space-between"><span>Distillate x<sub>D</sub><i class="dx-why" data-tip="xD" tabindex="0" role="button" aria-label="What is the distillate purity x_D?" onMouseEnter="{{ tipIn }}" onMouseLeave="{{ tipOut }}" onFocus="{{ tipIn }}" onBlur="{{ tipOut }}">i</i></span><span style="font-variant-numeric:tabular-nums">{{ v.xD }}</span></label>
               <input type="range" min="0.05" max="0.999" step="0.001" value="{{ v.xD }}" data-k="xD" onChange="{{ setNum }}" style="width:100%;accent-color:var(--color-accent)" aria-label="Distillate composition x_D, mole fraction">
@@ -2648,10 +2906,15 @@
               <div style="font-size:11px;margin-top:4px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">{{ r.qPhase }}</div>
             </div>
             <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">The three square handles on the diagonal — x<sub>B</sub>, z<sub>F</sub> and x<sub>D</sub> — can be dragged directly on the diagram.</div>
+          </div>
+            </details>
           </section>
-          <section class="card blueprint dx-noprint" style="padding:14px;gap:8px">
+          <section class="card blueprint dx-noprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Stage stepping</h6>
+            
+            <details class="dx-fold" open="{{ folds.mtStep }}" data-f="mtStep" onToggle="{{ setFold }}">
+            <summary><h6>Stage stepping</h6></summary>
+            <div class="dx-foldbody" style="--fg:8px">
             <button class="btn btn-primary btn-block" onClick="{{ runSteps }}" style="margin-top:0">▶ Run stage calculation</button>
             <div style="display:flex;gap:6px">
               <button class="btn btn-secondary" onClick="{{ stepBack }}" style="flex:1">‹ Back</button>
@@ -2661,15 +2924,22 @@
             <div style="font-size:12px;font-variant-numeric:tabular-nums">Stages drawn: {{ shownStages }}</div>
             <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 70%,transparent)">Point at any drawn step on the diagram to read that stage.</div>
             <p style="margin:0;font-size:12.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mtStepInfo }}</p>
+          </div>
+            </details>
           </section>
-          <section class="card blueprint" style="padding:14px;gap:4px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Construction results</h6>
+            
+            <details class="dx-fold" open="{{ folds.mtResults }}" data-f="mtResults" onToggle="{{ setFold }}">
+            <summary><h6>Construction results</h6></summary>
+            <div class="dx-foldbody" style="--fg:4px">
             <div class="dx-kv">
               <sc-for list="{{ mtSummary }}" as="row" hint-placeholder-count="8">
                 <div><span class="k">{{ row.k }}</span><span class="v">{{ row.v }}</span></div>
               </sc-for>
             </div>
+          </div>
+            </details>
           </section>
         </div>
 
@@ -2693,11 +2963,11 @@
                   <line class="{{ g.cls }}" x1="{{ g.x1 }}" y1="{{ g.y1 }}" x2="{{ g.x2 }}" y2="{{ g.y2 }}" stroke="{{ g.c }}" stroke-width="{{ g.w }}"></line>
                 </sc-for>
                 <sc-for list="{{ mtMarks }}" as="m" hint-placeholder-count="6">
-                  <text x="{{ m.x }}" y="{{ m.y }}" text-anchor="end" font-size="9.5" font-variant-numeric="tabular-nums" fill="{{ m.fill }}">{{ m.n }}</text>
+                  <text x="{{ m.x }}" y="{{ m.y }}" class="dx-stg" text-anchor="end" font-size="9.5" font-variant-numeric="tabular-nums" fill="{{ m.fill }}">{{ m.n }}</text>
                 </sc-for>
                 <g onMouseLeave="{{ mtOut }}">
                   <sc-for list="{{ mtNodes }}" as="nd" hint-placeholder-count="8">
-                    <g class="{{ nd.cls }}" data-n="{{ nd.n }}" onMouseEnter="{{ mtIn }}">
+                    <g class="{{ nd.cls }}" data-n="{{ nd.n }}" onMouseEnter="{{ mtIn }}" onPointerDown="{{ mtIn }}">
                       <circle class="hit" cx="{{ nd.cx }}" cy="{{ nd.cy }}" r="11"></circle>
                       <circle class="dot" cx="{{ nd.cx }}" cy="{{ nd.cy }}" r="3.1"></circle>
                     </g>
@@ -2720,11 +2990,11 @@
               </g>
             </sc-if>
             <sc-for list="{{ axTicks }}" as="t" hint-placeholder-count="6">
-              <g><text x="{{ t.x }}" y="438" text-anchor="middle" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text>
-                 <text x="52" y="{{ t.y }}" text-anchor="end" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text></g>
+              <g><text x="{{ t.x }}" y="438" text-anchor="middle" class="dx-tick" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text>
+                 <text x="52" y="{{ t.y }}" text-anchor="end" class="dx-tick" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text></g>
             </sc-for>
-            <text x="260" y="458" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)">LIQUID MOLE FRACTION x_A</text>
-            <text x="18" y="220" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 18 220)">VAPOUR MOLE FRACTION y_A</text>
+            <text x="260" y="458" class="dx-axt" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)">LIQUID MOLE FRACTION x_A</text>
+            <text x="18" y="220" class="dx-axt" text-anchor="middle" font-size="12" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 18 220)">VAPOUR MOLE FRACTION y_A</text>
           </svg>
           <div class="dx-leg">
             <span style="--c:var(--dx-plot-phys)"><i></i>Equilibrium curve</span>
@@ -2739,10 +3009,13 @@
 
     <sc-if value="{{ isResults }}">
       <div class="dx-stack" style="display:flex;flex-direction:column">
-        <section class="card blueprint dx-noprint" style="padding:14px;gap:10px">
+        <section class="card blueprint dx-noprint" style="padding:14px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <h6 style="margin:0;color:var(--color-text)">Export</h6>
+            
+            <details class="dx-fold" open="{{ folds.resExport }}" data-f="resExport" onToggle="{{ setFold }}">
+            <summary><h6>Export</h6></summary>
+            <div class="dx-foldbody" style="--fg:10px">
             <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap">
               <button class="btn btn-secondary" onClick="{{ exportCSV }}">Export CSV</button>
               <button class="btn btn-secondary" onClick="{{ exportJSON }}">Export JSON</button>
@@ -2750,33 +3023,48 @@
             </div>
           </div>
           <div style="font-size:11.5px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Exports are generated in the browser — no data leaves this machine. The printable report contains inputs, model, assumptions, results and the mass balance.</div>
-        </section>
+        </div>
+            </details>
+          </section>
 
         <div class="dx-grid2 top">
-          <section class="card blueprint" style="padding:14px;gap:6px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">User inputs</h6>
+            
+            <details class="dx-fold" open="{{ folds.resInputs }}" data-f="resInputs" onToggle="{{ setFold }}">
+            <summary><h6>User inputs</h6></summary>
+            <div class="dx-foldbody" style="--fg:6px">
             <div class="dx-kv wrap">
               <sc-for list="{{ inputRows }}" as="row" hint-placeholder-count="10">
                 <div><span class="k">{{ row.k }}</span><span class="v">{{ row.v }}</span></div>
               </sc-for>
             </div>
+          </div>
+            </details>
           </section>
-          <section class="card blueprint" style="padding:14px;gap:6px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Calculated values</h6>
+            
+            <details class="dx-fold" open="{{ folds.resCalc }}" data-f="resCalc" onToggle="{{ setFold }}">
+            <summary><h6>Calculated values</h6></summary>
+            <div class="dx-foldbody" style="--fg:6px">
             <div class="dx-kv wrap">
               <sc-for list="{{ calcRows }}" as="row" hint-placeholder-count="12">
                 <div><span class="k">{{ row.k }}</span><span class="v">{{ row.v }}</span></div>
               </sc-for>
             </div>
+          </div>
+            </details>
           </section>
         </div>
 
         <div class="dx-grid2 top">
-          <section class="card blueprint" style="padding:14px;gap:8px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Material balance &amp; numerical convergence</h6>
+            
+            <details class="dx-fold" open="{{ folds.resBalance }}" data-f="resBalance" onToggle="{{ setFold }}">
+            <summary><h6>Material balance &amp; numerical convergence</h6></summary>
+            <div class="dx-foldbody" style="--fg:8px">
             <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.identityHead }}</div>
             <div style="font-size:12px;font-variant-numeric:tabular-nums;line-height:1.8;color:color-mix(in srgb,var(--color-text) 75%,transparent)">
               <div>Overall: F = D + B → {{ mb.total }}</div>
@@ -2787,23 +3075,33 @@
             <div style="{{ mb.convStyle }}">{{ mb.convStatus }}</div>
             <div style="font-size:12px;font-variant-numeric:tabular-nums;line-height:1.8;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.residLabel }}: {{ mb.residValue }}</div>
             <div style="font-size:11.5px;line-height:1.55;color:color-mix(in srgb,var(--color-text) 75%,transparent)">{{ mb.residNote }}</div>
+          </div>
+            </details>
           </section>
-          <section class="card blueprint" style="padding:14px;gap:6px">
+          <section class="card blueprint" style="padding:14px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Model assumptions</h6>
+            
+            <details class="dx-fold" open="{{ folds.resAssume }}" data-f="resAssume" onToggle="{{ setFold }}">
+            <summary><h6>Model assumptions</h6></summary>
+            <div class="dx-foldbody" style="--fg:6px">
             <sc-for list="{{ assumptions }}" as="a" hint-placeholder-count="8">
               <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--color-text)">—</span><span>{{ a }}</span></div>
             </sc-for>
+          </div>
+            </details>
           </section>
         </div>
       </div>
     </sc-if>
 
     <sc-if value="{{ isSens }}">
-      <div class="dx-side">
-        <section class="card blueprint" style="padding:14px;gap:12px">
+      <div class="dx-side dx-out-first">
+        <section class="card blueprint" style="padding:14px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--color-text)">Study definition</h6>
+          
+            <details class="dx-fold" open="{{ folds.sensStudy }}" data-f="sensStudy" onToggle="{{ setFold }}">
+            <summary><h6>Study definition</h6></summary>
+            <div class="dx-foldbody" style="--fg:10px">
           <div class="field">
             <label for="dx-si">Independent variable</label>
             <select class="input" id="dx-si" value="{{ sv.ind }}" data-k="ind" onChange="{{ setSens }}">
@@ -2823,7 +3121,9 @@
           <div class="field"><label for="dx-sn">Number of points</label><input class="input" id="dx-sn" type="number" min="3" max="60" step="1" value="{{ sv.n }}" data-k="n" onChange="{{ setSens }}"></div>
           <button class="btn btn-secondary btn-block" onClick="{{ sensCSV }}">Export sweep as CSV</button>
           <div style="font-size:11.5px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Each point is a complete re-solve of the column with the same thermodynamic model. Infeasible points are omitted rather than extrapolated.</div>
-        </section>
+        </div>
+            </details>
+          </section>
 
         <section class="card blueprint" style="padding:14px;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -2848,10 +3148,10 @@
               </g>
             </sc-if>
             <sc-for list="{{ sensXTicks }}" as="t" hint-placeholder-count="5">
-              <text x="{{ t.x }}" y="268" text-anchor="middle" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
+              <text class="dx-stick" x="{{ t.x }}" y="268" text-anchor="middle" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text>
             </sc-for>
             <sc-for list="{{ sensYTicks }}" as="t" hint-placeholder-count="5">
-              <text x="62" y="{{ t.y }}" text-anchor="end" font-size="10" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
+              <text class="dx-stick" x="62" y="{{ t.y }}" text-anchor="end" font-size="10" fill="var(--dx-plot-tick)">{{ t.label }}</text>
             </sc-for>
             <text x="345" y="290" text-anchor="middle" font-size="11.5" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)">{{ sensXLabel }}</text>
             <text x="16" y="140" text-anchor="middle" font-size="11.5" font-family="var(--font-heading)" letter-spacing=".06em" fill="var(--color-text)" transform="rotate(-90 16 140)">{{ sensYLabel }}</text>
@@ -3000,47 +3300,80 @@
           <p style="margin:0;max-width:78ch;font-size:14px;line-height:1.6">An interactive fractional-distillation laboratory for binary mixtures. Every value on screen is computed in the browser from the selected thermodynamic model: there is no server, no stored data and no pre-baked result. The calculation layer — Antoine vapour pressure, bubble and dew points, equilibrium interpolation, q-line, minimum reflux, operating lines, stage stepping, material balance, recovery and duties — is written as named functions so it can be tested and extended to other unit operations.</p>
         </section>
         <div class="dx-grid2">
-          <section class="card blueprint" style="padding:16px;gap:8px">
+          <section class="card blueprint" style="padding:16px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Engineering models</h6>
+            
+            <details class="dx-fold" open="{{ folds.aboutModels }}" data-f="aboutModels" onToggle="{{ setFold }}">
+            <summary><h6>Engineering models</h6></summary>
+            <div class="dx-foldbody" style="--fg:8px">
             <p style="margin:0;font-size:13px;line-height:1.6">Ideal VLE (Raoult's law) with Antoine vapour pressures in mmHg and °C, and a constant-relative-volatility model. Stage calculations follow McCabe–Thiele under constant molar overflow; minimum reflux includes a tangent-pinch check; minimum stages use Fenske with a geometric-mean α. Activity-coefficient models (Wilson, NRTL, UNIQUAC) are <strong>not</strong> implemented — mixtures that need them are flagged rather than silently approximated.</p>
+          </div>
+            </details>
           </section>
-          <section class="card blueprint" style="padding:16px;gap:8px">
+          <section class="card blueprint" style="padding:16px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Data provenance &amp; validation</h6>
+            
+            <details class="dx-fold" open="{{ folds.aboutData }}" data-f="aboutData" onToggle="{{ setFold }}">
+            <summary><h6>Data provenance &amp; validation</h6></summary>
+            <div class="dx-foldbody" style="--fg:8px">
             <p style="margin:0;font-size:13px;line-height:1.6">Antoine constants are the Reid–Prausnitz–Poling / Lange sets in mmHg and °C, each stored with the temperature range it was fitted over; the VLE Explorer prints that range and re-derives each pure-component vapour pressure at its own normal boiling point as a self-check (benzene 759.0 mmHg at 80.0 °C, water 757.6 mmHg at 100.0 °C — both ≈ 760). Latent heats are values at the normal boiling point. Stage temperatures outside a fitted range raise an extrapolation warning rather than silently degrading. Known azeotropes are recorded per mixture — ethanol/water at 95.6 wt% ethanol (x ≈ 0.894), boiling at 78.2 °C at 1 atm — and any specification that crosses one is flagged as physically unreachable, whatever the ideal model computes.</p>
+          </div>
+            </details>
           </section>
-          <section class="card blueprint dx-span2" style="padding:16px;gap:8px">
+          <section class="card blueprint dx-span2" style="padding:16px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Limitations</h6>
+            
+            <details class="dx-fold" open="{{ folds.aboutLimits }}" data-f="aboutLimits" onToggle="{{ setFold }}">
+            <summary><h6>Limitations</h6></summary>
+            <div class="dx-foldbody" style="--fg:8px">
             <p style="margin:0;font-size:13px;line-height:1.6">Binary systems only. No column hydraulics (flooding, weeping, pressure drop, diameter). Duties are latent-heat only. Tray efficiency is applied as a single overall value. Packed columns are not modelled: no HETP, packed height or transfer-unit (HTU/NTU) calculation is performed. Azeotropic systems cannot be represented by either model offered.</p>
+          </div>
+            </details>
           </section>
-          <section class="card blueprint" style="padding:16px;gap:8px">
+          <section class="card blueprint" style="padding:16px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Deployment</h6>
+            
+            <details class="dx-fold" open="{{ folds.aboutDeploy }}" data-f="aboutDeploy" onToggle="{{ setFold }}">
+            <summary><h6>Deployment</h6></summary>
+            <div class="dx-foldbody" style="--fg:8px">
             <ol style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">
               <li>Create a GitHub repository and push this project.</li>
               <li>Import the repository into Vercel — it is a static client-side app, so no build configuration or environment variables are required.</li>
               <li>Deploy, then open the generated Vercel URL.</li>
               <li>To update the live site, push to the tracked branch: Vercel rebuilds and redeploys automatically.</li>
             </ol>
+          </div>
+            </details>
           </section>
-          <section class="card blueprint" style="padding:16px;gap:8px">
+          <section class="card blueprint" style="padding:16px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <h6 style="margin:0;color:var(--color-text)">Extending it</h6>
+            
+            <details class="dx-fold" open="{{ folds.aboutExtend }}" data-f="aboutExtend" onToggle="{{ setFold }}">
+            <summary><h6>Extending it</h6></summary>
+            <div class="dx-foldbody" style="--fg:8px">
             <p style="margin:0;font-size:13px;line-height:1.6">The thermodynamic layer (vapour pressure, equilibrium, temperatures), the unit-operation engine (balances, stage stepping, duties), the visualisation layer and the mixture data are separate concerns. A new unit operation — absorption, extraction, evaporation, a heat exchanger — needs a new engine module and view; the thermodynamic and data layers are reused unchanged.</p>
+          </div>
+            </details>
           </section>
         </div>
-        <section class="card blueprint" style="padding:16px;gap:6px">
+        <section class="card blueprint" style="padding:16px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--color-text)">Standing assumptions</h6>
+          
+            <details class="dx-fold" open="{{ folds.aboutAssume }}" data-f="aboutAssume" onToggle="{{ setFold }}">
+            <summary><h6>Standing assumptions</h6></summary>
+            <div class="dx-foldbody" style="--fg:6px">
           <sc-for list="{{ assumptions }}" as="a" hint-placeholder-count="8">
             <div style="display:flex;gap:8px;font-size:12.5px;line-height:1.5"><span style="color:var(--color-text)">—</span><span>{{ a }}</span></div>
           </sc-for>
-        </section>
-        <section class="card blueprint" style="padding:16px;gap:6px">
+        </div>
+            </details>
+          </section>
+        <section class="card blueprint" style="padding:16px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <h6 style="margin:0;color:var(--color-text)">Developer</h6>
+          
+            <details class="dx-fold" open="{{ folds.aboutDev }}" data-f="aboutDev" onToggle="{{ setFold }}">
+            <summary><h6>Developer</h6></summary>
+            <div class="dx-foldbody" style="--fg:6px">
           <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
             <div style="font-family:var(--font-heading);font-size:19px">Shafin Ahamed Neon</div>
             <a href="https://www.linkedin.com/in/shafin-ahamed-neon-aa9596213" target="_blank" rel="noopener noreferrer external"
@@ -3048,7 +3381,9 @@
                aria-label="Shafin Ahamed Neon on LinkedIn (opens in a new tab)">LinkedIn ↗</a>
           </div>
           <p style="margin:0;font-size:12.5px;line-height:1.6;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Design, thermodynamic model, calculation engine and interface. Released under the MIT licence.</p>
-        </section>
+        </div>
+            </details>
+          </section>
       </div>
     </sc-if>
   </main>
@@ -3561,6 +3896,33 @@ class Component extends DCLogic {
     ['residue',  'Residue',        'above 400', 'Atmospheric bottoms — bitumen, or feed to a vacuum tower.',                     8]
   ];
 
+  /* Which cards arrive closed on a phone. Everything not listed arrives open,
+     and above the break point everything is open and cannot be folded — the
+     desktop layout has the room, so it keeps the density it was designed for.
+     The list is the audit's: prose, derived tables and anything set once a
+     session. Never the primary output of a view. */
+  /* Every foldable card, so the open map is built once and the template can
+     read folds.<key> without the view-model guessing. */
+  static FOLD_KEYS = [
+    'simModel','simFeed','simSpec','simNotes','simProfiles','simLive','simBalance','simWhatIf',
+    'vleParams','vleFacts','vleComponents',
+    'mtInputs','mtStep','mtResults','mtLegend',
+    'colConfig','colView',
+    'sensStudy','sensMethod','sensKey',
+    'resExport','resInputs','resCalc','resBalance','resAssume',
+    'aboutLead','aboutModels','aboutData','aboutLimits','aboutDeploy','aboutExtend','aboutAssume','aboutDev',
+    'valNotes'
+  ];
+  static PHONE_CLOSED = new Set([
+    'simModel','simNotes','simProfiles','simBalance','simWhatIf',
+    'vleFacts','vleComponents',
+    'mtResults','mtLegend',
+    'colConfig',
+    'sensMethod',
+    'resInputs','resBalance','resAssume',
+    'aboutModels','aboutData','aboutDeploy','aboutExtend','aboutAssume',
+    'valNotes'
+  ]);
   static NAV = [['sim','Simulation'],['vle','VLE Explorer'],['mt','McCabe\u2013Thiele'],['column','Column'],['results','Results'],['sens','Sensitivity'],['theory','Theory'],['exam','Exam Mode'],['validate','Validation'],['about','About']];
   static EXPLAIN = [
     ['Feed enters the column','The feed stream F, at composition z\u1da0 and quality q, enters at the feed stage. Its quality decides how much of it joins the descending liquid and how much joins the rising vapour.'],
@@ -3643,6 +4005,7 @@ class Component extends DCLogic {
           open:{ feed:true, furnace:true, column:false, products:false, adv:false },
           expert:false, tour:-1, hist:[], dirty:false, gl3d:true },
     theme:(this.props||{}).defaultTheme||'dark',
+    narrow:false, moreOpen:false, folds:{},
     custom:{a:{name:'Component A',A:6.90565,B:1211.033,C:220.79,MW:78.11,Tb:80.1,lat:30.8},
             b:{name:'Component B',A:6.95464,B:1344.800,C:219.48,MW:92.14,Tb:110.6,lat:33.2}}
   };
@@ -3725,6 +4088,18 @@ class Component extends DCLogic {
     pill.style.width = on.offsetWidth + 'px';
     pill.style.transform = 'translateX(' + on.offsetLeft + 'px)';
     pill.classList.add('on');
+    // On a phone the rail is wider than the screen, so the pill alone cannot
+    // say where you are — six of the ten destinations were simply off-screen.
+    // Centre the active one in the rail itself; scrollIntoView would take the
+    // document with it.
+    if (wrap.scrollWidth > wrap.clientWidth + 1) {
+      const want = on.offsetLeft - (wrap.clientWidth - on.offsetWidth) / 2;
+      const left = Math.max(0, Math.min(want, wrap.scrollWidth - wrap.clientWidth));
+      if (Math.abs(wrap.scrollLeft - left) > 2) {
+        try { wrap.scrollTo({ left: left, behavior: this._calm() ? 'auto' : 'smooth' }); }
+        catch (e) { wrap.scrollLeft = left; }
+      }
+    }
   }
 
   /** One pointer listener for the whole document, writing --mx/--my on the
@@ -3883,7 +4258,28 @@ class Component extends DCLogic {
   toTop(){ try { window.scrollTo(0, 0); } catch (e) {} }
   /** One place to change rig state, so no handler has to rebuild the object. */
   setRig(patch){ this.setState({ rig: Object.assign({}, this.state.rig, patch) }); }
-  componentDidMount(){ this._afterRender(); this.initRoute(); }
+  /** Open state for every foldable card. A reader's own choice always wins;
+   *  otherwise the width decides, and the desktop is always open. */
+  foldMap(){
+    const s = this.state, out = {}, seen = s.folds || {};
+    Component.FOLD_KEYS.forEach(k => {
+      out[k] = (seen[k] !== undefined) ? seen[k]
+             : (s.narrow ? !Component.PHONE_CLOSED.has(k) : true);
+    });
+    return out;
+  }
+  componentDidMount(){ this._watchWidth(); this._afterRender(); this.initRoute(); }
+  componentWillUnmount(){ if (this._mq && this._onMq) { try { this._mq.removeEventListener('change', this._onMq); } catch (e) {} } }
+  /** One media query decides the phone layout, so the break point lives in one
+   *  place and the view-model can fold a card without measuring anything. */
+  _watchWidth(){
+    try {
+      this._mq = window.matchMedia('(max-width: 900px)');
+      this._onMq = (e) => this.setState({ narrow: e.matches, moreOpen: false });
+      this._mq.addEventListener('change', this._onMq);
+      if (this._mq.matches) this.setState({ narrow: true });
+    } catch (e) { /* presentation only */ }
+  }
   componentDidUpdate(){ this._afterRender(); }
 
   componentWillUnmount(){
@@ -4221,9 +4617,10 @@ class Component extends DCLogic {
       whatIfNote=s.whatIf.note;
     }
 
+    const navHere=(S.NAV.find(([k])=>k===s.view)||[null,''])[1];
     const navItems=S.NAV.map(([k,label])=>({k,label,
       on:s.view===k?'1':'0', cur:s.view===k?'page':'false',
-      style:'min-height:32px;font-size:13px;padding:5px 11px 7px;border-color:transparent;background:transparent;font-weight:'+(s.view===k?'600':'450')+';color:'+(s.view===k?'var(--dx-ink-accent)':'color-mix(in srgb,var(--color-text) 80%,transparent)')}));
+      style:'min-height:32px;font-size:13px;padding:5px 11px 7px;border-color:transparent;font-weight:'+(s.view===k?'600':'450')+';color:'+(s.view===k?'var(--dx-ink-accent)':'color-mix(in srgb,var(--color-text) 80%,transparent)')}));
 
     const KINDLABEL={input:'INVALID INPUT',spec:'INFEASIBLE SPECIFICATION',domain:'MODEL DOMAIN'};
     const errStyle='font-size:12.5px;padding:6px 10px;border:1px solid var(--color-accent-700);background:color-mix(in srgb,var(--color-accent) 12%,transparent);color:var(--color-accent-800)';
@@ -4323,7 +4720,19 @@ class Component extends DCLogic {
       tipOpen:!!s.tip, tipText:s.tip?S.TIPS[s.tip]:'',
       tipStyle:'position:fixed;z-index:90;max-width:280px;padding:8px 10px;font-size:12px;line-height:1.45;background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);left:'+s.tipXY[0]+'px;top:'+s.tipXY[1]+'px',
       toastOpen:!!s.toast, toast:s.toast,
-      go:(e)=>this.setState({view:e.currentTarget.dataset.v}),
+      viewLabel:navHere,
+      folds:this.foldMap(),
+      setFold:(e)=>{ const k=e.currentTarget.dataset.f; if(!k) return;
+                     const o=!!e.currentTarget.open;
+                     if (this.foldMap()[k] === o) return;
+                     this.setState({ folds: Object.assign({}, this.state.folds, {[k]:o}) }); },
+      // On the desktop the disclosure is forced open and its summary hidden,
+      // so the controls stay inline; a phone gets a real sheet.
+      moreOn:(!s.narrow) || s.moreOpen,
+      setMore:(e)=>{ if (!this.state.narrow) return;
+                     const o = e.currentTarget.open;
+                     if (o !== this.state.moreOpen) this.setState({ moreOpen:o }); },
+      go:(e)=>{ this.setState({view:e.currentTarget.dataset.v, moreOpen:false}); },
       home:()=>this.setState({view:'landing'}),
       // The industrial page is the one view with a URL of its own, so entering
       // and leaving it pushes history rather than just swapping state.
@@ -4536,6 +4945,11 @@ class Component extends DCLogic {
                ' H' + (towerX + towerW + 78 + i * 9).toFixed(0),
         labX: (towerX + towerW + 86 + i * 9).toFixed(0),
         hitW: (towerW + 86 + i * 9 + 150).toFixed(0),
+        // the tappable band, centred on the visible one and never thinner than
+        // a finger: the drawing is 700 user units wide, so a 44px target on a
+        // 358px phone is 86 units
+        hh: Math.max(bandH - 3, 86).toFixed(1),
+        hy: (mid - Math.max(bandH - 3, 86) / 2).toFixed(1),
         grp: 'transform:translate(' + dx + 'px,' + dy.toFixed(1) + 'px)',
         cls: 'dx-band' + (on ? ' on' : '') + (hov && !on ? ' dim' : ''),
         // trays inside the band — three per section, purely indicative
@@ -4557,7 +4971,7 @@ class Component extends DCLogic {
       // as a resting state, so it is never an empty box
       info: rows.find(r => r.k === hov) || rows[0],
       hint: hov ? 'Tracing this cut through the tower.'
-                : 'Hover or focus any cut to trace it through the tower.',
+                : 'Tap, hover or focus any cut to trace it through the tower.',
       viewBtns: [['process', 'Process view'], ['exploded', 'Exploded view']]
         .map(([k, label]) => ({ k, label, on: (s.crudeView || 'process') === k ? '1' : '0',
                                 cur: (s.crudeView || 'process') === k ? 'true' : 'false' }))
@@ -5001,6 +5415,11 @@ class Component extends DCLogic {
     out.crudeOver = (e)=>{ const el=e.target.closest('[data-ck]');
       const k = el ? el.dataset.ck : null; if(k!==this.state.crudeHover) this.setState({crudeHover:k}); };
     out.crudeOut = ()=>{ if(this.state.crudeHover) this.setState({crudeHover:null}); };
+    // A touch screen has no hover: tap selects a cut, tap it again to clear.
+    // Keyboard focus routes through crudeOver, so all three inputs agree.
+    out.crudePick = (e)=>{ const el=e.target.closest('[data-ck]'); if(!el) return;
+      const k = el.dataset.ck;
+      this.setState({crudeHover: this.state.crudeHover===k ? null : k}); };
     // 3D column scene — geometry derived from the solved result
     out.scene = this.columnScene(s, r, hasR);
     // 2D elevation of the same trays, so a stage can be read flat as well
@@ -5137,7 +5556,15 @@ class Component extends DCLogic {
     out.mtIn=(e)=>{const n=+e.currentTarget.dataset.n;
       if(this.state.mtHover!==n) this.setState({mtHover:n});};
     out.mtOut=()=>{ if(this.state.mtHover!==null) this.setState({mtHover:null}); };
-    out.mtDown=(e)=>this.setState({mtDrag:e.currentTarget.dataset.k});
+    out.mtDown=(e)=>{
+      // Without capture the drag ends the moment the finger crosses the plot
+      // edge — which, on a 390px screen, is most of the way through it. The
+      // capture goes on the SVG, because mtMove measures against its box.
+      try { const svg = e.currentTarget.ownerSVGElement;
+            if (svg && e.pointerId != null) svg.setPointerCapture(e.pointerId); }
+      catch (err) { /* presentation only */ }
+      this.setState({mtDrag:e.currentTarget.dataset.k});
+    };
     out.mtUp=()=>this.setState({mtDrag:null});
     out.mtMove=(e)=>{
       if(!this.state.mtDrag) return;
@@ -5338,7 +5765,10 @@ class Component extends DCLogic {
                     : tShown+' of '+S.THEORY.length+' topics match \u201c'+(s.theoryQ||'').trim()+'\u201d.')
       : S.THEORY.length+' topics, each written against the same equations the simulator solves. Where this app computes the quantity, the open topic also reports it for the case you have loaded.';
     out.theoryEmpty = tShown===0;
-    out.setTheory=(e)=>this.setState({theoryOpen:e.currentTarget.dataset.k});
+    out.setTheory=(e)=>{ const k=e.currentTarget.dataset.k;
+      // assigning rather than toggling meant a topic could be opened and never
+      // closed, which on a phone is 250px that will not go away
+      this.setState({theoryOpen: this.state.theoryOpen===k ? '' : k}); };
     out.setTheoryQ=(e)=>this.setState({theoryQ:e.target.value});
     out.clearTheoryQ=()=>this.setState({theoryQ:''});
     out.theoryGo=(e)=>this.setState({view:e.currentTarget.dataset.v});

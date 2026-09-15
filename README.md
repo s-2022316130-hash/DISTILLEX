@@ -5,7 +5,7 @@ equilibrium, McCabe–Thiele stage construction, column operation, stage profile
 studies, theory and an exam mode. Everything is computed in the browser — no server, no build
 step, no account, no telemetry, no stored data.
 
-**Live entry point:** `index.html` (self-contained, ~953 KB, works offline by double-click).
+**Live entry point:** `index.html` (self-contained, ~982 KB, works offline by double-click).
 
 Alongside the binary simulator there is an **industrial crude unit** at
 `/industrial-distillation` — an interactive, educational visualisation of an atmospheric
@@ -301,6 +301,88 @@ liquid and teal for vapour.
 
 Convergence state uses the semantic roles rather than the accent: a rating
 solve that fails to close cannot wear the same colour as one that succeeds.
+
+### The phone
+
+The interface was designed at desk width and then measured at 390x844, which
+is where most of it was found wanting. The numbers below are measured, not
+estimated, by a harness that drives the real page.
+
+**Chrome.** 229 CSS px of a 844px viewport was permanently occupied: a wordmark
+row, a horizontally scrolling destination rail, and a toolbar that wrapped to
+two rows because an inline `flex-wrap:wrap` beat the media query that was
+written to prevent exactly that. Navigation now docks to the bottom, in the
+thumb's reach, and the occasional controls — reset, save, load, export, the
+detail level, the theme — sit behind one target in a slim top bar. 229px became
+117px, and the half of it that remains is navigation rather than a file menu.
+
+Two related defects went with it. The active destination was scrolled off
+screen on six of the ten views with nothing marked, because the pill that
+indicates it is hidden on a phone and nothing ever scrolled the rail; the rail
+now centres on wherever you are. And the chip that was supposed to mark the
+active tab never painted at all, because the view-model wrote
+`background:transparent` inline.
+
+**Height.** Every card whose content is prose, a derived table, or something
+set once a session now collapses, with the card's own heading as the
+disclosure — so nothing hides behind an unlabelled control, and the heading is
+still a heading in the document outline. Above 900px every card is simply open
+and the summary is not a control, so a desk reader loses nothing.
+
+| view | was | now |
+| --- | --- | --- |
+| Simulation | 4692px | 2908px |
+| Results | 2970px | 1540px |
+| About | 2911px | 1584px |
+| VLE Explorer | 2112px | 1368px |
+| Column | 1648px | 1081px |
+| McCabe-Thiele | 2044px | 1765px |
+| landing | 5267px | 4827px |
+
+**Order.** Stacked, the desktop column order reads controls first and answer
+last: on McCabe-Thiele the diagram — the entire point of the view — began
+1,660px down, after five sliders, a note, the stage stepper and a results
+table. The four diagram views now put the output first and the controls under
+it, and Simulation leads with the solved result, then the column, then the
+inputs. The desktop grid is untouched.
+
+**Things that did not work on a touch screen at all.** The eight-cut tower on
+the landing page was hover-only, so its detail panel was frozen on the overhead
+cut for ever while the caption told the reader to hover. The McCabe-Thiele
+specification handles were 7px targets, and a drag ended the moment the finger
+crossed the plot edge. A theory topic could be opened and never closed. Plot
+type set in user units resolved to 5-7px. Each of those is fixed, and none of
+the fixes changes the desktop drawing: the handles get a transparent 56-unit
+hit area only under `pointer: coarse`, the type is raised by CSS which wins
+over the SVG presentation attribute, and the tower takes a tap as well as a
+hover.
+
+**Targets.** Every interactive element on every view, in both themes, reaches
+44px — verified by hit-testing the document 20px out from each element's
+centre rather than by measuring its box, because a box can be small while the
+target is not. The one documented exception is the inline help marker beside a
+slider label: it sits inside the words it annotates, so it takes WCAG 2.5.8's
+24px minimum rather than 44px, which would swallow the label either side.
+
+### The mark and the ground
+
+The mark is the McCabe-Thiele construction: the equilibrium curve the physics
+fixes, and the staircase stepped off against it. It is the drawing every
+student of this subject makes by hand, so it says what the product is without a
+word, and it reduces to a flat silhouette for the favicon. It replaces a
+bordered square that could have belonged to anything.
+
+The background was two drifting fields of colour and a grid. In daylight a wash
+designed as glow-on-black reads as a stain, and every panel floated in coloured
+haze. The ground is now an engineering sheet — a 22px module, a 132px major
+rule, one soft lift where the page catches the light, and a flow sheet of the
+unit itself drawn at the scale of a real drawing and bled off the right edge.
+It is CSS gradients plus one 2.4 KB inline SVG, no animation, and the drawing
+is dropped below 900px where it would never be seen.
+
+Contrast was computed rather than judged: `--dx-ink3` over a major rule is
+4.73:1 in daylight and 6.01:1 at night, and over the motif 4.63:1 and 5.75:1.
+Body ink is 13.5:1 and 15.7:1.
 
 ### Taking it somewhere else
 
