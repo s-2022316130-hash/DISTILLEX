@@ -5,7 +5,7 @@ equilibrium, McCabe–Thiele stage construction, column operation, stage profile
 studies, theory and an exam mode. Everything is computed in the browser — no server, no build
 step, no account, no telemetry, no stored data.
 
-**Live entry point:** `index.html` (self-contained, ~982 KB, works offline by double-click).
+**Live entry point:** `index.html` (self-contained, ~983 KB, works offline by double-click).
 
 Alongside the binary simulator there is an **industrial crude unit** at
 `/industrial-distillation` — an interactive, educational visualisation of an atmospheric
@@ -380,9 +380,30 @@ unit itself drawn at the scale of a real drawing and bled off the right edge.
 It is CSS gradients plus one 2.4 KB inline SVG, no animation, and the drawing
 is dropped below 900px where it would never be seen.
 
-Contrast was computed rather than judged: `--dx-ink3` over a major rule is
-4.73:1 in daylight and 6.01:1 at night, and over the motif 4.63:1 and 5.75:1.
-Body ink is 13.5:1 and 15.7:1.
+It takes no hue of its own. Every saturated colour in this project means
+something — a stream, a plot role, a state — so the rules and the drawing are
+the theme's own ink at a weight low enough to read as paper. And it is
+`position: absolute` rather than `fixed`: a rule that does not move with the
+drawing is wallpaper.
+
+**How the contrast was checked, and what that caught.** The first numbers here
+were computed per layer — ink over one rule, ink over the motif — and they were
+wrong. Decoding the actual painted page told a different story: the two grids
+shared a pitch, so every 132px *four* rules landed on the same pixel, and
+`--dx-ink3` over that lattice fell to 3.95:1. Reading the tokens would never
+have shown it. The major rule is now offset half a minor cell so the grids
+never coincide.
+
+Measured off the composited page, sampling every pixel, with the cards hidden:
+
+| | ground | worst pixel | `--dx-ink3` there | `--dx-ink2` | body ink |
+| --- | --- | --- | --- | --- | --- |
+| daylight | `rgb(240,243,248)` | `rgb(224,226,232)` | 4.52:1 | 5.61:1 | 12.88:1 |
+| night | `rgb(9,12,19)` | `rgb(31,33,40)` | 5.55:1 | 7.90:1 | 14.48:1 |
+
+78% of the frame is the base colour exactly. The script that does this is not
+part of the headless suite — it needs a browser — but the method is the point:
+a background layer is precisely what a token-reading contrast test cannot see.
 
 ### Taking it somewhere else
 

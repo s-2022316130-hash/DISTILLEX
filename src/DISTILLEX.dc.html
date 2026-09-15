@@ -205,9 +205,10 @@
   }
   /* The live cursor — the hovered stage, the swept case.  It is a marker,
      not a label, so it is tuned against 3:1 for graphics rather than the
-     4.5:1 the gold text role has to carry. */
-  :root    { --dx-mark: #b88000; --dx-drop: 0 3px 12px rgba(31,41,72,.20) }
-  .dx-dark { --dx-mark: #eeb300; --dx-drop: 0 3px 12px rgba(0,0,0,.55) }
+     4.5:1 the gold text role has to carry.  It is --dx-cursor, not --dx-mark,
+     because .dx-mark is the logo and one of the two words had to give. */
+  :root    { --dx-cursor: #b88000; --dx-drop: 0 3px 12px rgba(31,41,72,.20) }
+  .dx-dark { --dx-cursor: #eeb300; --dx-drop: 0 3px 12px rgba(0,0,0,.55) }
 
   /* ═══ motion policy ═══════════════════════════════════════════════════
      Everything decorative is switched off; the interface stays fully
@@ -238,29 +239,40 @@
   .dx-app { position: relative; min-height: 100dvh; isolation: isolate;
             background: var(--color-bg); overflow: clip; }
 
+  /* Every hue in this file except these carries meaning, so the ground gets
+     none of them: the rules and the drawing are the theme's own ink, at a
+     weight low enough that they read as paper rather than as a colour. */
   :root {
-    --dx-rule-1: rgba(31,41,72,.038);
-    --dx-rule-2: rgba(31,41,72,.058);
-    --dx-motif: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20960%20780'%3E%3Cg%20stroke='%23223056'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='300'%20y='90'%20width='120'%20height='560'%20rx='60'%20fill='none'%20stroke-width='1.8'/%3E%3Cpath%20d='M317%20150H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20186H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20222H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20258H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20294H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20330H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20366H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20402H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20438H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20474H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20510H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20546H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20582H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20618H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M360%2090V54H600'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='600'%20y='30'%20width='110'%20height='48'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M710%2054H770V150'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='700'%20y='150'%20width='140'%20height='64'%20rx='32'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M770%20214V250H420'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20182H910'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20266H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='240'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20266H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20374H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='348'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20374H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20482H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='456'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20482H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M120%20470H300'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='60'%20y='430'%20width='120'%20height='80'%20rx='10'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M84%20496l14-22%2014%2022%2014-22%2014%2022'%20fill='none'%20stroke-width='1.6'/%3E%3Cpath%20d='M120%20430V360'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M360%20650V700H900'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='430'%20y='690'%20width='96'%20height='48'%20rx='10'%20fill='none'%20stroke-width='1.4'/%3E%3C/g%3E%3C/svg%3E");
-    --dx-motif-o: .07;
+    --dx-rule-1: color-mix(in srgb, var(--color-text) 2.4%, transparent);
+    --dx-rule-2: color-mix(in srgb, var(--color-text) 3.4%, transparent);
+    --dx-motif: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20960%20780'%3E%3Cg%20stroke='%23191e29'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='300'%20y='90'%20width='120'%20height='560'%20rx='60'%20fill='none'%20stroke-width='1.8'/%3E%3Cpath%20d='M317%20150H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20186H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20222H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20258H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20294H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20330H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20366H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20402H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20438H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20474H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20510H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20546H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20582H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20618H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M360%2090V54H600'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='600'%20y='30'%20width='110'%20height='48'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M710%2054H770V150'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='700'%20y='150'%20width='140'%20height='64'%20rx='32'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M770%20214V250H420'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20182H910'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20266H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='240'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20266H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20374H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='348'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20374H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20482H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='456'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20482H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M120%20470H300'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='60'%20y='430'%20width='120'%20height='80'%20rx='10'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M84%20496l14-22%2014%2022%2014-22%2014%2022'%20fill='none'%20stroke-width='1.6'/%3E%3Cpath%20d='M120%20430V360'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M360%20650V700H900'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='430'%20y='690'%20width='96'%20height='48'%20rx='10'%20fill='none'%20stroke-width='1.4'/%3E%3C/g%3E%3C/svg%3E");
+    --dx-motif-o: .038;
     --dx-lift: radial-gradient(130% 62% at 50% -16%, rgba(255,255,255,.90), rgba(255,255,255,0) 60%);
   }
   .dx-dark {
-    --dx-rule-1: rgba(168,192,255,.042);
-    --dx-rule-2: rgba(168,192,255,.075);
-    --dx-motif: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20960%20780'%3E%3Cg%20stroke='%23a8c0ff'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='300'%20y='90'%20width='120'%20height='560'%20rx='60'%20fill='none'%20stroke-width='1.8'/%3E%3Cpath%20d='M317%20150H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20186H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20222H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20258H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20294H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20330H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20366H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20402H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20438H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20474H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20510H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20546H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20582H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20618H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M360%2090V54H600'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='600'%20y='30'%20width='110'%20height='48'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M710%2054H770V150'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='700'%20y='150'%20width='140'%20height='64'%20rx='32'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M770%20214V250H420'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20182H910'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20266H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='240'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20266H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20374H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='348'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20374H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20482H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='456'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20482H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M120%20470H300'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='60'%20y='430'%20width='120'%20height='80'%20rx='10'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M84%20496l14-22%2014%2022%2014-22%2014%2022'%20fill='none'%20stroke-width='1.6'/%3E%3Cpath%20d='M120%20430V360'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M360%20650V700H900'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='430'%20y='690'%20width='96'%20height='48'%20rx='10'%20fill='none'%20stroke-width='1.4'/%3E%3C/g%3E%3C/svg%3E");
-    --dx-motif-o: .10;
-    --dx-lift: radial-gradient(130% 62% at 50% -16%, rgba(125,149,255,.09), rgba(0,0,0,0) 60%);
+    --dx-rule-1: color-mix(in srgb, var(--color-text) 2.4%, transparent);
+    --dx-rule-2: color-mix(in srgb, var(--color-text) 3.4%, transparent);
+    --dx-motif: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20960%20780'%3E%3Cg%20stroke='%23f1f3f8'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='300'%20y='90'%20width='120'%20height='560'%20rx='60'%20fill='none'%20stroke-width='1.8'/%3E%3Cpath%20d='M317%20150H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20186H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20222H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20258H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20294H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20330H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20366H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20402H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20438H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20474H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20510H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20546H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M317%20582H403'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M323%20618H397'%20fill='none'%20stroke-width='1.2'/%3E%3Cpath%20d='M360%2090V54H600'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='600'%20y='30'%20width='110'%20height='48'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M710%2054H770V150'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='700'%20y='150'%20width='140'%20height='64'%20rx='32'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M770%20214V250H420'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20182H910'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20266H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='240'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20266H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20374H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='348'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20374H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M420%20482H780'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='780'%20y='456'%20width='60'%20height='52'%20rx='8'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M840%20482H900'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M120%20470H300'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='60'%20y='430'%20width='120'%20height='80'%20rx='10'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M84%20496l14-22%2014%2022%2014-22%2014%2022'%20fill='none'%20stroke-width='1.6'/%3E%3Cpath%20d='M120%20430V360'%20fill='none'%20stroke-width='1.4'/%3E%3Cpath%20d='M360%20650V700H900'%20fill='none'%20stroke-width='1.4'/%3E%3Crect%20x='430'%20y='690'%20width='96'%20height='48'%20rx='10'%20fill='none'%20stroke-width='1.4'/%3E%3C/g%3E%3C/svg%3E");
+    --dx-motif-o: .058;
+    --dx-lift: radial-gradient(130% 62% at 50% -16%, rgba(255,255,255,.032), rgba(255,255,255,0) 60%);
   }
 
-  .dx-sheet { position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  /* absolute, not fixed: a rule that does not move with the drawing is
+     wallpaper. It scrolls with the page, so the sheet is the sheet. */
+  .dx-sheet { position: absolute; inset: 0; z-index: -1; pointer-events: none;
     background-image:
       var(--dx-lift),
       linear-gradient(to right,  var(--dx-rule-1) 1px, transparent 1px),
       linear-gradient(to bottom, var(--dx-rule-1) 1px, transparent 1px),
       linear-gradient(to right,  var(--dx-rule-2) 1px, transparent 1px),
       linear-gradient(to bottom, var(--dx-rule-2) 1px, transparent 1px);
-    background-size: 100% 100%, 22px 22px, 22px 22px, 132px 132px, 132px 132px;
+    background-size: 100% 680px, 22px 22px, 22px 22px, 132px 132px, 132px 132px;
+    /* The major rule is offset half a minor cell so the two grids never land
+       on the same pixel. Aligned, every 132px composited four layers at once
+       and --dx-ink3 over that lattice fell to 3.95:1 — measured off the
+       painted page, which reading the tokens would never have shown. */
+    background-position: 0 0, 0 0, 0 0, 11px 11px, 11px 11px;
+    background-repeat: no-repeat, repeat, repeat, repeat, repeat;
   }
   /* The drawing is its own layer so its weight can be set per theme without
      re-encoding it, and so a phone can drop it entirely — it is 2.4 KB of
@@ -852,9 +864,9 @@
   .dx-frow .num  { fill:var(--dx-plot-tick) }
   .dx-frow.feed .tray { stroke:var(--dx-plot-feed); stroke-width:2.8 }
   .dx-frow.feed .num  { fill:var(--dx-plot-feed); font-weight:700 }
-  .dx-frow.on  .hit   { fill:color-mix(in srgb, var(--dx-mark) 14%, transparent) }
-  .dx-frow.on  .tray  { stroke:var(--dx-mark); stroke-width:3 }
-  .dx-frow.on  .num   { fill:var(--dx-mark); font-weight:700 }
+  .dx-frow.on  .hit   { fill:color-mix(in srgb, var(--dx-cursor) 14%, transparent) }
+  .dx-frow.on  .tray  { stroke:var(--dx-cursor); stroke-width:3 }
+  .dx-frow.on  .num   { fill:var(--dx-cursor); font-weight:700 }
   .dx-frow:hover .tray { stroke-width:2.6 }
 
   /* flat planes that face the viewer, so a tray in the 3D column can be
@@ -862,9 +874,9 @@
   .dx-hit { position:absolute; cursor:pointer; background:transparent }
   .dx-vp-top .dx-hit { pointer-events:none }
   .dx-tray.hot {
-    border-color:var(--dx-mark) !important;
-    box-shadow:0 0 28px color-mix(in srgb, var(--dx-mark) var(--dx-3d-glow), transparent),
-               0 0 0 1px color-mix(in srgb, var(--dx-mark) 55%, transparent);
+    border-color:var(--dx-cursor) !important;
+    box-shadow:0 0 28px color-mix(in srgb, var(--dx-cursor) var(--dx-3d-glow), transparent),
+               0 0 0 1px color-mix(in srgb, var(--dx-cursor) 55%, transparent);
   }
   .dx-cm-split .dx-note { font-size:8.5px; letter-spacing:.04em }
   .dx-cm-split .dx-note b { font-size:10px }
@@ -941,8 +953,8 @@
                color:color-mix(in srgb, var(--color-text) 52%, transparent) }
   .dx-tlive { margin:0 0 10px; padding:8px 11px; font-size:12.5px; line-height:1.55;
               max-width:82ch; border-radius:var(--dx-r-sm);
-              background:color-mix(in srgb, var(--dx-mark) 9%, transparent);
-              box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--dx-mark) 28%, transparent);
+              background:color-mix(in srgb, var(--dx-cursor) 9%, transparent);
+              box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--dx-cursor) 28%, transparent);
               display:flex; gap:9px; align-items:baseline;
               animation:dxIn 340ms var(--dx-ease) both }
   @media (prefers-reduced-motion: reduce) { .dx-tlive { animation:none } }
@@ -951,10 +963,10 @@
      separation possible, filled so its size is read at a glance */
   .dx-eqband { fill:color-mix(in srgb, var(--dx-plot-phys) 13%, transparent);
                stroke:none; pointer-events:none }
-  .dx-sensnow line   { stroke:var(--dx-mark); stroke-width:1; stroke-dasharray:3 3 }
-  .dx-sensnow .halo  { fill:color-mix(in srgb, var(--dx-mark) 22%, transparent);
-                       stroke:var(--dx-mark); stroke-width:1 }
-  .dx-sensnow .core  { fill:var(--dx-mark) }
+  .dx-sensnow line   { stroke:var(--dx-cursor); stroke-width:1; stroke-dasharray:3 3 }
+  .dx-sensnow .halo  { fill:color-mix(in srgb, var(--dx-cursor) 22%, transparent);
+                       stroke:var(--dx-cursor); stroke-width:1 }
+  .dx-sensnow .core  { fill:var(--dx-cursor) }
   .dx-sensnow text   { fill:var(--color-text); font-weight:700 }
 
   /* ═══ McCabe–Thiele construction ═════════════════════════════ */
@@ -962,8 +974,8 @@
      the way it is drawn on paper.  Only the step that has just appeared is
      given the live-cursor amber, so the eye follows the construction. */
   .dx-mtseg { transition: stroke-width var(--dx-t-base) var(--dx-ease) }
-  .dx-mtseg.fresh { stroke:var(--dx-mark);
-                    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--dx-mark) 70%, transparent)) }
+  .dx-mtseg.fresh { stroke:var(--dx-cursor);
+                    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--dx-cursor) 70%, transparent)) }
   /* The three draggable specifications are 11-unit squares — 7px of target on
      a phone. The visible square stays exactly as drawn; a transparent 56-unit
      rect gives the finger something to find, and only where there is a finger. */
@@ -976,9 +988,9 @@
   .dx-mtnode .dot { fill:var(--color-surface); stroke:var(--dx-plot-ref);
                     stroke-width:1.4; transition:fill var(--dx-t-base) var(--dx-ease),
                                                  stroke var(--dx-t-base) var(--dx-ease) }
-  .dx-mtnode.fresh .dot { stroke:var(--dx-mark); stroke-width:2 }
-  .dx-mtnode.on    .dot { fill:var(--dx-mark); stroke:var(--dx-mark); stroke-width:2 }
-  .dx-mttip rect { fill:var(--color-surface); stroke:var(--dx-mark); stroke-width:1.2;
+  .dx-mtnode.fresh .dot { stroke:var(--dx-cursor); stroke-width:2 }
+  .dx-mtnode.on    .dot { fill:var(--dx-cursor); stroke:var(--dx-cursor); stroke-width:2 }
+  .dx-mttip rect { fill:var(--color-surface); stroke:var(--dx-cursor); stroke-width:1.2;
                    filter:drop-shadow(var(--dx-drop)) }
   .dx-mttip text { fill:var(--color-text) }
   .dx-mttip text:first-of-type { fill:var(--dx-ink3) }
@@ -2469,7 +2481,7 @@
               <span><i style="background:var(--dx-plot-liq)"></i>x liquid</span>
               <span><i style="background:var(--dx-plot-phys)"></i>y vapour</span>
               <span><i style="background:var(--dx-plot-feed)"></i>feed stage</span>
-              <span><i style="background:var(--dx-mark)"></i>selected stage</span>
+              <span><i style="background:var(--dx-cursor)"></i>selected stage</span>
               <span style="margin-left:auto">{{ stageNote }}</span>
             </div>
             <p style="margin:0;font-size:11px;line-height:1.5;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Stage positions, feed stage and the end temperatures are read from the solved case. The rising and falling traffic depicts counter-current flow and scales with the internal vapour and liquid rates — it is a visual aid, not a hydraulic calculation.</p>
@@ -2820,9 +2832,9 @@
                 <text class="dx-pnote" x="70" y="52" font-size="10" letter-spacing=".06em" fill="var(--dx-ink2)">shaded: y* − x, the driving force for the separation</text>
                 <sc-if value="{{ vleHoverOn }}">
                   <g>
-                    <line x1="{{ vleHover.cx }}" y1="420" x2="{{ vleHover.cx }}" y2="{{ vleHover.cy }}" stroke="var(--dx-mark)" stroke-dasharray="3 3" stroke-width="1"></line>
-                    <line x1="60" y1="{{ vleHover.cy }}" x2="{{ vleHover.cx }}" y2="{{ vleHover.cy }}" stroke="var(--dx-mark)" stroke-dasharray="3 3" stroke-width="1"></line>
-                    <circle cx="{{ vleHover.cx }}" cy="{{ vleHover.cy }}" r="4" fill="var(--dx-mark)"></circle>
+                    <line x1="{{ vleHover.cx }}" y1="420" x2="{{ vleHover.cx }}" y2="{{ vleHover.cy }}" stroke="var(--dx-cursor)" stroke-dasharray="3 3" stroke-width="1"></line>
+                    <line x1="60" y1="{{ vleHover.cy }}" x2="{{ vleHover.cx }}" y2="{{ vleHover.cy }}" stroke="var(--dx-cursor)" stroke-dasharray="3 3" stroke-width="1"></line>
+                    <circle cx="{{ vleHover.cx }}" cy="{{ vleHover.cy }}" r="4" fill="var(--dx-cursor)"></circle>
                     <text x="{{ vleHover.lx }}" y="{{ vleHover.cy }}" font-size="11" font-variant-numeric="tabular-nums" fill="var(--color-text)">{{ vleHover.label }}</text>
                   </g>
                 </sc-if>
