@@ -58,16 +58,20 @@ _rigMount() {
   THEME.set(mode);
   this._themeNow = mode;
   try {
-    // The surroundings are most of the triangles and none of the process, so
-    // a small screen gets the unit and not the site it stands on.
-    this._plant = PLANT.build({ site: (window.innerWidth || 1200) >= 820 });
-    gl = RIGGL.create(cv, this._plant, { maxDpr: 2, theme: mode });
+    this._plant = PLANT.build();
+    // A phone starts a tier down and climbs if it can, rather than starting
+    // at full detail and being dragged back by the watchdog while someone
+    // watches. The unit and the tank farm are always drawn; only the site
+    // furniture waits to be earned.
+    const wide = (window.innerWidth || 1200) >= 900;
+    gl = RIGGL.create(cv, this._plant, { maxDpr: wide ? 2 : 1.75, theme: mode });
   } catch (err) {
     this._glFail = (err && err.message) || 'WebGL is unavailable';
     this.setRig({ gl3d: false, view: '2d' });
     return;
   }
   this._gl = gl;
+  gl.setDetail(this.state.rig.detail != null ? this.state.rig.detail : (wide ? 2 : 1));
   this._cams = RIGINFO.cameras(this._plant);
   this.rigCamTo('plant', true);
   this._bindRigPointer(cv);
@@ -140,9 +144,13 @@ _rigLoop() {
     if (!this._gl || this.state.view !== 'rig') { this._raf = 0; return; }
     let dt = (now - last) / 1000; last = now;
     if (!(dt > 0) || dt > 0.25) dt = 1 / 60;
+    // A hidden tab still gets animation frames in some browsers, and drawing
+    // a scene nobody is looking at is pure battery.
+    if (document.hidden) { this._raf = requestAnimationFrame(step); return; }
     try {
-      gl.render(dt);
-      this._rigTags();
+      // render() returns false when the frame would be identical to the one
+      // already on screen; the overlays only have to move when it drew.
+      if (gl.render(dt) !== false) { this._rigTags(); this._rigLabels(); }
     } catch (e) { this._raf = 0; return; }
     acc += dt; frames++;
     if (acc >= 0.5) {
@@ -164,19 +172,39 @@ _rigLoop() {
  *  thing that materially changes shading cost. Both climb back when the
  *  machine can afford them, so a momentary stall is not permanent.
  */
+/** Hold the frame rate, cheapest thing first.
+ *
+ *  The order matters, and it changed. Detail comes off BEFORE resolution now:
+ *  the site furniture and the fine access steel are the most triangles and the
+ *  least information, and dropping them costs a viewer nothing, where blurring
+ *  the whole picture costs them everything. Tracers go next, resolution last.
+ *  Each lever climbs back on its own when the frames come back, with a gap
+ *  between the thresholds so nothing oscillates.
+ *
+ *  Changing detail is an instance count per draw call, so it is free — there
+ *  is no rebuild and no lost context behind this.
+ */
 _rigAdapt(gl, fps) {
   const st = gl.state;
   let note = '';
-  if (fps < 26 && st.tracers > 0.35 && this.state.rig.flow) {
+  const want = this.state.rig.detail;
+  if (fps < 30 && st.detail > (want === 0 ? 0 : 0) && st.detail > 0) {
+    st.detail -= 1;
+  } else if (fps < 26 && st.tracers > 0.35 && this.state.rig.flow) {
     st.tracers = 0.3;
-  } else if (fps < 22 && st.scale > 0.62) {
+  } else if (fps < 21 && st.scale > 0.62) {
     st.scale = Math.max(0.6, st.scale - 0.2);
-  } else if (fps > 52 && st.scale < 1) {
+  } else if (fps > 54 && st.scale < 1) {
     st.scale = Math.min(1, st.scale + 0.2);
-  } else if (fps > 55 && st.tracers < 1) {
+  } else if (fps > 56 && st.tracers < 1) {
     st.tracers = 1;
+  } else if (fps > 58 && st.detail < want) {
+    st.detail += 1;
   }
-  if (st.scale < 0.99 && st.tracers < 1) note = 'Tracers + resolution reduced';
+  const dn = st.detail < 2;
+  if (dn && st.scale < 0.99) note = 'Detail + resolution reduced';
+  else if (dn) note = st.detail === 0 ? 'Site hidden' : 'Site detail reduced';
+  else if (st.scale < 0.99 && st.tracers < 1) note = 'Tracers + resolution reduced';
   else if (st.scale < 0.99) note = 'Resolution reduced';
   else if (st.tracers < 1) note = 'Tracers thinned';
   const w = document.getElementById('rig-degrade');
@@ -232,7 +260,7 @@ _rigTags() {
  *  template, so this runs after it. */
 _rigCollectTags() {
   const P = this._plant;
-  if (!P) { this._tagEls = null; return; }
+  if (!P) { this._tagEls = null; this._labEls = null; return; }
   const out = [];
   const nodes = document.querySelectorAll('[data-rig-tag]');
   for (let i = 0; i < nodes.length; i++) {
@@ -241,6 +269,84 @@ _rigCollectTags() {
     if (ins) out.push({ el: el, at: ins.at });
   }
   this._tagEls = out;
+  // the nameplates are a second, quieter layer over the same scene
+  const labs = [];
+  const lnodes = document.querySelectorAll('[data-rig-lab]');
+  for (let i = 0; i < lnodes.length; i++) {
+    const el = lnodes[i], tag = el.getAttribute('data-rig-lab');
+    const lab = (P.labels || []).filter(q => q.tag === tag)[0];
+    if (lab) labs.push({ el: el, at: lab.at, pick: lab.pick, tier: lab.tier || 0 });
+  }
+  this._labEls = labs;
+}
+
+/** Place the nameplates.
+ *
+ *  They follow the same rule the instrument tags do — nearest wins a clash,
+ *  and there is a cap — but with a larger box, because a nameplate is three
+ *  lines rather than one, and with a longer reach, because half of them are
+ *  on tankage a hundred metres away. A plate whose item is behind the camera,
+ *  too far to read, or hidden under another plate simply does not appear:
+ *  twenty-four labels drawn at once would bury the plant they describe.
+ */
+_rigLabels() {
+  const gl = this._gl, P = this._plant;
+  if (!gl || !P || !this._labEls || !this._labEls.length) return;
+  const cv = document.getElementById('rig-gl');
+  const W = cv ? cv.clientWidth : 0, H = cv ? cv.clientHeight : 0;
+  const narrow = (window.innerWidth || 1200) < 1000;
+  const gapY = narrow ? 34 : 40, cap = narrow ? 5 : 11;
+  const sel = gl.state.sel;
+  // How far a plate may be read from follows the shot. In a close-up of the
+  // column base, a plate on tankage a hundred metres behind it is clutter over
+  // the thing being looked at; in the tank-farm shot that same plate is the
+  // subject. So the reach is the camera's own distance, with a floor so a
+  // tight shot still names what is beside it.
+  const reach = Math.max(70, gl.cam.dist * 1.7);
+  const shown = [];
+  // A plate belongs to a tier, and a tier that is not being drawn has no
+  // equipment under its plates. Whether the tier went because the viewer
+  // asked for the unit on its own or because the watchdog took it, a
+  // nameplate floating over empty paving is worse than no nameplate.
+  const tier = gl.state.detail;
+  for (let i = 0; i < this._labEls.length; i++) {
+    const t = this._labEls[i];
+    if (!t.el || !t.el.isConnected) continue;
+    if (t.tier > tier) { t.el.style.opacity = '0'; continue; }
+    const p = gl.toScreen(t.at);
+    if (!p) { t.el.style.opacity = '0'; continue; }
+    shown.push({ t: t, p: p, on: sel && t.pick === sel });
+  }
+  // a selected item's plate is placed first, so choosing something always
+  // names it whatever else is on screen
+  shown.sort((a, b) => (b.on ? 1 : 0) - (a.on ? 1 : 0) || a.p.d - b.p.d);
+  const placed = [];
+  for (let i = 0; i < shown.length; i++) {
+    const q = shown[i], p = q.p;
+    if (placed.length >= cap || p.d > reach) { q.t.el.style.opacity = '0'; continue; }
+    // A plate half off the canvas is worse than no plate: its leader dot still
+    // points at the item, so it is kept inside the box it is drawn in.
+    const w = q.t.el.offsetWidth || 130, h = q.t.el.offsetHeight || 40;
+    const x = Math.max(6, Math.min(W - w - 6, p.x + 9));
+    const y = Math.max(6, Math.min(H - h - 6, p.y - 16));
+    // Plates are not all the same width — 'V-102 Preflash drum' is half the
+    // width of 'V-301 LPG / WET GAS, Horton spheres, stored under pressure' —
+    // so the clash test is the box each one actually occupies, not a fixed
+    // gap around its anchor. A fixed gap let a narrow plate sit inside a wide
+    // neighbour and both were drawn, one over the other.
+    let clash = false;
+    for (let j = 0; j < placed.length; j++)
+      if (Math.abs(placed[j].y - y) < gapY &&
+          x < placed[j].x + placed[j].w + 8 && placed[j].x < x + w + 8) { clash = true; break; }
+    if (clash) { q.t.el.style.opacity = '0'; continue; }
+    placed.push({ x: x, y: y, w: w });
+    // The fade is relative to the shot, not to an absolute distance: a plate
+    // at the back of the tank-farm view is as far as that view goes and should
+    // still read, where the same distance in a close-up is the far background.
+    q.t.el.style.opacity = q.on ? '1'
+      : String(Math.max(0.46, Math.min(0.95, 1.02 - 0.48 * (p.d / reach))));
+    q.t.el.style.transform = 'translate3d(' + Math.round(x) + 'px,' + Math.round(y) + 'px,0)';
+  }
 }
 
 /* ── pointer, wheel, touch and keyboard ────────────────────────────────── */
@@ -379,13 +485,41 @@ rigCamTo(key, snap) {
   const gl = this._gl, cams = this._cams;
   if (!gl || !cams) return;
   const c = cams.filter(q => q.key === key)[0] || cams[0];
-  gl.cam.tYaw = c.yaw; gl.cam.tPitch = c.pitch; gl.cam.tDist = c.dist;
-  gl.cam.ttx = c.t[0]; gl.cam.tty = c.t[1]; gl.cam.ttz = c.t[2];
-  if (snap) {
-    gl.cam.yaw = c.yaw; gl.cam.pitch = c.pitch; gl.cam.dist = c.dist;
-    gl.cam.tx = c.t[0]; gl.cam.ty = c.t[1]; gl.cam.tz = c.t[2];
+  // A shot of something that is not being drawn is an empty shot. The tank
+  // farm and the off-plot furniture are detail tiers, so asking for either
+  // view raises the tier far enough to have something to look at; it is
+  // never lowered, because the viewer's own choice of a richer scene stands.
+  const need = c.key === 'farm' ? 1 : c.key === 'site' ? 2 : 0;
+  if (need && (this.state.rig.detail | 0) < need) {
+    gl.setDetail(need);
+    this.setRig({ detail: need });
   }
-  this._camPreset = c.key;
+  const cvE = document.getElementById('rig-gl');
+  const asp = cvE && cvE.clientHeight ? cvE.clientWidth / cvE.clientHeight : 1.6;
+  // The field of view is vertical, so a canvas taller than it is wide holds
+  // the same amount of plant top to bottom and much less side to side. A shot
+  // of something wide therefore has to be composed differently upright, not
+  // merely taken from further away, and a preset may carry that second shot.
+  const s = (asp < 1 && c.port) ? Object.assign({}, c, c.port) : c;
+  // What is left is the shots that are simply wider than they are tall: for
+  // those the width is what binds, and the camera steps back until it fits.
+  let dist = s.dist;
+  if (s.w) dist = Math.max(dist, s.w / (0.32 * Math.max(0.35, asp)));
+  gl.cam.tYaw = s.yaw; gl.cam.tPitch = s.pitch; gl.cam.tDist = dist;
+  gl.cam.ttx = s.t[0]; gl.cam.tty = s.t[1]; gl.cam.ttz = s.t[2];
+  if (snap) {
+    gl.cam.yaw = s.yaw; gl.cam.pitch = s.pitch; gl.cam.dist = dist;
+    gl.cam.tx = s.t[0]; gl.cam.ty = s.t[1]; gl.cam.tz = s.t[2];
+  }
+  // The pill that shows which shot you are in reads this, so it has to go
+  // through state: setting the field alone left the old preset highlighted
+  // however many times you pressed another one.
+  if (this._camPreset !== c.key) {
+    this._camPreset = c.key;
+    if (!snap) this.setRig({ cam: c.key });
+  } else {
+    this._camPreset = c.key;
+  }
 }
 
 /* ── selection, shared by both views ───────────────────────────────────── */

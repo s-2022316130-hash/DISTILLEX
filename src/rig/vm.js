@@ -245,7 +245,8 @@ rigView(s) {
   const info = RIGINFO.describe(rg.sel);
   const infoReads = info ? info.reads.map(k => this.rigRead(k, r)).filter(Boolean) : [];
   const cams = (this._cams || RIGINFO.cameras(PLANT.build())).map(c => ({
-    k: c.key, label: c.label, cls: 'rig-cam' + (this._camPreset === c.key ? ' on' : '') }));
+    k: c.key, label: c.label,
+    cls: 'rig-cam' + ((rg.cam || this._camPreset) === c.key ? ' on' : '') }));
   const instruments = (this._plant ? this._plant.instruments : []).map(q => {
     const rd = this.rigRead(q.read, r);
     return { key: q.key, kind: q.kind, tag: q.key,
@@ -322,6 +323,25 @@ rigView(s) {
       : 'M20 14.2A8.4 8.4 0 019.8 4 8.8 8.8 0 1020 14.2z',
     rigFlowLabel: rg.flow ? 'Pause flow' : 'Resume flow',
     // the scene on its own: both rails go and the controls ride over the top
+    // How much of the site to draw. The renderer takes it as an instance
+    // count, so this is free to change between frames.
+    // The plus signs matter: they say the control is cumulative, and they keep
+    // these three words from reading as the camera presets of the same name.
+    rigDetailBtns: [[0, 'Unit'], [1, '+Farm'], [2, '+Site']].map(d => ({
+      k: String(d[0]), label: d[1],
+      cls: 'rig-seg' + ((rg.detail == null ? 2 : rg.detail) === d[0] ? ' on' : '') })),
+    rigDetailSet: (e) => {
+      const d = +e.currentTarget.dataset.k;
+      if (this._gl) this._gl.setDetail(d);
+      this.setRig({ detail: d });
+    },
+    rigLabels: (rg.labels !== false && this._plant && this._plant.labels)
+                 ? this._plant.labels.map(l => ({ tag: l.tag, name: l.name, note: l.note || '' }))
+                 : [],
+    rigLabelsOn: rg.labels !== false ? 'true' : 'false',
+    rigLabelsLabel: rg.labels !== false ? 'Names on' : 'Names',
+    rigLabelsTitle: rg.labels !== false ? 'Hide the equipment nameplates'
+                                        : 'Show what every item is and its equipment number',
     rigFullCls: rg.full ? 'rig-full' : '',
     rigFullOn: rg.full ? 'true' : 'false',
     rigFullLabel: rg.full ? 'Exit focus' : 'Focus',
@@ -352,6 +372,8 @@ rigView(s) {
       else if (d.act === 'expert') this.setRig({ expert: !this.state.rig.expert });
       else if (d.act === 'flow') { const v = !this.state.rig.flow; if (this._gl) this._gl.state.flow = v; this.setRig({ flow: v }); }
       else if (d.act === 'clear') this.rigSelect(null);
+      else if (d.act === 'labels') this.setRig({ labels: this.state.rig.labels === false });
+      else if (d.act === 'labels') this.setRig({ labels: this.state.rig.labels === false });
       else if (d.act === 'full') this.rigFullToggle();
       else if (d.act === 'home') this.leaveRig();
     },

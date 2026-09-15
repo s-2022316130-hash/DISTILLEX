@@ -27,8 +27,15 @@ var KIT = (function () {
 
   /** Bind the kit to one plant's emitter.
    *  `add(mesh, mat, mtx, pick, tint, tintKey)` is the plant's own. */
-  function make(add, MAT) {
+  function make(add, MAT, tier) {
     var K = {};
+    /* The access steel is where the object count lives: handrail posts,
+       ladder rungs, stair treads. Half of each is emitted into a higher
+       detail tier, so a small screen gets a handrail at half the post
+       spacing — which is invisible at the distance it is drawn from — rather
+       than losing the handrail or the sharpness of the whole picture. */
+    var TIER = tier || function () {};
+    function fine(n, base) { TIER(n ? 2 : base || 0); }
 
     /* ── primitives ──────────────────────────────────────────────────── */
 
@@ -68,11 +75,13 @@ var KIT = (function () {
     K.platform = function (x, y, z, r, pick, inner) {
       var i, a;
       add('annulus', MAT.grate, M.trs(M.m4(), x, y, z, r, 1, r), pick);
-      var n = Math.max(10, Math.round(r * 4));
+      var n = Math.max(8, Math.round(r * 4));
       for (i = 0; i < n; i++) {
         a = i / n * Math.PI * 2;
+        fine(i % 2);
         K.up('rod', MAT.rail, x + Math.cos(a) * r, y, z + Math.sin(a) * r, 0.045, 1.08, pick);
       }
+      fine(0);
       add('ringThin', MAT.rail, M.trs(M.m4(), x, y + 1.05, z, r, 1, r), pick);
       add('ringThin', MAT.rail, M.trs(M.m4(), x, y + 0.55, z, r, 1, r), pick);
       if (inner > 0) for (i = 0; i < 8; i++) {
@@ -89,8 +98,12 @@ var KIT = (function () {
       // stringers
       K.tube([x - dir[2]*w, y0, z + dir[0]*w], [x - dir[2]*w, y1, z + dir[0]*w], 0.055, MAT.rail, pick);
       K.tube([x + dir[2]*w, y0, z - dir[0]*w], [x + dir[2]*w, y1, z - dir[0]*w], 0.055, MAT.rail, pick);
-      for (i = y0 + 0.3; i < y1; i += 0.42)
+      var rung = 0;
+      for (i = y0 + 0.3; i < y1; i += 0.42) {
+        fine((rung++) % 2);
         K.tube([x - dir[2]*w, i, z + dir[0]*w], [x + dir[2]*w, i, z - dir[0]*w], 0.04, MAT.rail, pick);
+      }
+      fine(0);
       for (i = y0 + 2.2; i < y1 - 1.2; i += 1.5)
         add('ringThin', MAT.rail, M.trs(M.m4(), x + dir[0]*0.3, i, z + dir[2]*0.3, 0.58, 1, 0.58), pick);
     };
@@ -236,30 +249,96 @@ var KIT = (function () {
 
     /* ── the plant around the plant ──────────────────────────────────── */
 
-    /** A floating-roof storage tank: shell, wind girder, roof, spiral stair
-     *  and the bund it stands in. */
+    /** A storage tank, of the kind the product it holds actually needs.
+     *
+     *  roof: 'float'  external floating roof — the deck sits on the liquid and
+     *                 there is no vapour space at all. What volatile stock
+     *                 (crude, naphtha) is kept in.
+     *        'ifr'    fixed roof with an internal floater and a vent ring —
+     *                 medium flash point: kerosene, jet.
+     *        'cone'   plain fixed cone roof — diesel, gas oil, anything whose
+     *                 flash point is high enough not to need a deck.
+     *  lagged: cladding and banding, for a stock that has to be kept warm.
+     *  heated: the steam coil header and its lines, which residue needs or it
+     *          will not pump.
+     */
     K.tank = function (o) {
       var x = o.x, z = o.z, r = o.r, h = o.h, pick = o.pick || '';
-      K.up('cyl', MAT.tank, x, 0, z, r, h, pick);
-      add('dish', MAT.tank, M.trs(M.m4(), x, h, z, r, r * 0.16, r), pick);
-      add('ringThin', MAT.struct, M.trs(M.m4(), x, h * 0.72, z, r * 1.03, 1, r * 1.03), pick);
-      add('ringThin', MAT.struct, M.trs(M.m4(), x, h * 0.40, z, r * 1.02, 1, r * 1.02), pick);
-      add('ringThin', MAT.rail, M.trs(M.m4(), x, h + 0.9, z, r * 0.99, 1, r * 0.99), pick);
-      // the stair that winds up the shell
-      var turns = 1.15, steps = Math.max(12, Math.round(h * 2));
-      for (var i = 0; i < steps; i++) {
+      var roof = o.roof || 'cone', i;
+      K.up('cyl', o.lagged ? MAT.insul : MAT.tank, x, 0, z, r, h, pick);
+      // shell courses: a tank is rolled in plate, and the rings read as scale
+      for (i = 1; i < 4; i++)
+        add('ringThin', MAT.struct, M.trs(M.m4(), x, h * i / 4, z, r * 1.015, 1, r * 1.015), pick);
+      if (roof === 'float') {
+        // the deck, part way down, and the wind girder round the open top
+        add('disc', MAT.struct, M.trs(M.m4(), x, h * (o.level || 0.62), z, r * 0.97, 1, r * 0.97), pick);
+        add('ringThin', MAT.rail, M.trs(M.m4(), x, h + 0.1, z, r * 1.05, 1, r * 1.05), pick);
+        add('ringThin', MAT.struct, M.trs(M.m4(), x, h - 0.5, z, r * 1.06, 1, r * 1.06), pick);
+      } else {
+        add('dish', o.lagged ? MAT.insul : MAT.tank, M.trs(M.m4(), x, h, z, r, r * 0.17, r), pick);
+        // the centre vent, and on an internal-floater tank the ring of shell
+        // vents that tells it apart from a plain cone roof
+        K.up('cylCap', MAT.struct, x, h + r * 0.15, z, 0.26, 0.9, pick);
+        if (roof === 'ifr') for (i = 0; i < 8; i++) {
+          var va = i / 8 * Math.PI * 2;
+          K.up('rodCap', MAT.struct, x + Math.cos(va) * r * 0.82, h + r * 0.09,
+               z + Math.sin(va) * r * 0.82, 0.16, 0.5, pick);
+        }
+      }
+      if (o.lagged) for (i = 0; i < 6; i++)
+        add('ringThin', MAT.struct, M.trs(M.m4(), x, h * (i + 0.5) / 6, z, r * 1.03, 1, r * 1.03), pick);
+      // the steam coil header a heated tank is fed through
+      if (o.heated) {
+        K.tube([x - r - 2.6, 1.0, z], [x - r * 0.2, 1.0, z], 0.16, MAT.shell, pick, o.steam);
+        K.up('cylCap', MAT.shell, x - r * 0.2, 1.0, z, 0.2, 1.6, pick, o.steam);
+      }
+      // the stair that winds up the shell, and the platform it lands on
+      var turns = 1.1, steps = Math.max(8, Math.round(h * (o.steps || 1.3)));
+      for (i = 0; i < steps; i++) {
         var t = i / steps, a = t * turns * Math.PI * 2;
+        fine(i % 2, 1);
         add('box', MAT.grate, M.yawTRS(M.m4(), x + Math.cos(a) * (r + 0.6), h * t + 0.4,
-            z + Math.sin(a) * (r + 0.6), -a, 1.2, 0.08, 0.45), pick);
+            z + Math.sin(a) * (r + 0.6), -a, 1.2, 0.08, 0.5), pick);
         K.up('rod', MAT.rail, x + Math.cos(a) * (r + 1.15), h * t + 0.4,
              z + Math.sin(a) * (r + 1.15), 0.045, 1.0, pick);
       }
+      fine(0, 1);
+      // the filling nozzle at the base, which is where the rundown lands
+      var na = o.fillAngle == null ? Math.PI : o.fillAngle;
+      var np = [x + Math.cos(na) * (r + 0.6), 1.3, z + Math.sin(na) * (r + 0.6)];
+      K.tube([x + Math.cos(na) * r, 1.3, z + Math.sin(na) * r], np, 0.22, MAT.shell, pick, o.tint);
+      K.flange(np, [Math.cos(na), 0, Math.sin(na)], 0.22, pick);
       // the bund wall
       if (o.bund) {
-        add('ringThin', MAT.concrete, M.trs(M.m4(), x, 1.2, z, r * 1.75, 1, r * 1.75), pick);
-        K.up('cyl', MAT.concrete, x, 0, z, r * 1.75, 1.2, pick);
+        K.up('cyl', MAT.concrete, x, 0, z, r * (o.bundR || 1.6), 1.1, pick);
+        add('ringThin', MAT.concrete, M.trs(M.m4(), x, 1.1, z, r * (o.bundR || 1.6), 1, r * (o.bundR || 1.6)), pick);
       }
-      return { top: h };
+      return { top: h, fill: np };
+    };
+
+    /** A Horton sphere: the pressure vessel LPG is kept in, on its ring of
+     *  legs with the cross bracing between them and the crown platform on top.
+     *  Nothing else on a refinery looks remotely like one. */
+    K.sphere = function (o) {
+      var x = o.x, z = o.z, r = o.r, pick = o.pick || '';
+      var cy = o.y == null ? r + 3.4 : o.y, legs = o.legs || 8, i, a, a2;
+      add('sphere', o.mat || MAT.tank, M.trs(M.m4(), x, cy, z, r, r, r), pick);
+      add('ringThin', MAT.struct, M.trs(M.m4(), x, cy, z, r * 1.005, 1, r * 1.005), pick);
+      for (i = 0; i < legs; i++) {
+        a = i / legs * Math.PI * 2;
+        var lx = x + Math.cos(a) * r * 0.80, lz = z + Math.sin(a) * r * 0.80;
+        K.tube([lx, 0, lz], [x + Math.cos(a) * r * 0.70, cy, z + Math.sin(a) * r * 0.70],
+               0.22, MAT.struct, pick);
+        K.pad(lx, lz, 1.5, 1.5, pick);
+        // one cross brace to the next leg
+        a2 = (i + 1) / legs * Math.PI * 2;
+        K.tube([lx, cy * 0.55, lz],
+               [x + Math.cos(a2) * r * 0.78, cy * 0.22, z + Math.sin(a2) * r * 0.78],
+               0.10, MAT.struct, pick);
+      }
+      K.platform(x, cy + r * 0.92, z, r * 0.42, pick, 0);
+      K.tube([x, cy + r, z], [x, cy + r * 0.92, z], 0.22, MAT.shell, pick, o.tint);
+      return { top: cy + r };
     };
 
     /** A flare: the derrick that carries it, the riser, the tip, and the
