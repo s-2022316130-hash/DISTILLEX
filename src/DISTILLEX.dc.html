@@ -213,8 +213,12 @@
      not a label, so it is tuned against 3:1 for graphics rather than the
      4.5:1 the gold text role has to carry.  It is --dx-cursor, not --dx-mark,
      because .dx-mark is the logo and one of the two words had to give. */
-  :root    { --dx-cursor: #b88000; --dx-drop: 0 3px 12px rgba(31,41,72,.20) }
-  .dx-dark { --dx-cursor: #eeb300; --dx-drop: 0 3px 12px rgba(0,0,0,.55) }
+  :root    { --dx-cursor: #b88000; --dx-drop: 0 3px 12px rgba(31,41,72,.20);
+             /* the core of the picked-stage bar: a white-hot centre reads as
+                light on a night sky and as nothing at all on a white one */
+             --dx-pick-hi: #8a5a00 }
+  .dx-dark { --dx-cursor: #eeb300; --dx-drop: 0 3px 12px rgba(0,0,0,.55);
+             --dx-pick-hi: #ffffff }
 
   /* ═══ motion policy ═══════════════════════════════════════════════════
      Everything decorative is switched off; the interface stays fully
@@ -939,10 +943,137 @@
      pointed at whatever the viewpoint */
   .dx-hit { position:absolute; cursor:pointer; background:transparent }
   .dx-vp-top .dx-hit { pointer-events:none }
+  /* ── a stage profile, and the size it opens to ────────────────────────
+     The card is a button because that is what it does: one press and the
+     chart is redrawn large enough to carry its stage markers. The dialog
+     grows out of the card it came from rather than appearing over it, which
+     is what makes the two read as the same object. */
+  .dx-chart { position:relative; display:block; width:100%; margin:0;
+              padding:10px 8px 6px; text-align:left; cursor:zoom-in;
+              background:var(--dx-raised); color:inherit; font:inherit;
+              border:1px solid var(--dx-hairline); border-radius:var(--dx-r-md);
+              transition:border-color var(--dx-t-base) var(--dx-ease),
+                         transform var(--dx-t-base) var(--dx-ease-out),
+                         box-shadow var(--dx-t-base) var(--dx-ease) }
+  .dx-chart:hover { border-color:color-mix(in srgb, var(--color-accent) 46%, var(--dx-hairline));
+                    transform:translateY(-2px); box-shadow:var(--shadow-md) }
+  .dx-chart:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px }
+  .dx-chart-zi { position:absolute; top:8px; right:8px; width:22px; height:22px;
+                 display:grid; place-items:center; border-radius:6px; pointer-events:none;
+                 color:var(--dx-ink3); opacity:0;
+                 background:color-mix(in srgb, var(--color-surface) 76%, transparent);
+                 transition:opacity var(--dx-t-base) var(--dx-ease), color var(--dx-t-base) var(--dx-ease) }
+  .dx-chart-zi svg { width:13px; height:13px }
+  .dx-chart:hover .dx-chart-zi, .dx-chart:focus-visible .dx-chart-zi { opacity:1; color:var(--dx-ink-accent) }
+  /* a touch screen has no hover, so the affordance is simply always there */
+  @media (hover: none) { .dx-chart-zi { opacity:.85 } }
+
+  .dx-ax { fill:none; stroke:var(--color-divider); stroke-width:1 }
+  .dx-gr { fill:none; stroke:color-mix(in srgb, var(--color-text) 8%, transparent); stroke-width:1 }
+  .dx-feedline { fill:none; stroke:var(--dx-plot-feed); stroke-width:1.6; stroke-dasharray:6 5; opacity:.8 }
+
+  .dx-lb { position:fixed; inset:0; z-index:90; display:grid; place-items:center;
+           padding:max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+           background:color-mix(in srgb, #05070c 82%, transparent);
+           animation:dxLbIn var(--dx-t-view) var(--dx-ease-out) both }
+  .dx-lb-card { position:relative; width:min(1080px, 100%); max-height:100%;
+                overflow:auto; padding:14px 16px 10px; border-radius:var(--dx-r-lg);
+                background:var(--color-surface);
+                border:1px solid color-mix(in srgb, var(--color-accent) 22%, var(--dx-hairline));
+                box-shadow:var(--shadow-lg, 0 24px 60px rgba(0,0,0,.45));
+                transform-origin:0 0 }
+  .dx-lb-head { display:flex; align-items:center; gap:12px; margin-bottom:6px }
+  .dx-lb-head .dx-kicker { flex:1; min-width:0 }
+  .dx-lb-x { flex:0 0 auto; width:44px; height:44px; display:grid; place-items:center;
+             border-radius:9px; cursor:pointer; color:var(--color-text);
+             background:var(--dx-raised); border:1px solid var(--dx-hairline);
+             transition:background var(--dx-t-base) var(--dx-ease),
+                        border-color var(--dx-t-base) var(--dx-ease) }
+  .dx-lb-x svg { width:17px; height:17px }
+  .dx-lb-x:hover { background:color-mix(in srgb, var(--color-accent) 14%, var(--dx-raised));
+                   border-color:color-mix(in srgb, var(--color-accent) 50%, var(--dx-hairline)) }
+  .dx-lb-x:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px }
+  .dx-lb-svg { display:block; width:100%; height:auto }
+  .dx-lb-note { margin:2px 0 0; font-size:11.5px; line-height:1.55; color:var(--dx-ink3) }
+  @keyframes dxLbIn { from { opacity:0 } to { opacity:1 } }
+  @media (prefers-reduced-motion: reduce) {
+    .dx-lb { animation-duration:1ms }
+    .dx-chart:hover { transform:none }
+  }
+
+  /* The picked stage, on a plane that faces the viewer: a lit bar across the
+     shell and a halo that expands once. This is the part that is actually
+     visible from the front, where the tray disc itself is seen edge-on; which
+     stage it is stays where it already was, in the legend under the column. */
+  /* Only where it is needed. Turned away from the front, the tray's own disc
+     is an ellipse you can see, and the bar — a plane edge-on to that view —
+     becomes a sliver sticking out of the shell. */
+  .dx-pick { display:none }
+  .dx-vp-front .dx-pick, .dx-vp-sec .dx-pick { display:block }
+  .dx-pick {
+    position:absolute; pointer-events:none; border-radius:999px; z-index:6;
+    background:linear-gradient(90deg, transparent,
+      color-mix(in srgb, var(--dx-cursor) 70%, transparent) 14%,
+      var(--dx-pick-hi) 50%,
+      color-mix(in srgb, var(--dx-cursor) 70%, transparent) 86%, transparent);
+    box-shadow:0 0 22px 2px color-mix(in srgb, var(--dx-cursor) 85%, transparent),
+               0 0 7px 1px color-mix(in srgb, var(--dx-pick-hi) 70%, transparent);
+    animation:dxPickIn 380ms var(--dx-ease-out) both;
+  }
+  .dx-pick::after {
+    content:''; position:absolute; inset:-13px -7px; border-radius:999px;
+    border:2px solid var(--dx-cursor);
+    animation:dxPickPing 820ms var(--dx-ease-out) both;
+  }
+  @keyframes dxPickIn   { from { opacity:0; filter:brightness(2.4) } to { opacity:1; filter:none } }
+  @keyframes dxPickPing { from { transform:scale(.72); opacity:.95 }
+                          to   { transform:scale(1.9);  opacity:0 } }
+  @media (prefers-reduced-motion: reduce) {
+    .dx-pick { animation:none }
+    .dx-pick::after { animation:none; opacity:.55 }
+  }
+
+  /* ── the stage you picked ─────────────────────────────────────────────
+     Selecting a tray used to change a border colour inside a stack of faint
+     rings, which read as the light going out rather than as a selection. Two
+     things fix that, and they work together: the rest of the stack steps back,
+     and the picked tray is lit — a filled disc, a bright ring, a real glow,
+     and one halo that expands and fades so the eye is told where to look.
+     Nothing here animates the tray's own transform: that is what places it in
+     the 3D scene, and touching it would tear the column apart. */
+  .dx-col-mid.picked .dx-tray:not(.hot) {
+    opacity:.26; box-shadow:none;
+    transition:opacity var(--dx-t-base) var(--dx-ease), box-shadow var(--dx-t-base) var(--dx-ease);
+  }
+  .dx-col-mid.picked .dx-slat { opacity:.5 }
+  .dx-col-mid.picked .dx-p    { opacity:.34 }
+
   .dx-tray.hot {
     border-color:var(--dx-cursor) !important;
-    box-shadow:0 0 28px color-mix(in srgb, var(--dx-cursor) var(--dx-3d-glow), transparent),
-               0 0 0 1px color-mix(in srgb, var(--dx-cursor) 55%, transparent);
+    border-width:2.5px;
+    background:radial-gradient(circle at 50% 50%,
+      color-mix(in srgb, var(--dx-cursor) 62%, transparent),
+      color-mix(in srgb, var(--dx-cursor) 26%, transparent) 62%,
+      color-mix(in srgb, var(--dx-cursor) 6%, transparent)) !important;
+    box-shadow:0 0 46px color-mix(in srgb, var(--dx-cursor) 80%, transparent),
+               0 0 14px color-mix(in srgb, var(--dx-cursor) 95%, transparent),
+               0 0 0 2px color-mix(in srgb, var(--dx-cursor) 78%, transparent),
+               inset 0 0 22px color-mix(in srgb, var(--dx-cursor) 46%, transparent);
+    opacity:1;
+  }
+  /* the halo. A pseudo-element, so it can be scaled without disturbing the
+     transform that puts the tray where it belongs. */
+  .dx-tray.hot::after {
+    content:''; position:absolute; inset:-9px; border-radius:50%;
+    border:2px solid var(--dx-cursor); pointer-events:none;
+    animation:dxTrayPing 780ms var(--dx-ease-out) both;
+  }
+  @keyframes dxTrayPing {
+    from { transform:scale(.78); opacity:.95 }
+    to   { transform:scale(1.55); opacity:0 }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dx-tray.hot::after { animation:none; opacity:.5 }
   }
   .dx-cm-split .dx-note, .dx-cm-tight .dx-note { font-size:8.5px; letter-spacing:.04em }
   .dx-cm-split .dx-note b, .dx-cm-tight .dx-note b { font-size:10px }
@@ -2986,7 +3117,7 @@
               </sc-if>
               <div class="{{ vpCls }}" style="position:absolute;inset:0;display:grid;place-items:center">
                 <div class="dx-col" style="width:{{ scene.W }}px;height:{{ scene.H }}px">
-                  <div class="dx-col-mid" style="height:{{ scene.H }}px">
+                  <div class="{{ scene.midCls }}" style="height:{{ scene.H }}px">
                     <sc-for list="{{ scene.slats }}" as="sl" hint-placeholder-count="16">
                       <i class="{{ sl.cls }}" style="{{ sl.style }}"></i>
                     </sc-for>
@@ -2997,6 +3128,9 @@
                     <sc-for list="{{ scene.trays }}" as="tr2" hint-placeholder-count="12">
                       <i class="{{ tr2.cls }}" style="{{ tr2.style }}"></i>
                     </sc-for>
+                    <sc-if value="{{ scene.hasMark }}">
+                      <i class="dx-pick" style="{{ scene.markStyle }}" aria-hidden="true"></i>
+                    </sc-if>
                     <div class="dx-layer-flow" style="position:absolute;inset:0;transform-style:preserve-3d">
                       <sc-for list="{{ scene.parts }}" as="p" hint-placeholder-count="18">
                         <span class="{{ p.cls }}" style="{{ p.style }}"><i style="{{ p.dot }}"></i></span>
@@ -3053,28 +3187,33 @@
           </div>
           <div class="dx-grid2" style="gap:14px">
             <sc-for list="{{ profiles }}" as="p" hint-placeholder-count="4">
-              <figure class="blueprint" style="padding:10px 8px 6px">
+              <button type="button" class="dx-chart blueprint" data-pi="{{ p.i }}"
+                      onClick="{{ zoomOpen }}" aria-label="Enlarge: {{ p.title }}">
                 <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-                <svg viewBox="0 0 360 190" style="width:100%;height:auto" role="img" aria-label="{{ p.title }}">
-                  <text x="8" y="14" class="dx-plabel" font-size="11" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-text)">{{ p.title }}</text>
-                  <g stroke="var(--color-divider)" stroke-width="1" fill="none"><path d="M46 24 V162 H352"></path></g>
-                  <g stroke="color-mix(in srgb,var(--color-text) 8%,transparent)" stroke-width="1"><path d="{{ p.grid }}"></path></g>
-                  <sc-for list="{{ p.series }}" as="s" hint-placeholder-count="1">
-                    <polyline points="{{ s.pts }}" fill="none" stroke="{{ s.color }}" stroke-width="1.6" stroke-dasharray="{{ s.dash }}"></polyline>
+                <svg viewBox="0 0 {{ p.W }} {{ p.H }}" style="width:100%;height:auto" role="img" aria-label="{{ p.title }}">
+                  <text x="8" y="{{ p.titleY }}" class="dx-plabel" font-size="{{ p.fsT }}" font-family="var(--font-heading)" letter-spacing=".08em" fill="var(--color-text)">{{ p.title }}</text>
+                  <path class="dx-ax" d="{{ p.axis }}"></path>
+                  <path class="dx-gr" d="{{ p.grid }}"></path>
+                  <sc-for list="{{ p.series }}" as="s" hint-placeholder-count="2">
+                    <polyline points="{{ s.pts }}" fill="none" stroke="{{ s.color }}" stroke-width="{{ s.w }}" stroke-dasharray="{{ s.dash }}" stroke-linejoin="round" stroke-linecap="round"></polyline>
                   </sc-for>
                   <sc-for list="{{ p.ticks }}" as="t" hint-placeholder-count="4">
-                    <text x="{{ t.x }}" y="{{ t.y }}" text-anchor="{{ t.anchor }}" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
+                    <text x="{{ t.x }}" y="{{ t.y }}" text-anchor="{{ t.anchor }}" font-size="{{ p.fs }}" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ t.label }}</text>
                   </sc-for>
-                  <text x="200" y="184" text-anchor="middle" font-size="9" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">Stage number (top → bottom)</text>
-                  <sc-for list="{{ p.legend }}" as="g" hint-placeholder-count="1">
-                    <g><rect x="{{ g.x }}" y="20" width="14" height="2" fill="{{ g.color }}"></rect><text x="{{ g.tx }}" y="25" font-size="9" fill="color-mix(in srgb,var(--color-text) 65%,transparent)">{{ g.label }}</text></g>
+                  <text x="{{ p.capX }}" y="{{ p.capY }}" text-anchor="middle" font-size="{{ p.fs }}" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ p.caption }}</text>
+                  <sc-for list="{{ p.legend }}" as="g" hint-placeholder-count="2">
+                    <g><rect x="{{ g.x }}" y="{{ g.y }}" width="14" height="2" fill="{{ g.color }}"></rect><text x="{{ g.tx }}" y="{{ g.ty }}" font-size="{{ p.fs }}" fill="color-mix(in srgb,var(--color-text) 65%,transparent)">{{ g.label }}</text></g>
                   </sc-for>
                 </svg>
-              </figure>
+                <span class="dx-chart-zi" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M9 3H3v6M15 21h6v-6M21 9V3h-6M3 15v6h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </span>
+              </button>
             </sc-for>
           </div>
         </div>
             </details>
+
           </section>
           </section>
         </div>
@@ -4348,6 +4487,55 @@
 </div>
 </sc-if>
 
+<!-- ══ a chart, opened ══════════════════════════════════════════════════
+     The same four series, redrawn at a size that fits the stage markers, the
+     stage-number axis and the feed line. It grows out of the card it came
+     from; Escape, the backdrop and the close button all put it back.
+
+     It lives out here with the other fixed overlays on purpose: inside the
+     card it came from, an ancestor's `perspective` makes position:fixed
+     resolve against that ancestor instead of the viewport, and the dialog
+     lands halfway down the page. ══ -->
+<sc-if value="{{ zoom.open }}">
+<div class="dx-lb" id="dx-lb" onClick="{{ zoomBack }}">
+  <div class="dx-lb-card" role="dialog" aria-modal="true" aria-label="{{ zoom.title }}">
+    <div class="dx-lb-head">
+      <span class="dx-kicker">{{ zoom.title }}</span>
+      <button type="button" class="dx-lb-x" onClick="{{ zoomClose }}" aria-label="Close chart">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
+      </button>
+    </div>
+    <svg viewBox="0 0 {{ zoom.W }} {{ zoom.H }}" class="dx-lb-svg" role="img" aria-label="{{ zoom.title }}">
+      <path class="dx-ax" d="{{ zoom.axis }}"></path>
+      <path class="dx-gr" d="{{ zoom.grid }}"></path>
+      <sc-if value="{{ zoom.hasFeed }}">
+        <g><path class="dx-feedline" d="{{ zoom.feedD }}"></path>
+           <text x="{{ zoom.feedLabX }}" y="{{ zoom.feedLabY }}" font-size="{{ zoom.fs }}" fill="var(--dx-plot-feed)">FEED</text></g>
+      </sc-if>
+      <sc-for list="{{ zoom.series }}" as="zs" hint-placeholder-count="2">
+        <g>
+          <polyline points="{{ zs.pts }}" fill="none" stroke="{{ zs.color }}" stroke-width="{{ zs.w }}" stroke-dasharray="{{ zs.dash }}" stroke-linejoin="round" stroke-linecap="round"></polyline>
+          <sc-for list="{{ zs.dots }}" as="zd" hint-placeholder-count="12">
+            <circle cx="{{ zd.cx }}" cy="{{ zd.cy }}" r="3.6" fill="{{ zs.color }}"></circle>
+          </sc-for>
+        </g>
+      </sc-for>
+      <sc-for list="{{ zoom.ticks }}" as="zt" hint-placeholder-count="7">
+        <text x="{{ zt.x }}" y="{{ zt.y }}" text-anchor="{{ zt.anchor }}" font-size="{{ zoom.fs }}" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ zt.label }}</text>
+      </sc-for>
+      <sc-for list="{{ zoom.xticks }}" as="zx" hint-placeholder-count="12">
+        <text x="{{ zx.x }}" y="{{ zx.y }}" text-anchor="middle" font-size="{{ zoom.fs }}" fill="color-mix(in srgb,var(--color-text) 66%,transparent)">{{ zx.label }}</text>
+      </sc-for>
+      <text x="{{ zoom.capX }}" y="{{ zoom.capY }}" text-anchor="middle" font-size="{{ zoom.fs }}" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ zoom.caption }}</text>
+      <sc-for list="{{ zoom.legend }}" as="zg" hint-placeholder-count="2">
+        <g><rect x="{{ zg.x }}" y="{{ zg.y }}" width="20" height="3" fill="{{ zg.color }}"></rect><text x="{{ zg.tx }}" y="{{ zg.ty }}" font-size="{{ zoom.fs }}" fill="color-mix(in srgb,var(--color-text) 72%,transparent)">{{ zg.label }}</text></g>
+      </sc-for>
+    </svg>
+    <p class="dx-lb-note">Stage 1 is the top tray; stage {{ r.N }} is the reboiler. Every point is one equilibrium stage from the solved case.</p>
+  </div>
+</div>
+</sc-if>
+
 <sc-if value="{{ tipOpen }}">
   <div style="{{ tipStyle }}">{{ tipText }}</div>
 </sc-if>
@@ -4540,7 +4728,7 @@ class Component extends DCLogic {
     eff:0.70, reb:'partial', calcMode:'design',
     mode:'learning', colView:'stages', equip:'column', colVP:'front', colMode:'3d',
     crudeView:'process', crudeHover:null,
-    anim:999, hoverStage:null, pinStage:null, mtHover:null, tip:null, tipXY:[0,0],
+    anim:999, hoverStage:null, pinStage:null, zoomChart:null, mtHover:null, tip:null, tipXY:[0,0],
     explaining:false, explainI:0, wiVar:'R', wiTo:3.2, whatIf:null,
     sens:{ind:'R',dep:'N',min:1.2,max:6,n:24}, exam:{i:0,reveal:'',input:''},
     theoryOpen:'t1', theoryQ:'', toast:'', vleShow:'xy', mtDrag:null, vleHover:null,
@@ -4743,6 +4931,53 @@ class Component extends DCLogic {
     document.querySelectorAll('.dx-reveal:not(.seen)').forEach(el => this._dxio.observe(el));
   }
 
+  /** Put an opened chart back, and return the focus that opened it. */
+  closeZoom(){
+    if (this.state.zoomChart === null) return;
+    const back = this._zoomReturn;
+    this.setState({ zoomChart: null });
+    // the card the chart came from gets the focus ring again, so a keyboard
+    // user is not dropped at the top of the document
+    if (back && back.isConnected) setTimeout(() => { try { back.focus(); } catch (e) {} }, 0);
+    this._zoomReturn = null;
+  }
+
+  /** Everything the opened chart needs that the template cannot express:
+   *  the key handler, the focus move, and the grow-out-of-the-card.
+   *
+   *  The growth is a FLIP. The card's rect was recorded when it was pressed;
+   *  the dialog is measured where it has landed, and the difference between
+   *  the two is played backwards. Nothing is laid out twice, and the browser
+   *  animates a transform rather than a size. */
+  _zoomTick(){
+    const open = this.state.zoomChart !== null;
+    if (open && !this._zoomKey){
+      this._zoomKey = (e) => { if (e.key === 'Escape' && this.state.zoomChart !== null){
+        e.preventDefault(); this.closeZoom(); } };
+      document.addEventListener('keydown', this._zoomKey);
+    } else if (!open && this._zoomKey){
+      document.removeEventListener('keydown', this._zoomKey);
+      this._zoomKey = null;
+    }
+    if (!open) { this._zoomShown = false; return; }
+    if (this._zoomShown) return;
+    this._zoomShown = true;
+    const card = document.querySelector('.dx-lb-card');
+    if (!card) return;
+    const x = document.querySelector('.dx-lb-x');
+    if (x) { try { x.focus({ preventScroll: true }); } catch (e) { try { x.focus(); } catch (e2) {} } }
+    const from = this._zoomFrom;
+    if (!from || this._calm() || typeof card.animate !== 'function') return;
+    const to = card.getBoundingClientRect();
+    if (!(to.width > 0 && to.height > 0)) return;
+    const sx = Math.max(0.05, from.w / to.width), sy = Math.max(0.05, from.h / to.height);
+    card.animate(
+      [{ transform: 'translate(' + (from.x - to.left) + 'px,' + (from.y - to.top) + 'px) scale(' + sx + ',' + sy + ')',
+         opacity: 0.35 },
+       { transform: 'none', opacity: 1 }],
+      { duration: 340, easing: 'cubic-bezier(.2,.7,.25,1)', fill: 'both' });
+  }
+
   _afterRender(){
     try {
       this._tickView(); this._tickNums(); this._tickPill(); this._tickFill(); this._tickSvgText();
@@ -4751,6 +4986,7 @@ class Component extends DCLogic {
       this._rigMount(); this._rigCollectTags();
       this._heroMount();
       this._crudeMount();
+      this._zoomTick();
     } catch (e) { /* presentation only — never let it reach the engine */ }
   }
   /** The industrial page is the one view with a URL of its own. Everything
@@ -5100,24 +5336,94 @@ class Component extends DCLogic {
     const ok=r.ok, hasR=ok&&r.stages;
     const f=(v,d)=>this.f(v,d);
 
-    // profiles for charts
+    // ── stage profiles ───────────────────────────────────────────────
+    // Four charts, built twice: once at card size and once at the size they
+    // open to. The enlarged one is not the small one scaled up — it carries
+    // the stage markers, the stage-number axis and the feed line that will
+    // not fit in a 360-unit box, which is the reason for opening it.
     const st = hasR? r.stages : [];
     const nS = st.length||1;
-    const px=(i)=> 46+(306)*(nS>1? i/(nS-1):0.5);
-    const mk=(vals,lo,hi)=> vals.map((v,i)=>[px(i), 162-138*((v-lo)/((hi-lo)||1))]);
     const Ts=st.map(a=>a.T), xs=st.map(a=>a.x), ys=st.map(a=>a.y);
-    const tLo=Math.min.apply(null,Ts.concat([0]))||0, tHi=Math.max.apply(null,Ts.concat([1]))||1;
     const tl=st.length?Math.min.apply(null,Ts)-1:0, th=st.length?Math.max.apply(null,Ts)+1:1;
     const enr=st.map(a=>a.x>0&&a.x<1? (a.y/a.x)/((1-a.y)/(1-a.x)) : 1);
     const eHi=st.length?Math.max.apply(null,enr):2;
-    const gridPath='M46 58 H352 M46 92 H352 M46 127 H352';
-    const ticksFor=(lo,hi)=>[0,1,2,3].map(i=>({x:42,y:166-i*46,anchor:'end',label:(lo+(hi-lo)*i/3).toFixed(hi-lo<5?1:0)}));
-    const profiles = hasR? [
-      {title:'TEMPERATURE vs STAGE  [\u00b0C]',grid:gridPath,series:[{pts:this.poly(mk(Ts,tl,th)),color:'var(--dx-plot-temp)',dash:'0'}],ticks:ticksFor(tl,th).concat([{x:200,y:176,anchor:'middle',label:''}]),legend:[{x:250,color:'var(--dx-plot-temp)',tx:268,label:'bubble T'}]},
-      {title:'COMPOSITION vs STAGE  [mol frac]',grid:gridPath,series:[{pts:this.poly(mk(xs,0,1)),color:'var(--dx-plot-liq)',dash:'0'},{pts:this.poly(mk(ys,0,1)),color:'var(--dx-plot-phys)',dash:'5 3'}],ticks:ticksFor(0,1),legend:[{x:210,color:'var(--dx-plot-liq)',tx:228,label:'x liquid'},{x:280,color:'var(--dx-plot-phys)',tx:298,label:'y vapour'}]},
-      {title:'INTERNAL FLOWS vs STAGE  [kmol/h]',grid:gridPath,series:[{pts:this.poly(mk(st.map(a=>a.L),0,Math.max(r.Lb,r.V)*1.1)),color:'var(--dx-plot-liq)',dash:'0'},{pts:this.poly(mk(st.map(a=>a.V),0,Math.max(r.Lb,r.V)*1.1)),color:'var(--dx-plot-phys)',dash:'5 3'}],ticks:ticksFor(0,Math.max(r.Lb,r.V)*1.1),legend:[{x:210,color:'var(--dx-plot-liq)',tx:228,label:'L'},{x:270,color:'var(--dx-plot-phys)',tx:288,label:'V'}]},
-      {title:'STAGE ENRICHMENT \u03b1_eff vs STAGE',grid:gridPath,series:[{pts:this.poly(mk(enr,1,eHi)),color:'var(--color-accent)',dash:'0'}],ticks:ticksFor(1,eHi),legend:[{x:250,color:'var(--color-accent)',tx:268,label:'(y/x)/((1-y)/(1-x))'}]}
+    const flowHi = hasR? Math.max(r.Lb,r.V)*1.1 : 1;
+
+    /** One chart, in whichever box it is being drawn into. */
+    const chart = (G, spec) => {
+      const px = i => G.AX + (G.AR - G.AX) * (nS>1 ? i/(nS-1) : 0.5);
+      const py = (v, lo, hi) => G.AB - (G.AB - G.AY) * ((v - lo) / ((hi - lo) || 1));
+      const grid = [], ticks = [];
+      for (let i = 0; i <= G.gridN; i++){
+        const y = +(G.AB - (G.AB - G.AY) * i / G.gridN).toFixed(1);
+        if (i > 0) grid.push('M' + G.AX + ' ' + y + ' H' + G.AR);
+        const v = spec.lo + (spec.hi - spec.lo) * i / G.gridN;
+        ticks.push({ x: G.AX - 6, y: (y + G.fs * 0.34).toFixed(1), anchor: 'end',
+                     label: v.toFixed(Math.abs(spec.hi - spec.lo) < 5 ? 2 : 0) });
+      }
+      const series = spec.series.map(sr => ({
+        pts: this.poly(sr.v.map((v,i) => [px(i), py(v, spec.lo, spec.hi)])),
+        color: sr.color, dash: sr.dash || '0', w: G.lw,
+        // Markers only on the enlarged chart: at card size they close up into
+        // a bead chain and hide the line they are meant to sit on.
+        dots: G.dots ? sr.v.map((v,i) => ({ cx: px(i).toFixed(1),
+                                            cy: py(v, spec.lo, spec.hi).toFixed(1) })) : []
+      }));
+      // stage numbers along the foot, thinned so they never collide
+      const xticks = [];
+      if (G.xticks){
+        const step = Math.max(1, Math.ceil(nS / 12));
+        for (let i = 0; i < nS; i += step)
+          xticks.push({ x: px(i).toFixed(1), y: (G.AB + G.fs + 8).toFixed(1),
+                        label: String(Math.round(st[i].n)) });
+      }
+      const fi = hasR ? st.findIndex(a => Math.round(a.n) === Math.round(r.feedStage)) : -1;
+      return {
+        i: spec.i, title: spec.title, W: G.W, H: G.H, fsT: G.fsT, fs: G.fs,
+        titleY: G.titleY, legY: G.legY, capY: G.capY, capX: (G.AX + G.AR) / 2,
+        axis: 'M' + G.AX + ' ' + G.AY + ' V' + G.AB + ' H' + G.AR,
+        grid: grid.join(' '), ticks: ticks, xticks: xticks,
+        series: series,
+        feedD: (G.feed && fi >= 0) ? ('M' + px(fi).toFixed(1) + ' ' + G.AY + ' V' + G.AB) : '',
+        feedLabX: (G.feed && fi >= 0) ? (px(fi) + 5).toFixed(1) : '0',
+        feedLabY: (G.AY + G.fs + 2).toFixed(1),
+        hasFeed: (G.feed && fi >= 0) ? 1 : 0,
+        legend: spec.series.map((sr, k) => ({
+          x: (G.AR - (spec.series.length - k) * G.legW).toFixed(1),
+          y: G.legY, ty: (G.legY + G.fs * 0.42).toFixed(1),
+          tx: (G.AR - (spec.series.length - k) * G.legW + 18).toFixed(1),
+          color: sr.color, label: sr.label })),
+        caption: 'Stage number (top \u2192 bottom)'
+      };
+    };
+
+    const SMALL = { W:360, H:190, AX:46, AY:24, AR:352, AB:162, gridN:3,
+                    fsT:11, fs:9, lw:1.6, titleY:14, legY:20, capY:184, legW:70,
+                    dots:false, xticks:false, feed:false };
+    const BIG   = { W:900, H:470, AX:86, AY:52, AR:872, AB:404, gridN:6,
+                    fsT:16, fs:12, lw:2.6, titleY:28, legY:44, capY:452, legW:150,
+                    dots:true, xticks:true, feed:true };
+    // A phone opens the chart into a portrait box, not a letterbox. The same
+    // drawing at 900 units wide is shown at 358 CSS px, where twelve-unit type
+    // lands at five pixels — enlarging it would make it no easier to read.
+    const BIGP  = { W:430, H:560, AX:58, AY:36, AR:414, AB:482, gridN:5,
+                    fsT:15, fs:12, lw:2.6, titleY:22, legY:26, capY:524, legW:118,
+                    dots:true, xticks:true, feed:true };
+
+    const SPECS = hasR? [
+      { i:0, title:'TEMPERATURE vs STAGE  [\u00b0C]', lo:tl, hi:th,
+        series:[{ v:Ts, color:'var(--dx-plot-temp)', label:'bubble T' }] },
+      { i:1, title:'COMPOSITION vs STAGE  [mol frac]', lo:0, hi:1,
+        series:[{ v:xs, color:'var(--dx-plot-liq)', label:'x liquid' },
+                { v:ys, color:'var(--dx-plot-phys)', dash:'5 3', label:'y vapour' }] },
+      { i:2, title:'INTERNAL FLOWS vs STAGE  [kmol/h]', lo:0, hi:flowHi,
+        series:[{ v:st.map(a=>a.L), color:'var(--dx-plot-liq)', label:'L' },
+                { v:st.map(a=>a.V), color:'var(--dx-plot-phys)', dash:'5 3', label:'V' }] },
+      { i:3, title:'STAGE ENRICHMENT \u03b1_eff vs STAGE', lo:1, hi:eHi,
+        series:[{ v:enr, color:'var(--color-accent)', label:'(y/x)/((1-y)/(1-x))' }] }
     ] : [];
+    const profiles = SPECS.map(sp => chart(SMALL, sp));
+    const profilesBig = SPECS.map(sp => chart(s.narrow ? BIGP : BIG, sp));
 
     // column trays
     const top=78, bot=462, maxDraw=Math.min(nS,26);
@@ -5252,6 +5558,8 @@ class Component extends DCLogic {
         ? 'Design mode: you fix both product purities and the reflux; the engine returns the stages required.'
         : 'Rating mode: you fix the stage count and the distillate cut; the engine solves for the purities that column actually delivers.',
       trays, bubbles, profiles, stageRows, liveRows, keyRows, moreRows, equipment,
+      zoom: (s.zoomChart !== null && profilesBig[s.zoomChart])
+              ? Object.assign({ open: true }, profilesBig[s.zoomChart]) : { open: false },
       equipInfo:{title:eq.title,body:eq.body,duty},
       hover:!!hoverStg,
       hoverRows: hoverStg? [
@@ -5307,6 +5615,16 @@ class Component extends DCLogic {
       trayIn:(e)=>{const n=+e.currentTarget.dataset.n;
         if(this.state.hoverStage!==n) this.setState({hoverStage:n});},
       trayOut:()=>{ if(this.state.hoverStage!==null) this.setState({hoverStage:null}); },
+      // A chart opens from where it was: the button's rect is kept so the
+      // dialog can be animated out of it rather than appearing on top of it.
+      zoomOpen:(e)=>{ const el=e.target.closest('[data-pi]'); if(!el) return;
+        const r=el.getBoundingClientRect();
+        this._zoomFrom={x:r.left,y:r.top,w:r.width,h:r.height};
+        this._zoomReturn=el;
+        this.setState({zoomChart:+el.dataset.pi}); },
+      // The backdrop closes; a click that started inside the card does not.
+      zoomBack:(e)=>{ if(e.target===e.currentTarget) this.closeZoom(); },
+      zoomClose:()=>{ this.closeZoom(); },
       // clicking pins a stage so the reading survives the pointer leaving;
       // clicking the same stage again releases it
       trayPick:(e)=>{const n=+e.currentTarget.dataset.n;
@@ -5772,6 +6090,8 @@ class Component extends DCLogic {
     const picks = this.stagePicks(st, Component.DRAW_CAP);
     const shown = picks.length;
     const hotN = this.activeStage(s);
+    scene.midCls = 'dx-col-mid' + (hotN !== null ? ' picked' : '');
+    scene.hasMark = 0; scene.markStyle = 'display:none';
     const span = (bot - top - 28) / Math.max(1, shown - 1);
     for (let i = 0; i < shown; i++){
       const a = picks[i];
@@ -5785,6 +6105,20 @@ class Component extends DCLogic {
       // a flat hit plane facing the viewer, so a tray can be pointed at in
       // any viewpoint without the disc's own 90-degree rotation getting in
       // the way
+      // The picked stage, marked on a plane that faces the viewer.
+      //
+      // A tray is a disc lying flat, so from the front it is a line one pixel
+      // high: a fill, a glow and a halo on the disc itself are all edge-on and
+      // none of them can be seen. The marker is drawn on the same kind of
+      // viewer-facing plane the hit targets use, which is why it reads from
+      // every viewpoint.
+      if (isHot){
+        scene.hasMark = 1;
+        scene.markStyle =
+          'width:' + (RAD * 2.16).toFixed(1) + 'px;height:3px;' +
+          'left:' + (-RAD * 1.08).toFixed(1) + 'px;top:-1.5px;' +
+          'transform:translateY(' + y.toFixed(1) + 'px) translateZ(' + (RAD + 3) + 'px)';
+      }
       scene.hits.push({ n: String(a.n),
         style:'width:' + (RAD * 2.1).toFixed(1) + 'px;height:' + Math.max(9, span).toFixed(1) +
           'px;left:' + (-RAD * 1.05).toFixed(1) + 'px;top:' + (-Math.max(9, span) / 2).toFixed(1) +
