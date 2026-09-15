@@ -856,6 +856,25 @@
   .dx-vp-front { transform: none }
   .dx-vp-iso   { transform: rotateX(16deg) rotateY(-22deg) rotateZ(1deg) scale(.92) }
   .dx-stage-hero .dx-vp-iso { transform: rotateX(15deg) rotateY(-24deg) rotateZ(1deg) scale(1.0) }
+
+  /* The hero's real model. It sits under the caption and over the ruled grid,
+     and it only becomes visible once the renderer has actually produced a
+     frame — a canvas that never paints is worse than the drawing it replaced,
+     so the drawing stays until there is something to put in its place. */
+  .dx-hero-gl { position:absolute; inset:0; width:100%; height:100%; display:block;
+                opacity:0; transition:opacity var(--dx-t-reveal) var(--dx-ease-out);
+                border-radius:inherit }
+  .dx-hero-3d .dx-hero-gl { opacity:1 }
+  /* the drawing carries an inline display, so taking it down has to outrank
+     that — a stylesheet rule alone loses to the attribute and both pictures
+     end up stacked on each other */
+  .dx-hero-3d .dx-hero-fb, .dx-hero-3d .dx-stage-grid { display:none !important }
+  .dx-hero-3d { perspective:none }
+  /* the caption strip reads over the sky, so it carries its own scrim */
+  .dx-hero-3d .dx-hero-cap { background:color-mix(in srgb, #05070c 46%, transparent);
+                             border:1px solid color-mix(in srgb, #fff 12%, transparent);
+                             border-radius:999px; padding:5px 11px 5px 9px; color:#eef4ff }
+  .dx-hero-3d .dx-hero-cap .dx-num { color:#dce6f7 !important }
   .dx-vp-sec   { transform: rotateX(9deg) rotateY(-7deg) scale(1.04) }
   .dx-vp-sec .dx-slat.near { opacity:.05 }
   .dx-vp-sec .dx-tray { border-width:2px }
@@ -925,11 +944,17 @@
     box-shadow:0 0 28px color-mix(in srgb, var(--dx-cursor) var(--dx-3d-glow), transparent),
                0 0 0 1px color-mix(in srgb, var(--dx-cursor) 55%, transparent);
   }
-  .dx-cm-split .dx-note { font-size:8.5px; letter-spacing:.04em }
-  .dx-cm-split .dx-note b { font-size:10px }
-  .dx-cm-split .dx-note::before { width:11px }
-  .dx-cm-split .dx-note.l::before { right:-13px }
-  .dx-cm-split .dx-note.r::before { left:-13px }
+  .dx-cm-split .dx-note, .dx-cm-tight .dx-note { font-size:8.5px; letter-spacing:.04em }
+  .dx-cm-split .dx-note b, .dx-cm-tight .dx-note b { font-size:10px }
+  .dx-cm-split .dx-note::before, .dx-cm-tight .dx-note::before { width:11px }
+  .dx-cm-split .dx-note.l::before, .dx-cm-tight .dx-note.l::before { right:-13px }
+  .dx-cm-split .dx-note.r::before, .dx-cm-tight .dx-note.r::before { left:-13px }
+  /* a phone is not a cramped half-panel: the callouts come in close, but the
+     type stays at a size a person can actually read */
+  @media (max-width: 900px) {
+    .dx-cm-tight .dx-note   { font-size:10px; letter-spacing:.05em }
+    .dx-cm-tight .dx-note b { font-size:11.5px }
+  }
   .dx-why { display:inline-flex; width:14px; height:14px; margin-left:5px;
             border:1px solid var(--color-divider); border-radius:50%;
             align-items:center; justify-content:center; font-size:9px; font-style:normal;
@@ -2013,7 +2038,7 @@
     .dx-grid2 { grid-template-columns:minmax(0,1fr) } .dx-side { grid-template-columns:minmax(0,1fr) }
     /* The hero stage is sized by aspect-ratio, so it must keep its own
        sizing — forcing a height on it makes it wider than the viewport. */
-    .dx-stage:not(.dx-stage-hero) { height:340px !important }
+    .dx-stage:not(.dx-stage-hero) { height:360px !important }
   }
   @media print { .dx-noprint { display:none !important } }
 </style>
@@ -2066,9 +2091,12 @@
       </div>
       <div class="dx-in dx-in-5" style="margin-top:22px;font-size:12px;color:color-mix(in srgb,var(--color-text) 72%,transparent)">Runs entirely client-side · Ideal VLE (Raoult) and constant-volatility models · No account, no server</div>
     </div>
-    <div class="dx-stage dx-stage-hero dx-lit dx-in dx-in-4" style="aspect-ratio:6/5;display:grid;place-items:center" role="img" aria-label="Three-dimensional cutaway of a fractionating column showing its trays, the feed stage and counter-current vapour and liquid traffic.">
+    <div class="dx-stage dx-stage-hero dx-lit dx-in dx-in-4" id="hero-stage" style="aspect-ratio:6/5;display:grid;place-items:center" role="img" aria-label="Three-dimensional cutaway model of a fractionating column: a skirt-mounted vessel with sieve trays and downcomers behind a sectioned shell, an overhead condenser and reflux drum above it and a reboiler beside the sump, turning slowly on a turntable.">
       <i class="dx-stage-grid" aria-hidden="true"></i>
-      <div class="dx-stage-inner dx-vp-iso" style="position:absolute;inset:0;display:grid;place-items:center">
+      <!-- The real model. It replaces the drawing below as soon as it mounts;
+           if WebGL is unavailable the drawing is simply left in place. -->
+      <canvas id="hero-gl" class="dx-hero-gl" aria-hidden="true"></canvas>
+      <div class="dx-stage-inner dx-vp-iso dx-hero-fb" style="position:absolute;inset:0;display:grid;place-items:center">
         <div class="dx-col" style="width:{{ scene.W }}px;height:{{ scene.H }}px">
           <div class="dx-col-mid" style="height:{{ scene.H }}px">
             <sc-for list="{{ scene.slats }}" as="sl" hint-placeholder-count="16">
@@ -2089,7 +2117,7 @@
           </div>
         </div>
       </div>
-      <div style="position:absolute;left:18px;bottom:16px;display:flex;align-items:center;gap:8px">
+      <div class="dx-hero-cap" style="position:absolute;left:14px;bottom:13px;display:flex;align-items:center;gap:8px">
         <span class="dx-dot live" aria-hidden="true"></span>
         <span class="dx-num" style="font-size:11px;letter-spacing:.05em;color:color-mix(in srgb,var(--color-text) 74%,transparent)">{{ scene.caption }}</span>
       </div>
@@ -2636,7 +2664,7 @@
             </div>
             </sc-if>
             <sc-if value="{{ show3D }}">
-            <div class="dx-stage dx-lit" style="height:462px" role="img" aria-label="Three-dimensional schematic of the distillation column. {{ scene.caption }}. {{ scene.thermLabel }}.">
+            <div class="{{ scene.cls }}" style="height:462px" role="img" aria-label="Three-dimensional schematic of the distillation column. {{ scene.caption }}. {{ scene.thermLabel }}.">
               <i class="dx-stage-grid" aria-hidden="true"></i>
               <sc-if value="{{ scene.empty }}">
                 <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:24px">
@@ -3545,21 +3573,6 @@
           <section class="card blueprint" style="padding:16px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             
-            <details class="dx-fold" open="{{ folds.aboutDeploy }}" data-f="aboutDeploy" onToggle="{{ setFold }}">
-            <summary><h6>Deployment</h6></summary>
-            <div class="dx-foldbody" style="--fg:8px">
-            <ol style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">
-              <li>Create a GitHub repository and push this project.</li>
-              <li>Import the repository into Vercel — it is a static client-side app, so no build configuration or environment variables are required.</li>
-              <li>Deploy, then open the generated Vercel URL.</li>
-              <li>To update the live site, push to the tracked branch: Vercel rebuilds and redeploys automatically.</li>
-            </ol>
-          </div>
-            </details>
-          </section>
-          <section class="card blueprint" style="padding:16px">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            
             <details class="dx-fold" open="{{ folds.aboutExtend }}" data-f="aboutExtend" onToggle="{{ setFold }}">
             <summary><h6>Extending it</h6></summary>
             <div class="dx-foldbody" style="--fg:8px">
@@ -4043,6 +4056,7 @@
 // @include rig/glmath.js
 // @include rig/geometry.js
 // @include rig/plant.js
+// @include rig/column3d.js
 // @include rig/renderer.js
 // @include rig/engine.js
 // @include rig/info.js
@@ -4122,7 +4136,7 @@ class Component extends DCLogic {
     'colConfig','colView',
     'sensStudy','sensMethod','sensKey',
     'resExport','resInputs','resCalc','resBalance','resAssume',
-    'aboutLead','aboutModels','aboutData','aboutLimits','aboutDeploy','aboutExtend','aboutAssume','aboutDev',
+    'aboutLead','aboutModels','aboutData','aboutLimits','aboutExtend','aboutAssume','aboutDev',
     'valNotes'
   ];
   static PHONE_CLOSED = new Set([
@@ -4132,7 +4146,7 @@ class Component extends DCLogic {
     'colConfig',
     'sensMethod',
     'resInputs','resBalance','resAssume',
-    'aboutModels','aboutData','aboutDeploy','aboutExtend','aboutAssume',
+    'aboutModels','aboutData','aboutExtend','aboutAssume',
     'valNotes'
   ]);
   static NAV = [['sim','Simulation'],['vle','VLE Explorer'],['mt','McCabe\u2013Thiele'],['column','Column'],['results','Results'],['sens','Sensitivity'],['theory','Theory'],['exam','Exam Mode'],['validate','Validation'],['about','About']];
@@ -4417,6 +4431,7 @@ class Component extends DCLogic {
       this._bindPointer(); this._tickReveal();
       if (this._rigTheme()) this._rigApplyResult();
       this._rigMount(); this._rigCollectTags();
+      this._heroMount();
     } catch (e) { /* presentation only — never let it reach the engine */ }
   }
   /** The industrial page is the one view with a URL of its own. Everything
@@ -5294,11 +5309,17 @@ class Component extends DCLogic {
   }
 
   columnScene(s, r, ok){
-    // the split gives the column half the width, so it draws narrower there;
-    // on its own it fills the frame it is given
-    const H = 384, RAD = (s.colMode === 'split') ? 46 : 58, SLATS = 16;
+    // The scene is laid out in pixels, so it has to be laid out for the box it
+    // is given. On a phone that box is 324 x 360 against 634 x 462 on a desk,
+    // and at the desktop size the vessel ran 45px past the bottom and both
+    // callout columns were cut off at the edges.
+    const narrow = !!s.narrow;
+    const H = narrow ? 312 : 384;
+    const RAD = (s.colMode === 'split') ? 46 : (narrow ? 50 : 58);
+    const SLATS = 16;
     const top = 18, bot = H - 16;                    // usable vessel span
-    const scene = { H, RAD, W: RAD * 2, slats: [], trays: [], hits: [], parts: [], caps: [], notes: [] };
+    const scene = { H, RAD, W: RAD * 2, slats: [], trays: [], hits: [], parts: [], caps: [], notes: [],
+                    cls: 'dx-stage dx-lit' + (narrow ? ' dx-cm-tight' : '') };
 
     // vessel wall — a ring of slats at a fixed radius
     const w = (2 * Math.PI * RAD) / SLATS + 1.5;
@@ -5394,7 +5415,7 @@ class Component extends DCLogic {
     const f = (v, d) => this.f(v, d);
     // the split puts the column in half the width, so the callouts come in
     // closer and wrap rather than run off the panel
-    const tight = s.colMode === 'split';
+    const tight = s.colMode === 'split' || narrow;
     const NOFF = tight ? 13 : 52;
     // in the split the callouts have roughly a third of the room, so they
     // carry the headline number only; the full set is still on the right-hand

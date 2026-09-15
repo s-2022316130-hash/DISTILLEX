@@ -42,6 +42,7 @@ _rigTheme() {
   this._themeNow = want;
   THEME.set(want);
   if (this._gl) this._gl.setTheme(want);
+  if (this._heroGl) this._heroGl.setTheme(want);
   return true;
 }
 
@@ -598,4 +599,135 @@ rigLoad(e) {
   };
   rd.readAsText(f);
   e.target.value = '';
+}
+
+/* ── the hero model ───────────────────────────────────────────────────────
+   The landing page's column, mounted on the same renderer as the crude unit.
+
+   Three things keep it cheap enough to sit at the top of a marketing page:
+   it only runs while it is actually on screen, it only exists on the landing
+   view, and under prefers-reduced-motion it draws exactly one frame and then
+   stops. The canvas stays invisible until that first frame lands, so a
+   machine without WebGL keeps the drawing it already had.
+   ══════════════════════════════════════════════════════════════════════ */
+
+_heroMount() {
+  if (this.state.view !== 'landing') { this._heroUnmount(); return; }
+  const cv = document.getElementById('hero-gl');
+  if (!cv || cv._dxBound || this._heroFailed) return;
+  cv._dxBound = true;
+  const mode = this.state.theme === 'light' ? 'light' : 'dark';
+  let gl = null;
+  try {
+    THEME.set(mode);
+    this._heroPlant = COL3D.build({ lite: (window.innerWidth || 1200) < 700 });
+    // The hero is a picture, not an instrument: a slightly softer edge costs
+    // nothing, and a backing store at full retina density is the single most
+    // expensive thing on the landing page.
+    gl = RIGGL.create(cv, this._heroPlant, { maxDpr: 1.6, theme: mode, calm: true });
+  } catch (err) { gl = null; }
+  if (!gl || gl.error || !gl.render) { this._heroFailed = true; cv._dxBound = false; return; }
+  this._heroGl = gl;
+  const h = this._heroPlant.home;
+  gl.cam.tYaw = gl.cam.yaw = h.yaw;
+  gl.cam.tPitch = gl.cam.pitch = h.pitch;
+  gl.cam.tDist = gl.cam.dist = h.dist;
+  gl.cam.ttx = gl.cam.tx = h.target[0];
+  gl.cam.tty = gl.cam.ty = h.target[1];
+  gl.cam.ttz = gl.cam.tz = h.target[2];
+  // The traffic. Counts are small on purpose: this is a hero, and a hundred
+  // and thirty sparks read as a working unit where six hundred read as noise.
+  gl.setFlow({
+    feed:    { n: 10, speed: 0.080, size: 0.90 },
+    ovhd:    { n: 12, speed: 0.130, size: 0.90 },
+    cond:    { n:  6, speed: 0.100, size: 0.80 },
+    reflux:  { n: 10, speed: 0.090, size: 0.80 },
+    dist:    { n:  6, speed: 0.090, size: 0.80 },
+    cw:      { n:  5, speed: 0.110, size: 0.70 },
+    steam:   { n:  5, speed: 0.120, size: 0.70 },
+    rebdown: { n:  8, speed: 0.080, size: 0.80 },
+    rebup:   { n: 10, speed: 0.110, size: 0.90 },
+    btms:    { n:  8, speed: 0.070, size: 0.80 },
+    vup:     { n: 26, speed: 0.055, size: 0.75 },
+    ldn:     { n: 22, speed: 0.050, size: 0.65 }
+  });
+  this._heroYaw = h.yaw;
+  this._heroSeen = true;
+  // Only run while the stage is on screen. A hero that keeps a GPU busy after
+  // the reader has scrolled past it is the whole cost with none of the point.
+  if (typeof IntersectionObserver !== 'undefined' && !this._heroIo) {
+    this._heroIo = new IntersectionObserver((rows) => {
+      for (const row of rows) this._heroSeen = row.isIntersecting;
+      if (this._heroSeen) this._heroLoop();
+    }, { threshold: 0.02 });
+  }
+  const stage = document.getElementById('hero-stage');
+  if (this._heroIo && stage) this._heroIo.observe(stage);
+  if (this._calm()) {
+    // one frame, held: the model is still worth seeing, the motion is not
+    gl.state.flow = false;
+    try { gl.render(1 / 60); } catch (e) { this._heroFailed = true; return; }
+    if (stage) stage.classList.add('dx-hero-3d');
+    return;
+  }
+  this._heroLoop();
+}
+
+_heroUnmount() {
+  if (this._heroRaf) { cancelAnimationFrame(this._heroRaf); this._heroRaf = 0; }
+  if (this._heroGl) { try { this._heroGl.dispose(); } catch (e) {} this._heroGl = null; }
+  if (this._heroIo) { try { this._heroIo.disconnect(); } catch (e) {} this._heroIo = null; }
+  const cv = document.getElementById('hero-gl');
+  if (cv) cv._dxBound = false;
+  this._heroPlant = null;
+  this._heroFirst = false;
+}
+
+/** A turntable, not a spin. The camera sweeps through a little under a
+ *  half-turn and comes back, so the sectioned face is never off screen for
+ *  long, and it eases at each end instead of reversing on the spot — which is
+ *  how a CAD viewer behaves when someone is turning a part over in their
+ *  hands, and why it reads as an assembly rather than as a logo. */
+_heroLoop() {
+  const gl = this._heroGl;
+  if (!gl || this._heroRaf) return;
+  const home = this._heroPlant.home;
+  let last = performance.now(), acc = 0, frames = 0, phase = 0;
+  const step = (now) => {
+    this._heroRaf = 0;
+    if (!this._heroGl || this.state.view !== 'landing') return;
+    if (!this._heroSeen) return;                       // resumes on re-entry
+    let dt = (now - last) / 1000; last = now;
+    if (!(dt > 0) || dt > 0.25) dt = 1 / 60;
+    phase += dt * 0.135;
+    const sw = Math.sin(phase);
+    gl.cam.tYaw = home.yaw + sw * 0.95;
+    gl.cam.tPitch = home.pitch + Math.sin(phase * 0.63) * 0.085;
+    // the dolly only ever pulls BACK from the framing distance: moving in
+    // would crop the condenser off the top of a 6:5 box
+    gl.cam.tDist = home.dist + (1 - Math.cos(phase * 0.47)) * 2.6;
+    try { gl.render(dt); } catch (e) { this._heroFailed = true; return; }
+    if (this._heroFirst !== true) {
+      this._heroFirst = true;
+      const stage = document.getElementById('hero-stage');
+      if (stage) stage.classList.add('dx-hero-3d');
+    }
+    // The same watchdog the rig uses, with the same two levers, so a slow
+    // machine gets a hero that still moves rather than one that stutters.
+    acc += dt; frames++;
+    if (acc >= 0.7) {
+      const fps = frames / acc;
+      const st = gl.state;
+      // It gives ground earlier than the rig does. Nobody came to the landing
+      // page for the hero, so it is the first thing that should get out of the
+      // way when the machine is struggling.
+      if (fps < 34 && st.scale > 0.62) st.scale = Math.max(0.6, st.scale - 0.2);
+      else if (fps < 26 && st.tracers > 0.35) st.tracers = 0.3;
+      else if (fps > 55 && st.scale < 1) st.scale = Math.min(1, st.scale + 0.2);
+      else if (fps > 58 && st.tracers < 1) st.tracers = 1;
+      acc = 0; frames = 0;
+    }
+    this._heroRaf = requestAnimationFrame(step);
+  };
+  this._heroRaf = requestAnimationFrame(step);
 }
