@@ -5,7 +5,7 @@ equilibrium, McCabe–Thiele stage construction, column operation, stage profile
 studies, theory and an exam mode. Everything is computed in the browser — no server, no build
 step, no account, no telemetry, no stored data.
 
-**Live entry point:** `index.html` (self-contained, ~983 KB, works offline by double-click).
+**Live entry point:** `index.html` (self-contained, ~993 KB, works offline by double-click).
 
 Alongside the binary simulator there is an **industrial crude unit** at
 `/industrial-distillation` — an interactive, educational visualisation of an atmospheric
@@ -363,6 +363,27 @@ centre rather than by measuring its box, because a box can be small while the
 target is not. The one documented exception is the inline help marker beside a
 slider label: it sits inside the words it annotates, so it takes WCAG 2.5.8's
 24px minimum rather than 44px, which would swallow the label either side.
+
+### The glyph matrix
+
+The landing page carries a field of glyphs with the column's two composition
+profiles traced through it — the liquid as its own leading digit, the vapour as
+a ring, the feed column marked. It is not an ornament with a data theme: the
+bright cells *are* the result.
+
+It also walks a reflux sweep, 1.05 to 2.8 times the minimum, a frame every 2.8
+seconds. Every frame is a real solve through `variant()` — the same validation
+gate the interactive path uses, so the engine keeps its two entry points and
+the `identity` suite still holds. The stage count falls from 22 to 11 as the
+reflux opens, which is the trade-off the whole subject turns on, demonstrated
+before the reader has clicked anything.
+
+The field is seeded from each cell's own position rather than randomly, so two
+renders of the same case are identical and the build stays reproducible. One
+element moves — a sweeping highlight, by transform alone. Under
+`prefers-reduced-motion` the highlight is hidden, the cells stop pulsing, and
+the reflux timer never starts; the matrix simply shows the base case. The timer
+only runs while the landing page is on screen and is cleared when it is not.
 
 ### The mark and the ground
 

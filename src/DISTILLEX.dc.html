@@ -1700,6 +1700,59 @@
      separation it needs, and the name itself is set in an italic serif
      against the page's sans — enough contrast to read as a hand rather than
      as another label, at a size that keeps it out of the way. */
+  /* ═══ the glyph matrix ═══════════════════════════════════════════════
+     A field of glyphs with the solved column's two composition profiles
+     traced through it. The field is inert; the bright cells are the result,
+     so the block changes when the case does. One sweeping highlight is the
+     only thing that moves, and it moves by transform alone. */
+  .dx-gmx-wrap { position:relative; overflow:hidden; border-radius:var(--dx-r-lg);
+                 border:1px solid var(--dx-hairline); background:var(--dx-raised);
+                 padding:16px clamp(12px,2.4vw,22px) 14px; box-shadow:var(--shadow-sm) }
+  .dx-gmx { position:relative; z-index:1;
+            display:grid; grid-auto-flow:column;
+            grid-template-rows:repeat(9, 1fr);
+            grid-auto-columns:minmax(0,1fr);
+            font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size:clamp(9px,1.05vw,12.5px); line-height:1.62;
+            user-select:none; -webkit-user-select:none }
+  .dx-gmx i { font-style:normal; text-align:center; color:var(--dx-ink3); opacity:.26 }
+  .dx-gmx i.near { opacity:.52 }
+  .dx-gmx i.feed { opacity:.70; color:var(--dx-plot-feed) }
+  .dx-gmx i.on   { opacity:1; font-weight:600 }
+  .dx-gmx i.liq  { color:var(--dx-plot-liq) }
+  .dx-gmx i.vap  { color:var(--dx-plot-phys) }
+  /* the sweep: one element, transform only, so it never repaints the field */
+  .dx-gmx-head { position:relative; z-index:1; display:flex; align-items:baseline;
+                 gap:14px; flex-wrap:wrap; margin-bottom:12px }
+  .dx-gmx-key { font-size:11px; letter-spacing:.04em; color:var(--dx-ink3);
+                display:flex; align-items:baseline; gap:5px }
+  .dx-gmx-key b { font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                  font-weight:700; margin-left:7px }
+  .dx-gmx-key b:first-child { margin-left:0 }
+  .dx-gmx-key b.liq { color:var(--dx-plot-liq) }
+  .dx-gmx-key b.vap { color:var(--dx-plot-phys) }
+  .dx-gmx-key b.feed { color:var(--dx-plot-feed) }
+  .dx-gmx-cap { margin-left:auto; font-size:11px; font-variant-numeric:tabular-nums;
+                color:var(--dx-ink2); white-space:nowrap }
+  @media (max-width:620px) { .dx-gmx-cap { display:none } }
+  .dx-gmx-scan { position:absolute; inset:0 auto 0 0; width:26%; z-index:0;
+                 pointer-events:none; will-change:transform;
+                 background:linear-gradient(90deg, transparent,
+                   color-mix(in srgb, var(--color-accent) var(--dx-gmx-sweep), transparent) 52%,
+                   transparent);
+                 animation:dxSweep 7.5s linear infinite }
+  :root    { --dx-gmx-sweep: 9% }
+  .dx-dark { --dx-gmx-sweep: 16% }
+  @keyframes dxSweep { from { transform:translateX(-110%) } to { transform:translateX(420%) } }
+  /* the two profiles breathe, a column at a time, so the block reads as live
+     without anything jumping */
+  .dx-gmx i.on { animation:dxGlyph 3.6s var(--dx-ease) infinite }
+  @keyframes dxGlyph { 0%,100% { opacity:1 } 50% { opacity:.62 } }
+  @media (prefers-reduced-motion: reduce) {
+    .dx-gmx-scan { display:none }
+    .dx-gmx i.on { animation:none }
+  }
+
   .dx-sig {
     margin-top: 20px; padding: 10px 0 12px;
     display: flex; align-items: center; justify-content: center;
@@ -1716,6 +1769,16 @@
     font-style: italic; font-weight: 400;
     font-size: 11.5px; letter-spacing: .055em;
     color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  }
+  /* On the home page it is the sign-off, not fine print: bright enough to read
+     at a glance, with the rules lengthened to carry the extra width. */
+  .dx-land .dx-sig { margin-top: 30px; padding: 14px 0 16px }
+  .dx-land .dx-sig::before, .dx-land .dx-sig::after { width: 46px }
+  .dx-land .dx-sig::before { margin-right: 18px }
+  .dx-land .dx-sig::after  { margin-left: 18px }
+  .dx-land .dx-sig b {
+    font-size: 13px; letter-spacing: .09em;
+    color: color-mix(in srgb, var(--color-text) 85%, transparent);
   }
   .dx-rig .dx-sig { margin: 0; padding: 7px 0 8px; border-top: 1px solid var(--r-line) }
   .dx-rig .dx-sig::before, .dx-rig .dx-sig::after { background: var(--r-line) }
@@ -1957,7 +2020,24 @@
     </div>
   </div>
 
-  <div class="dx-grid3b dx-reveal">
+  <div class="dx-gmx-wrap dx-reveal" style="margin-top:8px">
+    <i class="dx-gmx-scan" aria-hidden="true"></i>
+    <div class="dx-gmx-head">
+      <span class="dx-kicker">Composition profile &middot; live</span>
+      <span class="dx-gmx-key" aria-hidden="true">
+        <b class="liq">x</b> liquid <b class="vap">o</b> vapour <b class="feed">&middot;</b> feed
+      </span>
+      <span class="dx-gmx-cap">{{ gmx.caption }}</span>
+    </div>
+    <div class="dx-gmx" aria-hidden="true">
+      <sc-for list="{{ gmx.cells }}" as="gc" hint-placeholder-count="288">
+        <i class="{{ gc.cls }}" style="{{ gc.st }}">{{ gc.c }}</i>
+      </sc-for>
+    </div>
+    <p style="position:relative;z-index:1;margin:12px 0 0;font-size:11.5px;line-height:1.5;color:var(--dx-ink2)">{{ gmx.note }}</p>
+  </div>
+
+  <div class="dx-grid3b dx-reveal" style="margin-top:20px">
     <div class="card blueprint dx-lift dx-lit" style="padding:18px;min-height:170px">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <div class="card-kicker">01</div>
@@ -3925,6 +4005,11 @@ class Component extends DCLogic {
     'aboutLead','aboutModels','aboutData','aboutLimits','aboutDeploy','aboutExtend','aboutAssume','aboutDev',
     'valNotes'
   ];
+  /* The reflux sweep the landing page's glyph matrix walks, as multiples of
+     the minimum reflux. It starts just above the pinch, where the column needs
+     the most stages, and opens up to where extra reflux stops buying much. */
+  static GMX_R = [1.05, 1.15, 1.3, 1.5, 1.8, 2.2, 2.8, 2.2, 1.8, 1.5, 1.3, 1.15];
+
   static PHONE_CLOSED = new Set([
     'simModel','simNotes','simProfiles','simBalance','simWhatIf',
     'vleFacts','vleComponents',
@@ -4017,7 +4102,7 @@ class Component extends DCLogic {
           open:{ feed:true, furnace:true, column:false, products:false, adv:false },
           expert:false, tour:-1, hist:[], dirty:false, gl3d:true },
     theme:(this.props||{}).defaultTheme||'dark',
-    narrow:false, moreOpen:false, folds:{},
+    narrow:false, moreOpen:false, folds:{}, gmxI:0,
     custom:{a:{name:'Component A',A:6.90565,B:1211.033,C:220.79,MW:78.11,Tb:80.1,lat:30.8},
             b:{name:'Component B',A:6.95464,B:1344.800,C:219.48,MW:92.14,Tb:110.6,lat:33.2}}
   };
@@ -4215,6 +4300,7 @@ class Component extends DCLogic {
     try {
       this._tickView(); this._tickNums(); this._tickPill(); this._tickFill(); this._tickSvgText();
       this._bindPointer(); this._tickReveal();
+      this._gmxTick();
       if (this._rigTheme()) this._rigApplyResult();
       this._rigMount(); this._rigCollectTags();
     } catch (e) { /* presentation only — never let it reach the engine */ }
@@ -4280,8 +4366,27 @@ class Component extends DCLogic {
     });
     return out;
   }
-  componentDidMount(){ this._watchWidth(); this._afterRender(); this.initRoute(); }
-  componentWillUnmount(){ if (this._mq && this._onMq) { try { this._mq.removeEventListener('change', this._onMq); } catch (e) {} } }
+  componentDidMount(){ this._watchWidth(); this._afterRender(); this.initRoute(); this._gmxTick(); }
+  componentWillUnmount(){
+    if (this._mq && this._onMq) { try { this._mq.removeEventListener('change', this._onMq); } catch (e) {} }
+    if (this._gmxT) { clearInterval(this._gmxT); this._gmxT = null; }
+  }
+  /** The glyph matrix walks a reflux sweep so the landing page demonstrates the
+   *  one trade-off the whole subject turns on — more reflux, fewer stages —
+   *  without the reader touching anything. Each frame is a real solve, not an
+   *  interpolation, and the timer only runs while the landing page is showing
+   *  and only if motion is wanted. */
+  _gmxTick(){
+    const want = this.state.view === 'landing' && !this._calm();
+    if (want && !this._gmxT) {
+      this._gmxT = setInterval(() => {
+        if (this.state.view !== 'landing') return;
+        this.setState({ gmxI: (this.state.gmxI + 1) % Component.GMX_R.length });
+      }, 2800);
+    } else if (!want && this._gmxT) {
+      clearInterval(this._gmxT); this._gmxT = null;
+    }
+  }
   /** One media query decides the phone layout, so the break point lives in one
    *  place and the view-model can fold a card without measuring anything. */
   _watchWidth(){
@@ -5062,6 +5167,74 @@ class Component extends DCLogic {
     const v = s.pinStage !== null && s.pinStage !== undefined ? s.pinStage : s.hoverStage;
     return (v === null || v === undefined) ? null : Math.round(v);
   }
+  /** A field of glyphs with the solved column's two composition profiles
+   *  traced through it: the liquid as its own leading digit, the vapour as a
+   *  ring. It is a rendering of the result, not an ornament — change the
+   *  reflux and the curves move — so it says what the page claims: every
+   *  number here was computed in this browser.
+   *
+   *  The field is deterministic, seeded from the cell's own position, so two
+   *  renders of the same case are pixel-identical and the build stays
+   *  reproducible. */
+  glyphMatrix(s, r, ok){
+    const COLS = 32, ROWS = 9, step = 1 / (ROWS - 1);
+    // Walk a reflux sweep rather than repeating the base case: each frame is a
+    // real solve at R = k x Rmin, so the stage count the reader watches shorten
+    // is the engine's answer, not an animation of one.
+    let src = r, swept = null;
+    if (ok && r && isFinite(r.Rmin) && r.Rmin > 0) {
+      const k = Component.GMX_R[(s.gmxI || 0) % Component.GMX_R.length];
+      const Rk = +(r.Rmin * k).toFixed(3);
+      try {
+        // variant(), not solve(): the programmatic callers go through the same
+        // validation gate the interactive path does, and the engine keeps its
+        // two entry points.
+        const alt = this.variant(s, { R: Rk, calcMode: 'design' });
+        if (alt && alt.ok && alt.stages && alt.stages.length) { src = alt; swept = { k: k, R: Rk }; }
+      } catch (e) { /* presentation only — the base case still draws */ }
+    }
+    const st = (ok && src && src.stages) ? src.stages : [];
+    const n = st.length;
+    const at = (pick, t) => {
+      if (!n) return 0;
+      const u = t * (n - 1), i = Math.floor(u), f = u - i;
+      const a = pick(st[Math.min(i, n - 1)]), b = pick(st[Math.min(i + 1, n - 1)]);
+      return a + (b - a) * f;
+    };
+    const feed = (n > 1) ? Math.round((this.num(src.feedStage) - 1) / (n - 1) * (COLS - 1)) : -1;
+    const cells = [];
+    for (let c = 0; c < COLS; c++) {
+      const t = COLS > 1 ? c / (COLS - 1) : 0;
+      const x = at(a => a.x, t), y = at(a => a.y, t);
+      const delay = 'animation-delay:' + (c * 62) + 'ms';
+      for (let ro = 0; ro < ROWS; ro++) {
+        const level = 1 - ro / (ROWS - 1);          // row 0 is the top of the column
+        const dx = Math.abs(x - level) / step, dy = Math.abs(y - level) / step;
+        let cls, ch;
+        if (n && dx < 0.5)                    { cls = 'on liq'; ch = String(Math.round(x * 9)); }
+        else if (n && dy < 0.5)               { cls = 'on vap'; ch = 'o'; }
+        else if (n && (dx < 1.5 || dy < 1.5)) { cls = 'near';   ch = '\u00b7'; }
+        else { cls = ''; ch = ((c * 73 + ro * 31) % 9) === 0 ? ':' : '\u00b7'; }
+        if (c === feed && !/on/.test(cls)) cls = (cls + ' feed').trim();
+        cells.push({ c: ch, cls: cls, st: delay });
+      }
+    }
+    return { cells: cells,
+      caption: n ? (swept ? ('R = ' + this.f(swept.R, 2) + '  ·  ' + this.f(swept.k, 2) + ' \u00d7 R_min  ·  '
+                             + n + ' stages')
+                          : (n + ' stages'))
+                 : '\u2014',
+      note: n ? (swept
+            ? ('Reflux walking from ' + this.f(Component.GMX_R[0], 2) + ' to '
+               + this.f(Math.max.apply(null, Component.GMX_R), 2)
+               + ' \u00d7 R_min. Every frame is solved here, in this browser, from the same '
+               + 'model the simulator uses — watch the stage count fall as the reflux opens up. '
+               + 'The digit is x to one figure, the ring is y.')
+            : ('Liquid and vapour composition across ' + n + ' stages. '
+               + 'The digit is x to one figure, the ring is y.'))
+          : 'No solved case to draw.' };
+  }
+
   columnScene(s, r, ok){
     // the split gives the column half the width, so it draws narrower there;
     // on its own it fills the frame it is given
@@ -5432,6 +5605,8 @@ class Component extends DCLogic {
     out.crudePick = (e)=>{ const el=e.target.closest('[data-ck]'); if(!el) return;
       const k = el.dataset.ck;
       this.setState({crudeHover: this.state.crudeHover===k ? null : k}); };
+    // the glyph matrix on the landing page, drawn from the same solved case
+    out.gmx = this.glyphMatrix(s, r, hasR);
     // 3D column scene — geometry derived from the solved result
     out.scene = this.columnScene(s, r, hasR);
     // 2D elevation of the same trays, so a stage can be read flat as well
