@@ -24,6 +24,54 @@ var RIGINFO = (function () {
    * enough to sit in a panel without scrolling.
    */
   var COMPONENTS = {
+    preheat: {
+      name: 'Preheat exchanger train',
+      cat: 'Heat recovery',
+      purpose: 'Takes the cold crude most of the way to furnace temperature using heat that would otherwise be thrown away.',
+      how: 'Crude runs through the tubes of a series of shell-and-tube exchangers; the shells carry hot products and pumparound liquid on their way out of the unit. A crude unit typically recovers enough here to reach 230-280 \u00b0C before the heater sees the feed.',
+      role: 'The train is why a crude unit is affordable to run: every degree recovered here is a degree the furnace does not have to fire for.',
+      reads: ['feedT', 'charge']
+    },
+    desalter: {
+      name: 'Desalter',
+      cat: 'Feed treatment',
+      purpose: 'Washes the chloride salts out of the crude before it is heated any further.',
+      how: 'Wash water is mixed into the crude through a mixing valve at around 120-140 \u00b0C, and the emulsion is broken in an electrostatic field between plates inside the vessel. Brine settles to the boot; desalted crude leaves the top.',
+      role: 'Salts left in the feed hydrolyse to hydrochloric acid in the tower overhead. Desalting is a corrosion-control step, not a separation.',
+      reads: ['charge']
+    },
+    preflash: {
+      name: 'Preflash drum',
+      cat: 'Feed treatment',
+      purpose: 'Drops the lightest ends out of the crude before the furnace.',
+      how: 'Partly preheated crude is flashed in a drum; the vapour goes forward to the tower overhead system and the liquid carries on to the rest of the preheat train and the heater.',
+      role: 'Taking the light ends out ahead of the heater unloads the furnace and the transfer line, and lets the preheat train run at a lower pressure.',
+      reads: ['charge', 'feedT']
+    },
+    pumparound: {
+      name: 'Pumparound circuit',
+      cat: 'Heat removal',
+      purpose: 'Takes heat out of the tower part way up and gives it to the crude.',
+      how: 'Hot liquid is drawn from a chimney tray, pumped through an exchanger against crude, and returned to the tower a few trays higher, where it condenses vapour and creates the internal reflux for the section below. A crude tower normally runs three of them.',
+      role: 'Pumparound duty is what sets the internal liquid traffic in each section; it is also where most of the tower heat is recovered rather than rejected to air.',
+      reads: ['feedT']
+    },
+    compressor: {
+      name: 'Wet gas compressor',
+      cat: 'Overhead',
+      purpose: 'Lifts the uncondensed overhead gas to the pressure the gas plant needs.',
+      how: 'Gas off the reflux drum is compressed and sent on for recovery of the propane and butane in it.',
+      role: 'It sets the pressure the reflux drum runs at, and with it the tower overhead pressure.',
+      reads: ['topP']
+    },
+    offplot: {
+      name: 'Off-plot facilities',
+      cat: 'Site',
+      purpose: 'Everything on the plot that serves the unit without being part of it.',
+      how: 'Tankage for the charge and the rundowns, the flare that takes relief and off-spec material, the cooling tower, and the control room and substation that run and power the place.',
+      role: 'Nothing here changes a separation; the unit could not be operated without any of it.',
+      reads: []
+    },
     crude: {
       name: 'Crude charge line',
       cat: 'Feed',
@@ -162,8 +210,15 @@ var RIGINFO = (function () {
     function fit(r) { return r / 0.32; }
     var sideMid = P.sideY[1];
     return [
-      { key:'plant',     label:'Plant',     t:[-2, top * 0.50, 0],
-        yaw:-0.72, pitch:0.15, dist: fit(33) },
+      // The site. The unit is no longer the whole plot — there is a preheat
+      // train and a desalter to the west, a tank farm and a flare beyond it —
+      // so the widest shot has to contain the place, not just the tower.
+      { key:'site',      label:'Site',      t:[2, top * 0.34, -14],
+        yaw:-0.62, pitch:0.24, dist: fit(96) },
+      { key:'plant',     label:'Unit',      t:[-2, top * 0.50, 0],
+        yaw:-0.72, pitch:0.15, dist: fit(36) },
+      { key:'frontend',  label:'Front end', t:[-34, 6.5, -10],
+        yaw:-1.10, pitch:0.20, dist: fit(26) },
       { key:'tower',     label:'Column',    t:[0, sk + D.towerH * 0.5, 0],
         yaw:-0.40, pitch:0.06, dist: fit(25) },
       { key:'cutaway',   label:'Cutaway',   t:[0, sk + D.towerH * 0.5, 0],
@@ -174,6 +229,8 @@ var RIGINFO = (function () {
         yaw: 1.16, pitch:0.19, dist: fit(15) },
       { key:'strippers', label:'Strippers', t:[D.stripX - 2.6, sideMid - 2, 0],
         yaw: 0.86, pitch:0.30, dist: fit(17) },
+      { key:'pumps',     label:'Pumparounds', t:[-16, 7, -20],
+        yaw:-0.30, pitch:0.24, dist: fit(16) },
       { key:'base',      label:'Base',      t:[0, 5.5, 2],
         yaw:-0.86, pitch:0.06, dist: fit(11) }
     ];
@@ -181,7 +238,9 @@ var RIGINFO = (function () {
 
   /** Which preset frames a given component best. */
   var FOCUS = {
-    crude:'furnace', furnace:'furnace', feed:'furnace',
+    crude:'frontend', furnace:'furnace', feed:'furnace',
+    desalter:'frontend', preheat:'frontend', preflash:'frontend',
+    pumparound:'pumps', compressor:'overhead', offplot:'site',
     tower:'tower', trays:'cutaway', sidedraw:'strippers',
     overhead:'overhead', condenser:'overhead', drum:'overhead', reflux:'overhead',
     reboiler:'base', steam:'base',

@@ -321,6 +321,14 @@ rigView(s) {
         + 'M17.5 17.5l1.7 1.7M1.8 12h2.4M19.8 12h2.4M4.8 19.2l1.7-1.7M17.5 6.5l1.7-1.7'
       : 'M20 14.2A8.4 8.4 0 019.8 4 8.8 8.8 0 1020 14.2z',
     rigFlowLabel: rg.flow ? 'Pause flow' : 'Resume flow',
+    // the scene on its own: both rails go and the controls ride over the top
+    rigFullCls: rg.full ? 'rig-full' : '',
+    rigFullOn: rg.full ? 'true' : 'false',
+    rigFullLabel: rg.full ? 'Exit focus' : 'Focus',
+    rigFullTitle: rg.full ? 'Leave the full-screen scene' : 'Show only the scene, full screen',
+    rigFullD: rg.full
+      ? 'M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6'
+      : 'M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6',
     rigGl: rg.gl3d !== false,
     rigGlNote: this._glFail || '',
     rigStages: has ? this.rigStages(r, rg.expert, rg.stage) : [],
@@ -344,6 +352,7 @@ rigView(s) {
       else if (d.act === 'expert') this.setRig({ expert: !this.state.rig.expert });
       else if (d.act === 'flow') { const v = !this.state.rig.flow; if (this._gl) this._gl.state.flow = v; this.setRig({ flow: v }); }
       else if (d.act === 'clear') this.rigSelect(null);
+      else if (d.act === 'full') this.rigFullToggle();
       else if (d.act === 'home') this.leaveRig();
     },
     rigSection: (e) => { const k = e.currentTarget.dataset.k;

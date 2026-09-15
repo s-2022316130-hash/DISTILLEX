@@ -213,6 +213,10 @@ var RIGGL = (function () {
       cone:   GEO.cone(seg(40), 0.62),
       skirt:  GEO.cone(seg(40), 0.94),               // a support skirt barely tapers
       dish:   GEO.dish(seg(36), Math.max(4, Math.round(9 * LOD))),
+      // A 2:1 head on a pump volute is four hundred triangles nobody can
+      // resolve. plant.js swaps to this below a radius where the facets
+      // stop being visible; the shape is identical.
+      dishLo: GEO.dish(seg(16), Math.max(3, Math.round(5 * LOD))),
       box:    GEO.box(),
       annulus:GEO.annulus(seg(30), 0.62, true),      // platform gratings
       ringThin:GEO.annulus(seg(22), 0.90, true),     // banding straps, flanges
@@ -408,7 +412,9 @@ var RIGGL = (function () {
       r = M.springStep(cam.ty,    cam.tty,    cam.vty,    K, dt); cam.ty = r[0];    cam.vty = r[1];
       r = M.springStep(cam.tz,    cam.ttz,    cam.vtz,    K, dt); cam.tz = r[0];    cam.vtz = r[1];
       cam.pitch = M.clamp(cam.pitch, -0.30, 1.15);
-      cam.dist  = M.clamp(cam.dist, 16, 240);
+      // The plot is a site now, not one unit: the widest shot sits three
+      // hundred metres out, so the leash has to be longer than the tower.
+      cam.dist  = M.clamp(cam.dist, 16, 420);
     }
     function eye() {
       var cp = Math.cos(cam.pitch);
@@ -555,7 +561,7 @@ var RIGGL = (function () {
     function drawScene(prog, w, h, forPick) {
       gl.useProgram(prog);
       var e = eye();
-      M.perspective(P, cam.fov, w / Math.max(1, h), 0.5, 520);
+      M.perspective(P, cam.fov, w / Math.max(1, h), 0.5, 1400);
       M.lookAt(V, e, [cam.tx, cam.ty, cam.tz], [0,1,0]);
       M.mul(VP, P, V);
       gl.uniformMatrix4fv(uniLoc(prog, 'uVP'), false, VP);

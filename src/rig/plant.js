@@ -86,7 +86,13 @@ var PLANT = (function () {
   var CUTAWAY_FACES = 0.62;
   var CUTAWAY_YAW = Math.PI / 2 + CUTAWAY_FACES;
 
-  function build() {
+  /** Build the plant.
+   *  opts.site — false to leave off everything beyond the unit's own fence.
+   *  The surroundings are most of the triangles and none of the process, so a
+   *  small machine can have the unit without them. */
+  function build(opts) {
+    opts = opts || {};
+    var SITE = opts.site !== false;
     var objs = [], streams = [], anchors = {}, m;
     var STREAM = THEME.get().streamLin;
 
@@ -108,6 +114,10 @@ var PLANT = (function () {
       if (Math.hypot(d[0],d[1],d[2]) < 1e-6) return;
       add(capped ? 'cylCap' : 'cyl', mat, M.alignY(M.m4(), a, d, r), pick, tint);
     }
+
+    // The equipment kit, bound to this plant's emitter. Everything below that
+    // is a machine rather than a shape is built through it.
+    var K = KIT.make(add, MAT);
 
     /** A pipe run from a polyline: a straight section per leg, and a sphere at
      *  every interior corner standing in for the elbow. Using a sphere of the
@@ -141,7 +151,7 @@ var PLANT = (function () {
     var skirtTop = D.skirtH, shellTop = D.skirtH + D.towerH;
     // The skirt: very slightly tapered, not a cone. It also gets the access
     // opening and the anchor-bolt chairs that make it read as load-bearing.
-    add('skirt', MAT.fire, M.trs(M.m4(), 0, 0, 0, D.towerR * 1.16, D.skirtH, D.towerR * 1.16),
+    add('skirt', MAT.fire, M.trs(M.m4(), 0, 0, 0, D.towerR * 1.16, D.skirtH, -D.towerR * 1.16),
         'reboiler');
     for (var ab = 0; ab < 12; ab++) {
       var aba = ab / 12 * Math.PI * 2;
@@ -158,13 +168,13 @@ var PLANT = (function () {
       // internals from one side and the lagged shell from the other, which is
       // how a cutaway drawing works.
       add('cylArc', b2 % 2 ? MAT.insul : MAT.shell,
-          M.yawTRS(M.m4(), 0, y0, 0, CUTAWAY_YAW, D.towerR, h, D.towerR), 'tower');
+          M.yawTRS(M.m4(), 0, y0, 0, CUTAWAY_YAW, D.towerR, h, -D.towerR), 'tower');
       // the banding strap between courses — a narrow ring, not a flange
       add('ringThin', MAT.struct,
           M.trs(M.m4(), 0, y0 + h, 0, D.towerR * 1.03, 1, D.towerR * 1.03), 'tower');
     }
     add('dish', MAT.head, M.trs(M.m4(), 0, shellTop, 0, D.towerR, D.towerR, D.towerR), 'tower');
-    add('dish', MAT.head, M.trs(M.m4(), 0, skirtTop, 0, D.towerR, -D.towerR, D.towerR), 'reboiler');
+    add('dish', MAT.head, M.trs(M.m4(), 0, skirtTop, 0, D.towerR, -D.towerR, -D.towerR), 'reboiler');
 
     anchors.towerTop = [0, shellTop + 1.2, 0];
     anchors.towerMid = [0, skirtTop + D.towerH * 0.55, 0];
@@ -195,7 +205,7 @@ var PLANT = (function () {
       for (var q = 0; q < 22; q++) {
         var ang = q / 22 * Math.PI * 2;
         var px = Math.cos(ang) * pr, pz = Math.sin(ang) * pr;
-        add('cyl', MAT.rail, M.trs(M.m4(), px, py, pz, 0.05, 1.1, 0.05), 'tower');
+        add('cyl', MAT.rail, M.trs(M.m4(), px, py, pz, 0.05, 1.1, -0.05), 'tower');
       }
       add('ringThin', MAT.rail, M.trs(M.m4(), 0, py + 1.05, 0, pr, 1, pr), 'tower');
       add('ringThin', MAT.rail, M.trs(M.m4(), 0, py + 0.55, 0, pr, 1, pr), 'tower');
@@ -209,7 +219,7 @@ var PLANT = (function () {
     // caged ladder up the north face
     var ladX = 0, ladZ = -(D.towerR + 0.75);
     for (var ly = skirtTop; ly < shellTop - 1; ly += 0.42)
-      add('cyl', MAT.rail, M.trs(M.m4(), ladX, ly, ladZ, 0.38, 0.045, 0.045), 'tower');
+      add('cyl', MAT.rail, M.alignY(M.m4(), [ladX - 0.38, ly, ladZ], [0.76, 0, 0], 0.045), 'tower');
     cylBetween([ladX-0.38, skirtTop, ladZ], [ladX-0.38, shellTop-1, ladZ], 0.06, MAT.rail, 'tower');
     cylBetween([ladX+0.38, skirtTop, ladZ], [ladX+0.38, shellTop-1, ladZ], 0.06, MAT.rail, 'tower');
     for (ly = skirtTop + 2; ly < shellTop - 2; ly += 1.6)
@@ -250,7 +260,7 @@ var PLANT = (function () {
     add('box', MAT.grate, M.trs(M.m4(), D.furX, bdY, bdZ, D.furW*1.06, 0.16, 2.9), 'furnace');
     for (var bp = 0; bp < 9; bp++) {
       var bpx = D.furX - D.furW*0.5 + bp * (D.furW / 8);
-      add('cyl', MAT.rail, M.trs(M.m4(), bpx, bdY, bdZ + 1.4, 0.05, 1.1, 0.05), 'furnace');
+      add('cyl', MAT.rail, M.trs(M.m4(), bpx, bdY, bdZ + 1.4, 0.05, 1.1, -0.05), 'furnace');
       cylBetween([bpx, 0, bdZ + 1.2], [bpx, bdY, bdZ + 1.2], 0.07, MAT.struct, 'furnace');
     }
     cylBetween([D.furX - D.furW*0.53, bdY + 1.05, bdZ + 1.4],
@@ -262,9 +272,9 @@ var PLANT = (function () {
         [D.furW*0.92, 0, 0], 0.26), 'furnace');
     // stack: a transition cone off the convection section, then the barrel
     var stkX = D.furX + D.furW*0.34, stkY = cvY + cvH/2;
-    add('cone', MAT.stack, M.trs(M.m4(), stkX, stkY - 1.8, D.furZ, 2.4, 1.9, 2.4), 'furnace');
-    add('cylCap', MAT.stack, M.trs(M.m4(), stkX, stkY, D.furZ, 1.5, D.stackH, 1.5), 'furnace');
-    add('cone', MAT.stack, M.trs(M.m4(), stkX, stkY + D.stackH, D.furZ, 1.5, 1.2, 1.5), 'furnace');
+    add('cone', MAT.stack, M.trs(M.m4(), stkX, stkY - 1.8, D.furZ, 2.4, 1.9, -2.4), 'furnace');
+    add('cylCap', MAT.stack, M.trs(M.m4(), stkX, stkY, D.furZ, 1.5, D.stackH, -1.5), 'furnace');
+    add('cone', MAT.stack, M.trs(M.m4(), stkX, stkY + D.stackH, D.furZ, 1.5, 1.2, -1.5), 'furnace');
     add('ringThin', MAT.struct, M.trs(M.m4(), stkX, stkY + D.stackH*0.34, D.furZ, 1.72, 1, 1.72), 'furnace');
     // a ladder up the barrel and the platform it lands on. Painted steel, not
     // safety yellow: on a stack that height only the handrail is picked out.
@@ -278,7 +288,7 @@ var PLANT = (function () {
     for (var sq = 0; sq < 16; sq++) {
       var sa = sq / 16 * Math.PI * 2;
       add('cyl', MAT.rail, M.trs(M.m4(), stkX + Math.cos(sa)*2.6, plY, D.furZ + Math.sin(sa)*2.6,
-          0.045, 1.1, 0.045), 'furnace');
+          0.045, 1.1, -0.045), 'furnace');
     }
     add('ringThin', MAT.rail, M.trs(M.m4(), stkX, plY + 1.05, D.furZ, 2.6, 1, 2.6), 'furnace');
     add('ringThin', MAT.rail, M.trs(M.m4(), stkX, plY + 0.55, D.furZ, 2.6, 1, 2.6), 'furnace');
@@ -313,10 +323,10 @@ var PLANT = (function () {
     for (var sI = 0; sI < 3; sI++) {
       var sx = D.stripX, sz = -5 + sI * 5;
       var sy = sideY[sI] - D.stripH - 2;
-      add('cyl', MAT.insul, M.trs(M.m4(), sx, sy, sz, D.stripR, D.stripH, D.stripR), 'sidedraw');
+      add('cyl', MAT.insul, M.trs(M.m4(), sx, sy, sz, D.stripR, D.stripH, -D.stripR), 'sidedraw');
       add('dish', MAT.head, M.trs(M.m4(), sx, sy + D.stripH, sz, D.stripR, D.stripR, D.stripR), 'sidedraw');
-      add('dish', MAT.head, M.trs(M.m4(), sx, sy, sz, D.stripR, -D.stripR, D.stripR), 'sidedraw');
-      add('cone', MAT.struct, M.trs(M.m4(), sx, 0, sz, D.stripR*0.9, sy, D.stripR*0.55), 'sidedraw');
+      add('dish', MAT.head, M.trs(M.m4(), sx, sy, sz, D.stripR, -D.stripR, -D.stripR), 'sidedraw');
+      add('cone', MAT.struct, M.trs(M.m4(), sx, 0, sz, D.stripR*0.9, sy, -D.stripR*0.9), 'sidedraw');
       for (var sb = 1; sb < 4; sb++)
         add('ringThin', MAT.struct, M.trs(M.m4(), sx, sy + D.stripH * sb / 4, sz,
             D.stripR * 1.05, 1, D.stripR * 1.05), 'sidedraw');
@@ -326,7 +336,7 @@ var PLANT = (function () {
       for (var sr = 0; sr < 12; sr++) {
         var sra = sr / 12 * Math.PI * 2;
         add('cyl', MAT.rail, M.trs(M.m4(), sx + Math.cos(sra) * (D.stripR + 1.1),
-            sy + D.stripH - 1.4, sz + Math.sin(sra) * (D.stripR + 1.1), 0.045, 1.1, 0.045), 'sidedraw');
+            sy + D.stripH - 1.4, sz + Math.sin(sra) * (D.stripR + 1.1), 0.045, 1.1, -0.045), 'sidedraw');
       }
       add('ringThin', MAT.rail, M.trs(M.m4(), sx, sy + D.stripH - 0.35, sz,
           D.stripR + 1.1, 1, D.stripR + 1.1), 'sidedraw');
@@ -380,7 +390,7 @@ var PLANT = (function () {
     add('box', MAT.struct, M.trs(M.m4(), D.condX, D.condY + 1.35, D.condZ, D.condW, 0.4, D.condD), 'condenser');
     for (var fn = 0; fn < 2; fn++) {
       var fx2 = D.condX - D.condW*0.24 + fn * D.condW*0.48;
-      add('cyl', MAT.struct, M.trs(M.m4(), fx2, D.condY - 2.6, D.condZ, 2.3, 0.3, 2.3), 'condenser');
+      add('cyl', MAT.struct, M.trs(M.m4(), fx2, D.condY - 2.6, D.condZ, 2.3, 0.3, -2.3), 'condenser');
       for (var bl = 0; bl < 4; bl++)
         add('box', MAT.grate, M.yawTRS(M.m4(), fx2, D.condY - 2.4, D.condZ,
             bl * Math.PI / 4, 4.2, 0.08, 0.5), 'condenser');
@@ -421,7 +431,7 @@ var PLANT = (function () {
     for (var cp = 0; cp < 10; cp++) {
       var cpx = D.condX - D.condW * 0.5 + cp * (D.condW / 9);
       add('cyl', MAT.rail, M.trs(M.m4(), cpx, D.condY + 1.9, D.condZ + D.condD * 0.72 + 1.0,
-          0.05, 1.1, 0.05), 'condenser');
+          0.05, 1.1, -0.05), 'condenser');
     }
     cylBetween([D.condX - D.condW*0.53, D.condY + 2.95, D.condZ + D.condD*0.72 + 1.0],
                [D.condX + D.condW*0.53, D.condY + 2.95, D.condZ + D.condD*0.72 + 1.0],
@@ -443,7 +453,7 @@ var PLANT = (function () {
     add('dish', MAT.head, M.alignY(M.m4(), [D.drumX - D.drumL*0.5, D.drumY, D.drumZ],
         [-D.drumR, 0, 0], D.drumR), 'drum');
     add('cylCap', MAT.shell, M.trs(M.m4(), D.drumX - 1.4, D.drumY - D.drumR - 1.1, D.drumZ,
-        0.62, 1.2, 0.62), 'drum');
+        0.62, 1.2, -0.62), 'drum');
     for (var sd = 0; sd < 2; sd++)
       add('box', MAT.struct, M.trs(M.m4(), D.drumX + (sd?1:-1)*D.drumL*0.3,
           (D.rackY + D.drumY - D.drumR) / 2, D.drumZ, 0.5, D.drumY - D.drumR - D.rackY, 2.4), 'drum');
@@ -510,7 +520,7 @@ var PLANT = (function () {
     // The paved plot. It runs well past the fog so its edge is never a visible
     // circle; the joints and the apron staining are drawn in the shader from
     // world coordinates rather than modelled.
-    add('disc', MAT.deck, M.trs(M.m4(), 0, 0.02, 0, 230, 1, 230), '');
+    add('disc', MAT.deck, M.trs(M.m4(), 0, 0.02, 0, 620, 1, 620), '');
     add('disc', MAT.concrete, M.trs(M.m4(), 0, 0.05, 0, 9.5, 1, 9.5), '');
     // Foundations. Nothing on a unit stands straight on the paving, and a
     // plinth under each item is most of what stops equipment looking dropped.
@@ -525,10 +535,164 @@ var PLANT = (function () {
     // storage, far enough back to read as distance rather than as clutter
     for (var dr = 0; dr < 3; dr++) {
       var dx = -14 + dr * 17, dz = -54;
-      add('cyl', MAT.tank, M.trs(M.m4(), dx, 0, dz, 5.2, 8.6, 5.2), '');
+      add('cyl', MAT.tank, M.trs(M.m4(), dx, 0, dz, 5.2, 8.6, -5.2), '');
       add('dish', MAT.tank, M.trs(M.m4(), dx, 8.6, dz, 5.2, 1.6, 5.2), '');
       add('ringThin', MAT.struct, M.trs(M.m4(), dx, 4.4, dz, 5.3, 1, 5.3), '');
       pad(dx, dz, 12, 12);
+    }
+
+    /* ══ the front end: desalter, preheat train, preflash ══════════════════
+       A crude unit does not start at the furnace. Cold crude is pumped through
+       a preheat train that recovers heat from the hot products leaving the
+       unit, is washed in a desalter at about 130 °C so the chlorides do not
+       go on to make acid in the tower overhead, picks up the rest of its heat,
+       and drops its lightest ends in a preflash drum before the furnace sees
+       it. None of that was here, and it is most of the plot. */
+    var PH = { x: -46, z: -14 };
+    // the charge pumps: two, because a crude unit has a spare
+    for (var cp2 = 0; cp2 < 2; cp2++)
+      K.pump({ x: PH.x - 10, z: PH.z - 4 + cp2 * 4, yaw: 0, pick: 'crude', tint: STREAM.crude });
+    // the preheat train: four shell-and-tube exchangers in two stacked pairs,
+    // the crude in the tubes and a hot rundown in the shell
+    var phPairs = [[STREAM.residue, 'gasoil'], [STREAM.gasoil, 'diesel']];
+    for (var ph = 0; ph < 4; ph++) {
+      var pRow = ph >> 1, pCol = ph & 1;
+      K.drum({ x: PH.x + pCol * 9, y: 2.6 + pRow * 3.4, z: PH.z, r: 1.15, len: 7.6,
+               axis: 'x', bundle: 5, channel: true, stand: pRow ? 0 : 1,
+               mat: MAT.shell, pick: 'preheat', tint: phPairs[pRow][0] });
+      if (pRow) K.frame({ x: PH.x + pCol * 9, z: PH.z, w: 6.4, d: 2.6, top: 1.4, pick: 'preheat' });
+    }
+    pipeRun([[PH.x - 8, 1.4, PH.z], [PH.x - 5.2, 1.4, PH.z], [PH.x - 5.2, 2.6, PH.z]],
+            0.3, STREAM.crude, 'crude');
+    anchors.preheat = [PH.x + 4.5, 8.4, PH.z];
+
+    // the desalter: a horizontal electrostatic vessel with its transformers
+    // on the crown and a wash-water line into the mixing valve
+    var DS = { x: PH.x + 20, y: 3.2, z: PH.z, r: 2.0, len: 11 };
+    K.drum({ x: DS.x, y: DS.y, z: DS.z, r: DS.r, len: DS.len, axis: 'x',
+             mat: MAT.shell, pick: 'desalter', stand: 1 });
+    for (var tf = -1; tf <= 1; tf += 2) {
+      add('box', MAT.struct, M.trs(M.m4(), DS.x + tf * 2.4, DS.y + DS.r + 0.9, DS.z, 2.0, 1.6, 1.6), 'desalter');
+      add('cylCap', MAT.insul, M.alignY(M.m4(), [DS.x + tf * 2.4, DS.y + DS.r + 1.7, DS.z],
+          [0, 0.9, 0], 0.26), 'desalter');
+    }
+    K.up('cylCap', MAT.shell, DS.x, 0.1, DS.z, 0.5, DS.y - DS.r - 0.1, 'desalter');
+    pipeRun([[DS.x - 9, 1.1, DS.z - 5], [DS.x - 5.6, 1.1, DS.z - 5], [DS.x - 5.6, 1.1, DS.z],
+             [DS.x - DS.len/2 - 0.4, DS.y, DS.z]], 0.22, STREAM.steam, 'desalter');
+    pipeRun([[PH.x + 9 + 4.2, 4.3, PH.z], [DS.x - DS.len/2 - 1.6, 4.3, DS.z],
+             [DS.x - DS.len/2 - 1.6, DS.y, DS.z], [DS.x - DS.len/2, DS.y, DS.z]],
+            0.3, STREAM.crude, 'desalter');
+    anchors.desalter = [DS.x, DS.y + DS.r + 3.2, DS.z];
+
+    // the preflash drum: the light ends leave before the furnace, which is
+    // what keeps the transfer line and the heater from having to carry them
+    var PFx = DS.x + 14, PFz = PH.z + 6;
+    K.up('cyl', MAT.insul, PFx, 2.2, PFz, 1.5, 9, 'preflash');
+    K.headY(PFx, 11.2, PFz, 1.5, 1, MAT.head, 'preflash');
+    K.headY(PFx, 2.2, PFz, 1.5, -1, MAT.head, 'preflash');
+    K.up('cone', MAT.fire, PFx, 0, PFz, 1.62, 2.2, 'preflash');
+    K.pad(PFx, PFz, 4.4, 4.4, 'preflash');
+    K.platform(PFx, 9.6, PFz, 2.7, 'preflash', 1.5);
+    K.ladder(PFx, PFz - 1.5, 2.2, 9.6, [0, 0, -1], 'preflash');
+    for (var pb = 1; pb < 4; pb++)
+      add('ringThin', MAT.struct, M.trs(M.m4(), PFx, 2.2 + 9 * pb / 4, PFz, 1.56, 1, 1.56), 'preflash');
+    pipeRun([[DS.x + DS.len/2, DS.y, DS.z], [PFx, DS.y, DS.z], [PFx, 4.0, PFz]],
+            0.3, STREAM.crude, 'preflash');
+    pipeRun([[PFx, 11.9, PFz], [PFx, 15.5, PFz], [D.rackX + 4.2, 15.5, PFz],
+             [D.rackX + 4.2, D.rackY + 1.5, PFz]], 0.2, STREAM.gas, 'preflash');
+    pipeRun([[PFx, 2.0, PFz], [PFx + 4, 2.0, PFz], [PFx + 4, 2.0, D.furZ],
+             [D.furX - D.furW*0.5 - 2, 2.2, D.furZ]], 0.3, STREAM.crude, 'crude');
+    anchors.preflash = [PFx, 13.5, PFz];
+
+    /* ══ pumparounds ═══════════════════════════════════════════════════════
+       Three of them, which is what a crude tower normally has. Each takes hot
+       liquid off a chimney tray, gives its heat up to the crude in the preheat
+       train, and returns it a few trays higher: that circulating heat removal
+       is what sets the internal reflux, and without it the tower could not
+       make the cuts it makes. */
+    var paKeys = ['kerosene', 'diesel', 'gasoil'];
+    var paY = [sideY[0] + 4, sideY[1] + 4, sideY[2] + 4];
+    for (var pa = 0; pa < 3; pa++) {
+      var px2 = -16, pz2 = -16 - pa * 7, py2 = 5.0 + pa * 0.0;
+      K.drum({ x: px2, y: py2, z: pz2, r: 1.05, len: 7.0, axis: 'x', bundle: 4,
+               channel: true, stand: 1, mat: MAT.shell, pick: 'pumparound',
+               tint: STREAM[paKeys[pa]] });
+      var pmp = K.pump({ x: px2 + 7.5, z: pz2, yaw: Math.PI, pick: 'pumparound',
+                         tint: STREAM[paKeys[pa]] });
+      // off the chimney tray, down to the pump, through the exchanger, back up
+      var drawN = nozzle(paY[pa] - 2.5, Math.PI * 0.72, 1.2, 0.24, 'pumparound', STREAM[paKeys[pa]]);
+      pipeRun([drawN, [px2 + 9.5, paY[pa] - 2.5, 0], [px2 + 9.5, 2.4, 0],
+               [px2 + 9.5, 2.4, pz2], pmp.suction],
+              0.24, STREAM[paKeys[pa]], 'pumparound');
+      pipeRun([pmp.discharge, [pmp.discharge[0], py2, pz2], [px2 + 3.9, py2, pz2]],
+              0.2, STREAM[paKeys[pa]], 'pumparound');
+      var retN = nozzle(paY[pa], Math.PI * 0.86, 1.2, 0.22, 'pumparound', STREAM[paKeys[pa]]);
+      pipeRun([[px2 - 3.9, py2, pz2], [px2 - 5.5, py2, pz2], [px2 - 5.5, paY[pa], 0], retN],
+              0.22, STREAM[paKeys[pa]], 'pumparound');
+    }
+    anchors.pumparound = [-16, 9, -23];
+
+    /* ══ the rundown pumps and the overhead machine ════════════════════════ */
+    // every product leaving the unit is pumped; a rundown that just ends is
+    // the clearest sign of a model rather than a plant
+    var rdKeys = ['kerosene', 'diesel', 'gasoil', 'naphtha', 'residue'];
+    for (var rd2 = 0; rd2 < rdKeys.length; rd2++)
+      K.pump({ x: D.rackX - 5.5, z: -10 + rd2 * 5, yaw: Math.PI / 2,
+               pick: 'product-' + rdKeys[rd2], tint: STREAM[rdKeys[rd2]] });
+    // the wet gas compressor, on its own plinth under a light shelter
+    var WGx = D.drumX + 4, WGz = D.drumZ + 15;
+    add('box', MAT.concrete, M.trs(M.m4(), WGx, 0.4, WGz, 9.0, 0.8, 5.0), 'compressor');
+    K.drum({ x: WGx - 1.6, y: 2.0, z: WGz, r: 1.0, len: 4.2, axis: 'x',
+             mat: MAT.struct, pick: 'compressor', saddles: false });
+    add('box', MAT.struct, M.trs(M.m4(), WGx + 2.6, 2.0, WGz, 3.6, 1.7, 1.7), 'compressor');
+    for (var wg = 0; wg < 4; wg++)
+      add('ringThin', MAT.struct, M.trs(M.m4(), WGx + 1.4 + wg * 0.7, 2.0, WGz, 1.05, 1, 1.05), 'compressor');
+    K.frame({ x: WGx, z: WGz, w: 8.4, d: 4.6, top: 5.2, pick: 'compressor' });
+    add('box', MAT.tank, M.trs(M.m4(), WGx, 5.5, WGz, 9.6, 0.3, 5.8), 'compressor');
+    pipeRun([[D.drumX + 2, D.drumY + D.drumR + 5, D.drumZ],
+             [D.drumX + 2, D.drumY + D.drumR + 5, WGz], [WGx - 4.2, 3.6, WGz]],
+            0.22, STREAM.gas, 'compressor');
+    anchors.compressor = [WGx, 7.4, WGz];
+    // the trim cooler that takes the overhead the last few degrees
+    K.drum({ x: D.condX + 12, y: 3.0, z: D.condZ, r: 1.1, len: 7.0, axis: 'z',
+             bundle: 4, channel: true, stand: 1, mat: MAT.shell, pick: 'condenser',
+             tint: STREAM.reflux });
+
+    /* ══ the plant around the plant ════════════════════════════════════════
+       A crude unit does not sit in a field. What is out here is what a refinery
+       actually has on the plot beside it, placed the way a plot plan places it:
+       the flare downwind and well away, tanks in bunded groups, the cooling
+       tower clear of the process area, and the control room upwind of all of
+       it. */
+    if (SITE) {
+    // tank farm
+    for (var tk = 0; tk < 5; tk++) {
+      var tx = -62 + tk * 31, tz = -86;
+      K.tank({ x: tx, z: tz, r: 9.5, h: 13.5, bund: tk % 2 === 0, pick: 'offplot' });
+    }
+    for (var tk2 = 0; tk2 < 3; tk2++)
+      K.tank({ x: -96 + tk2 * 26, z: -44, r: 7.0, h: 10.5, bund: false, pick: 'offplot' });
+    // the flare, at the far corner
+    K.flare({ x: 96, z: -78, h: 62, pick: 'offplot' });
+    // cooling tower, downwind of the unit
+    K.coolTower({ x: 72, z: 46, w: 26, d: 11, h: 10, cells: 4, pick: 'offplot' });
+    // control room and substation, upwind and clear
+    K.building({ x: -44, z: 46, w: 20, d: 11, h: 5.2, pick: 'offplot' });
+    K.building({ x: -16, z: 48, w: 11, d: 8, h: 4.2, pick: 'offplot' });
+    // the road between them
+    add('box', MAT.concrete, M.trs(M.m4(), 0, 0.06, 34, 190, 0.12, 7.5), '');
+    add('box', MAT.concrete, M.trs(M.m4(), 52, 0.06, 0, 7.5, 0.12, 120), '');
+    // lighting masts round the unit
+    var masts = [[-30, 20], [26, 20], [-30, -26], [30, -26], [10, 26], [-6, -34]];
+    for (var mm = 0; mm < masts.length; mm++) K.mast(masts[mm][0], masts[mm][1], 17, 'offplot');
+    // the rack running off-plot to the tank farm
+    for (var rr = 0; rr < 7; rr++) {
+      var rrz = -20 - rr * 9;
+      add('box', MAT.struct, M.trs(M.m4(), D.rackX, D.rackY/2, rrz, 0.5, D.rackY, 0.5), 'offplot');
+      add('box', MAT.struct, M.trs(M.m4(), D.rackX + 5, D.rackY/2, rrz, 0.5, D.rackY, 0.5), 'offplot');
+      add('box', MAT.struct, M.trs(M.m4(), D.rackX + 2.5, D.rackY, rrz, 6.2, 0.4, 0.45), 'offplot');
+      K.pad(D.rackX, rrz, 1.2, 1.2, 'offplot'); K.pad(D.rackX + 5, rrz, 1.2, 1.2, 'offplot');
+    }
     }
 
     /* ── instrument tags: anchored to the equipment they read ──────────── */
@@ -552,18 +716,21 @@ var PLANT = (function () {
        one wherever the instance is too small for the facets to be visible.
        Purely a substitution on the finished list: the geometry is identical in
        shape, and nothing above this line has to know. */
-    var LOD_R = 0.30, SWAP = { cyl:'rod', cylCap:'rodCap', sphere:'knuckle' };
+    // Each swap has its own radius, because the size at which facets stop
+    // being visible depends on how round the thing is trying to look.
+    var SWAP = { cyl:['rod',0.30], cylCap:['rodCap',0.30],
+                 sphere:['knuckle',0.30], dish:['dishLo',1.60] };
     for (var li = 0; li < objs.length; li++) {
       var ob = objs[li], sw = SWAP[ob.mesh];
       if (!sw) continue;
       var m2 = ob.m;
       var rx = Math.hypot(m2[0], m2[1], m2[2]), rz = Math.hypot(m2[8], m2[9], m2[10]);
-      if (Math.max(rx, rz) < LOD_R) ob.mesh = sw;
+      if (Math.max(rx, rz) < sw[1]) ob.mesh = sw[0];
     }
 
     return { objects: objs, streams: streams, anchors: anchors, D: D,
              MAT: MAT, STREAM: STREAM, instruments: instruments,
-             bounds: { min:[-56, 0, -30], max:[46, shellTop + 12, 30] },
+             bounds: { min:[-110, 0, -100], max:[100, shellTop + 12, 60] },
              shellTop: shellTop, skirtTop: skirtTop, feedY: feedY,
              sideY: sideY, sideKeys: sideKeys, trays: trays };
   }
