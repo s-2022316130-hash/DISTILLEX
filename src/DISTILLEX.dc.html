@@ -1154,6 +1154,53 @@
   svg text span.sc-interp { display:none }
 
   .dx-crude { position:relative }
+
+  /* The model sits in the same box the drawing did, at the aspect the
+     assembly actually has: tall, because a crude tower is. */
+  /* Tall, because the assembly is — but capped, because a panel a thousand
+     pixels high pushes everything after it off the page. */
+  .dx-crude-gl { display:block; width:100%; aspect-ratio:5/6; max-height:min(72vh, 620px);
+                 border-radius:var(--dx-r-lg);
+                 opacity:0; transition:opacity var(--dx-t-reveal) var(--dx-ease-out) }
+  .dx-crude-3d .dx-crude-gl { opacity:1 }
+  .dx-crude-3d .dx-crude-fb { display:none !important }
+  .dx-crude-tags { position:absolute; inset:0; pointer-events:none }
+  .dx-crude-3d .dx-crude-tags { pointer-events:auto }
+  /* Until the model mounts the tags have nowhere to be, so they stay out of
+     the flow; the drawing carries its own labels in the meantime. */
+  .dx-crude-tags > button { display:none }
+  .dx-crude-3d .dx-crude-tags > button { display:block }
+  .dx-ctag {
+    position:absolute; left:0; top:0; will-change:transform;
+    /* an absolutely positioned flex box does not always shrink-to-fit the
+       way it looks like it should; asking for the content width outright
+       is what keeps the name from collapsing to nothing */
+    width:max-content; max-width:min(52%, 190px);
+    /* A block with nowrap children, not a flex column: an absolutely
+       positioned column flex box reports a zero intrinsic width in Chromium
+       once its second child is display:none, and the label collapses to its
+       own padding. */
+    display:block; white-space:nowrap;
+    padding:3px 7px 4px; margin:0; border-radius:7px; cursor:pointer;
+    background:color-mix(in srgb, var(--color-surface) 80%, transparent);
+    border:1px solid color-mix(in srgb, var(--ct) 46%, transparent);
+    backdrop-filter:blur(3px);
+    transition:opacity var(--dx-t-base) var(--dx-ease),
+               border-color var(--dx-t-base) var(--dx-ease),
+               background var(--dx-t-base) var(--dx-ease);
+  }
+  .dx-ctag b { display:block; font-size:11.5px; font-weight:600; letter-spacing:.01em; color:var(--ct); line-height:1.2 }
+  .dx-ctag > span { display:block; font-size:10px; font-variant-numeric:tabular-nums; line-height:1.25;
+                    color:color-mix(in srgb, var(--color-text) 70%, transparent) }
+  .dx-ctag[data-on="1"] { border-color:var(--ct);
+                          background:color-mix(in srgb, var(--ct) 16%, var(--color-surface)) }
+  .dx-ctag:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px }
+  @media (max-width: 900px) {
+    /* a phone has no room for eight two-line labels over a 300px picture */
+    .dx-ctag > span { display:none }
+    .dx-ctag b { font-size:10.5px }
+    .dx-ctag { padding:2px 5px 3px }
+  }
   .dx-crude svg { width:100%; height:auto; display:block; overflow:visible }
   .dx-band { transition: transform var(--dx-t-slow) var(--dx-ease),
                          opacity var(--dx-t-base) var(--dx-ease);
@@ -2292,8 +2339,24 @@
         <p style="margin:0;font-size:11px;line-height:1.55;color:color-mix(in srgb,var(--color-text) 66%,transparent)">{{ crude.hint }} Boiling ranges are the conventional approximate cut points for an atmospheric unit &mdash; they describe the industry, and are not computed by this simulator.</p>
       </div>
 
-      <div class="dx-crude dx-reveal dx-lit" onPointerOver="{{ crudeOver }}" onPointerLeave="{{ crudeOut }}" onClick="{{ crudePick }}" onFocus="{{ crudeOver }}">
-        <svg viewBox="0 0 700 {{ crude.height }}" role="img" aria-label="Atmospheric crude-oil distillation tower, showing eight fractions drawn off from refinery gas at the overhead down to residue at the sump.">
+      <div class="dx-crude dx-reveal dx-lit" id="crude-stage" onPointerOver="{{ crudeOver }}" onPointerLeave="{{ crudeOut }}" onClick="{{ crudePick }}" onFocus="{{ crudeOver }}">
+        <!-- The model. Same renderer as the hero and the industrial simulator;
+             the drawing below stays in place if WebGL is unavailable. -->
+        <canvas id="crude-gl" class="dx-crude-gl" aria-hidden="true"></canvas>
+        <!-- The eight draws, as real buttons pinned to their own nozzles. They
+             are in the document whether or not the model mounts, so the cuts
+             are reachable by keyboard either way. -->
+        <!-- No handlers here: the events bubble to .dx-crude, which already
+             carries them. Binding both fires the toggle twice and it cancels. -->
+        <div class="dx-crude-tags">
+          <sc-for list="{{ crude.rows }}" as="ct" hint-placeholder-count="8">
+            <button class="dx-ctag" data-ck="{{ ct.k }}" data-on="{{ ct.on }}"
+                    aria-pressed="{{ ct.cur }}" style="--ct:{{ ct.tone }}">
+              <b>{{ ct.name }}</b><span>{{ ct.range }} &deg;C</span>
+            </button>
+          </sc-for>
+        </div>
+        <svg class="dx-crude-fb" viewBox="0 0 700 {{ crude.height }}" role="img" aria-label="Atmospheric crude-oil distillation tower, showing eight fractions drawn off from refinery gas at the overhead down to residue at the sump.">
           <g class="tower" style="{{ crude.shellStyle }}">
             <!-- shell -->
             <rect x="{{ crude.towerX }}" y="{{ crude.top }}" width="{{ crude.towerW }}" height="{{ crude.shellH }}" rx="10"
@@ -4057,6 +4120,7 @@
 // @include rig/geometry.js
 // @include rig/plant.js
 // @include rig/column3d.js
+// @include rig/crude3d.js
 // @include rig/renderer.js
 // @include rig/engine.js
 // @include rig/info.js
@@ -4432,6 +4496,7 @@ class Component extends DCLogic {
       if (this._rigTheme()) this._rigApplyResult();
       this._rigMount(); this._rigCollectTags();
       this._heroMount();
+      this._crudeMount();
     } catch (e) { /* presentation only — never let it reach the engine */ }
   }
   /** The industrial page is the one view with a URL of its own. Everything
@@ -5187,6 +5252,7 @@ class Component extends DCLogic {
         hy: (mid - Math.max(bandH - 3, 86) / 2).toFixed(1),
         grp: 'transform:translate(' + dx + 'px,' + dy.toFixed(1) + 'px)',
         cls: 'dx-band' + (on ? ' on' : '') + (hov && !on ? ' dim' : ''),
+        on: on ? '1' : '0', cur: on ? 'true' : 'false',
         // trays inside the band — three per section, purely indicative
         trays: [0.3, 0.5, 0.7].map(t => ({ y: (y + bandH * t).toFixed(1),
           x1: (towerX + 12), x2: (towerX + towerW - 12) })),
@@ -5676,7 +5742,10 @@ class Component extends DCLogic {
     // landing-page crude tower (illustration; see crudeScene)
     out.crude = this.crudeScene(s);
     out.setCrudeView = (e)=>{ const el=e.target.closest('[data-cv]'); if(el) this.setState({crudeView:el.dataset.cv}); };
-    out.crudeOver = (e)=>{ const el=e.target.closest('[data-ck]');
+    // The model does its own picking, so a move over the canvas must not be
+    // read here as a move onto nothing.
+    out.crudeOver = (e)=>{ if(e.target && e.target.id==='crude-gl') return;
+      const el=e.target.closest('[data-ck]');
       const k = el ? el.dataset.ck : null; if(k!==this.state.crudeHover) this.setState({crudeHover:k}); };
     out.crudeOut = ()=>{ if(this.state.crudeHover) this.setState({crudeHover:null}); };
     // A touch screen has no hover: tap selects a cut, tap it again to clear.

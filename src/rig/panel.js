@@ -43,6 +43,7 @@ _rigTheme() {
   THEME.set(want);
   if (this._gl) this._gl.setTheme(want);
   if (this._heroGl) this._heroGl.setTheme(want);
+  if (this._crudeGl) { this._crudeGl.setTheme(want); this._crudeDirty = true; this._crudeLoop(); }
   return true;
 }
 
@@ -730,4 +731,193 @@ _heroLoop() {
     this._heroRaf = requestAnimationFrame(step);
   };
   this._heroRaf = requestAnimationFrame(step);
+}
+
+/* ── the crude tower on the landing page ──────────────────────────────────
+   Same renderer again, with two things the hero does not need: the assembly
+   comes apart, and the eight cuts are selectable.
+
+   Exploding is a translation per object, so it interpolates — the view button
+   moves a single number between 0 and 1 and every piece, every draw line and
+   every label follows it. Selection goes through the renderer's own id buffer,
+   so a pointer anywhere on a section names the same cut the label does, and
+   the panel beside the model reads it.
+   ══════════════════════════════════════════════════════════════════════ */
+
+_crudeMount() {
+  if (this.state.view !== 'landing') { this._crudeUnmount(); return; }
+  const cv = document.getElementById('crude-gl');
+  if (!cv || cv._dxBound || this._crudeFailed) return;
+  cv._dxBound = true;
+  const mode = this.state.theme === 'light' ? 'light' : 'dark';
+  let gl = null;
+  try {
+    THEME.set(mode);
+    this._crudePlant = CRUDE3D.build({ lite: (window.innerWidth || 1200) < 700 });
+    gl = RIGGL.create(cv, this._crudePlant, { maxDpr: 1.6, theme: mode, calm: true });
+  } catch (err) { gl = null; }
+  if (!gl || gl.error || !gl.render) { this._crudeFailed = true; cv._dxBound = false; return; }
+  this._crudeGl = gl;
+  const P = this._crudePlant, h = P.home;
+  gl.cam.tYaw = gl.cam.yaw = h.yaw;
+  gl.cam.tPitch = gl.cam.pitch = h.pitch;
+  gl.cam.tDist = gl.cam.dist = h.dist;
+  gl.cam.ttx = gl.cam.tx = h.target[0];
+  gl.cam.tty = gl.cam.ty = h.target[1];
+  gl.cam.ttz = gl.cam.tz = h.target[2];
+  const draws = {};
+  for (const c of P.cuts) draws['draw-' + c.k] = { n: 5, speed: 0.09, size: 0.80 };
+  gl.setFlow(Object.assign({
+    crude:    { n: 10, speed: 0.080, size: 0.90 },
+    transfer: { n: 14, speed: 0.110, size: 1.00 },
+    ovhd:     { n: 12, speed: 0.130, size: 0.90 },
+    gasout:   { n:  6, speed: 0.100, size: 0.80 },
+    btms:     { n:  8, speed: 0.070, size: 0.90 },
+    steam:    { n:  6, speed: 0.120, size: 0.70 },
+    vup:      { n: 30, speed: 0.060, size: 0.80 }
+  }, draws));
+  this._crudeT = this.state.crudeView === 'exploded' ? 1 : 0;
+  CRUDE3D.apply(P, this._crudeT);
+  gl.remap();
+  this._crudeSeen = true;
+  this._crudeDirty = true;
+  if (typeof IntersectionObserver !== 'undefined' && !this._crudeIo) {
+    this._crudeIo = new IntersectionObserver((rows) => {
+      for (const row of rows) this._crudeSeen = row.isIntersecting;
+      if (this._crudeSeen) { this._crudeDirty = true; this._crudeLoop(); }
+    }, { threshold: 0.02 });
+  }
+  const stage = document.getElementById('crude-stage');
+  if (this._crudeIo && stage) this._crudeIo.observe(stage);
+  this._bindCrudePointer(cv);
+  this._crudeLoop();
+}
+
+_crudeUnmount() {
+  if (this._crudeRaf) { cancelAnimationFrame(this._crudeRaf); this._crudeRaf = 0; }
+  if (this._crudeGl) { try { this._crudeGl.dispose(); } catch (e) {} this._crudeGl = null; }
+  if (this._crudeIo) { try { this._crudeIo.disconnect(); } catch (e) {} this._crudeIo = null; }
+  const cv = document.getElementById('crude-gl');
+  if (cv) cv._dxBound = false;
+  this._crudePlant = null;
+  this._crudeFirst = false;
+}
+
+/** Pointing at the model names a cut, exactly as pointing at its label does.
+ *  The id buffer is read on move, which is one pixel per event. */
+_bindCrudePointer(cv) {
+  if (cv._dxPtr) return;
+  cv._dxPtr = true;
+  const hit = (e) => {
+    const gl = this._crudeGl;
+    if (!gl) return null;
+    const r = cv.getBoundingClientRect();
+    return gl.pickAt(e.clientX - r.left, e.clientY - r.top);
+  };
+  const keys = {};
+  for (const c of CRUDE3D.CUTS) keys[c.k] = 1;
+  cv.addEventListener('pointermove', (e) => {
+    const k = hit(e);
+    const want = (k && keys[k]) ? k : null;
+    if (want !== this.state.crudeHover) this.setState({ crudeHover: want });
+  });
+  cv.addEventListener('click', (e) => {
+    const k = hit(e);
+    if (k && keys[k]) this.setState({ crudeHover: this.state.crudeHover === k ? null : k });
+  });
+}
+
+_crudeLoop() {
+  const gl = this._crudeGl;
+  if (!gl || this._crudeRaf) return;
+  const P = this._crudePlant, h = P.home;
+  let last = performance.now(), phase = 0, selNow = null, acc = 0, frames = 0;
+  const calm = this._calm();
+  const step = (now) => {
+    this._crudeRaf = 0;
+    if (!this._crudeGl || this.state.view !== 'landing') return;
+    if (!this._crudeSeen) return;
+    let dt = (now - last) / 1000; last = now;
+    if (!(dt > 0) || dt > 0.25) dt = 1 / 60;
+
+    // the assembly opens and closes on one number
+    const want = this.state.crudeView === 'exploded' ? 1 : 0;
+    const prev = this._crudeT;
+    this._crudeT = calm ? want
+                        : prev + (want - prev) * (1 - Math.exp(-dt * 3.0));
+    if (Math.abs(want - this._crudeT) < 0.0015) this._crudeT = want;
+    if (this._crudeT !== prev) {
+      CRUDE3D.apply(P, this._crudeT);
+      gl.remap();
+      this._crudeDirty = true;
+    }
+    // the camera pulls back as it opens, because the assembly gets bigger
+    const t = this._crudeT;
+    const dist = h.dist + (P.explodedDist - h.dist) * t;
+    const ty = h.target[1] + (P.explodedTarget[1] - h.target[1]) * t;
+    if (!calm) {
+      phase += dt * 0.115;
+      gl.cam.tYaw = h.yaw + Math.sin(phase) * 0.62;
+      gl.cam.tPitch = h.pitch + Math.sin(phase * 0.58) * 0.055;
+      this._crudeDirty = true;
+    }
+    gl.cam.tDist = dist;
+    gl.cam.tty = ty;
+
+    // selection, through the renderer's own dim-and-glow path
+    const sel = this.state.crudeHover || null;
+    if (sel !== selNow) { selNow = sel; gl.state.sel = sel; gl.refresh(); this._crudeDirty = true; }
+
+    if (this._crudeDirty) {
+      try { gl.render(dt); } catch (e) { this._crudeFailed = true; return; }
+      this._crudeTags();
+      if (this._crudeFirst !== true) {
+        this._crudeFirst = true;
+        const stage = document.getElementById('crude-stage');
+        if (stage) stage.classList.add('dx-crude-3d');
+      }
+      if (calm) this._crudeDirty = false;      // one frame, then hold it
+      // the same watchdog the hero runs, for the same reason: this is a
+      // picture on a landing page, and it should be the first thing to give
+      // ground when the machine cannot hold a frame
+      acc += dt; frames++;
+      if (acc >= 0.7) {
+        const fps = frames / acc, st = gl.state;
+        if (fps < 34 && st.scale > 0.62) st.scale = Math.max(0.6, st.scale - 0.2);
+        else if (fps < 26 && st.tracers > 0.35) st.tracers = 0.3;
+        else if (fps > 55 && st.scale < 1) st.scale = Math.min(1, st.scale + 0.2);
+        else if (fps > 58 && st.tracers < 1) st.tracers = 1;
+        acc = 0; frames = 0;
+      }
+    }
+    this._crudeRaf = requestAnimationFrame(step);
+  };
+  this._crudeRaf = requestAnimationFrame(step);
+}
+
+/** Pin each label to the end of its own transfer line. Transform only, so
+ *  eight labels moving every frame never trigger a layout. */
+_crudeTags() {
+  const gl = this._crudeGl, P = this._crudePlant;
+  if (!gl || !P) return;
+  const wrap = document.getElementById('crude-stage');
+  if (!wrap) return;
+  const els = wrap.querySelectorAll('.dx-ctag');
+  if (!els.length) return;
+  const cv = document.getElementById('crude-gl');
+  const W = cv ? cv.clientWidth : 0, H = cv ? cv.clientHeight : 0;
+  for (let i = 0; i < els.length; i++) {
+    const el = els[i], L = P.labels[i];
+    if (!L) { el.style.opacity = '0'; continue; }
+    const p = gl.toScreen(L.now || L.at);
+    if (!p) { el.style.opacity = '0'; el.style.pointerEvents = 'none'; continue; }
+    // a label that has swung behind the tower is faded, not moved: leaving it
+    // where it belongs is what keeps it attached to its own nozzle
+    const w = el.offsetWidth || 90, hh = el.offsetHeight || 24;
+    const x = Math.max(0, Math.min(W - w, p.x + 6));
+    const y = Math.max(0, Math.min(H - hh, p.y - hh / 2));
+    el.style.transform = 'translate3d(' + Math.round(x) + 'px,' + Math.round(y) + 'px,0)';
+    el.style.opacity = String(Math.max(0.42, Math.min(1, 1.35 - p.d * 0.0072)));
+    el.style.pointerEvents = 'auto';
+  }
 }

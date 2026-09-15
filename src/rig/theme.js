@@ -69,7 +69,12 @@ var THEME = (function () {
     stream: {
       gas:'#3ae3d3', naphtha:'#f1cd2e', kerosene:'#f8ae00', diesel:'#fa8927',
       gasoil:'#f16b40', residue:'#e84d64',
-      crude:'#9e886e', hot:'#ff763b', vapour:'#39d4e4', reflux:'#49adec', steam:'#acd8e6'
+      crude:'#9e886e', hot:'#ff763b', vapour:'#39d4e4', reflux:'#49adec', steam:'#acd8e6',
+      // The eight atmospheric cuts, in the same order and the same colours the
+      // landing page uses for them in CSS (--dx-f1 … --dx-f8). They live here
+      // so the 3D tower can be re-tinted by retheme() like any other stream.
+      f1:'#00beaf', f2:'#4ac06c', f3:'#c2a200', f4:'#d79700',
+      f5:'#ef852e', f6:'#f77c56', f7:'#f97772', f8:'#f6758e'
     },
 
     /* ── the flow sheet's own surfaces ──────────────────────────────── */
@@ -113,7 +118,9 @@ var THEME = (function () {
     stream: {
       gas:'#009185', naphtha:'#9e8400', kerosene:'#ab7600', diesel:'#aa5600',
       gasoil:'#b33600', residue:'#ba003a',
-      crude:'#7d684d', hot:'#c64900', vapour:'#00848f', reflux:'#006ca0', steam:'#568999'
+      crude:'#7d684d', hot:'#c64900', vapour:'#00848f', reflux:'#006ca0', steam:'#568999',
+      f1:'#00786f', f2:'#007c37', f3:'#7f6a00', f4:'#8f6300',
+      f5:'#a85500', f6:'#b9441c', f7:'#bc4040', f8:'#ba3e5b'
     },
 
     sheet: {
