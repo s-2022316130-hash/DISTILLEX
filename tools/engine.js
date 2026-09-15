@@ -61,7 +61,7 @@ function load() {
     'var DCLogic = class { constructor(p){ this.props = p || {}; } ' +
     'setState(o){ Object.assign(this.state, o); } };\n' +
     body + '\nreturn { Component: Component, CDU: CDU, PLANT: PLANT, GEO: GEO, ' +
-    'GLM: GLM, RIG2D: RIG2D, RIGINFO: RIGINFO };');
+    'GLM: GLM, RIG2D: RIG2D, RIGINFO: RIGINFO, THEME: THEME };');
   const mods = factory();
   const Component = mods.Component;
   // Capture downloads and toasts instead of touching the DOM.
