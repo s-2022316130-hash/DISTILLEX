@@ -1702,6 +1702,18 @@
             font-weight: 650 }
   .d2-tag { letter-spacing: .15em; pointer-events: none }
   .d2-tray { stroke: var(--r-line2); stroke-width: 1 }
+  /* Equipment internals: tube bundles, radiant tubes, burners, trays and
+     nozzles. Never interactive — the block behind them carries the pick. */
+  .d2-det { fill: none; stroke-linecap: round; stroke-linejoin: round; pointer-events: none }
+  /* The gateway is a preview: at phone width its 980-unit sheet is drawn in
+     356 CSS px, so an 8.5-unit equipment name lands at three pixels. The
+     shapes still read at that size; the naming does not, and the card's own
+     heading says what it is. The product column stays — the live rates are
+     the point of showing it at all. */
+  @media (max-width: 620px) {
+    .dx-gate-v .d2-lbl, .dx-gate-v .d2-sub,
+    .dx-gate-v .d2-tag, .dx-gate-v .d2-tin { display: none }
+  }
   .d2-pipe { fill: none; stroke-linecap: round; stroke-linejoin: round; cursor: pointer }
   .d2-pipe:hover { filter: drop-shadow(0 0 6px currentColor) }
   .d2-halo { fill: none; stroke-linecap: round; stroke-linejoin: round; opacity: .16;
@@ -2644,8 +2656,25 @@
           <rect class="d2-shell" x="{{ gateD2.tower.x }}" y="{{ gateD2.tower.y }}" width="{{ gateD2.tower.w }}"
                 height="{{ gateD2.tower.h }}" rx="{{ gateD2.tower.rx }}"></rect>
           <sc-for list="{{ gateD2.blocks }}" as="gk" hint-placeholder-count="7">
-            <rect class="d2-blk" x="{{ gk.x }}" y="{{ gk.y }}" width="{{ gk.w }}" height="{{ gk.h }}"
-                  rx="{{ gk.rx }}" style="pointer-events:none"></rect>
+            <g opacity="{{ gk.op }}" style="pointer-events:none">
+              <rect class="d2-blk" x="{{ gk.x }}" y="{{ gk.y }}" width="{{ gk.w }}" height="{{ gk.h }}"
+                    rx="{{ gk.rx }}"></rect>
+              <text class="d2-lbl" x="{{ gk.lx }}" y="{{ gk.ly }}" text-anchor="{{ gk.anchor }}">{{ gk.label }}</text>
+              <text class="d2-sub" x="{{ gk.lx }}" y="{{ gk.sy }}" text-anchor="{{ gk.anchor }}">{{ gk.sub }}</text>
+            </g>
+          </sc-for>
+          <sc-for list="{{ gateD2.detail }}" as="gd" hint-placeholder-count="18">
+            <path class="d2-det" d="{{ gd.d }}" stroke="{{ gd.col }}" stroke-width="{{ gd.w }}"
+                  opacity="{{ gd.op }}" style="pointer-events:none"></path>
+          </sc-for>
+          <sc-for list="{{ gateD2.tags }}" as="gg" hint-placeholder-count="9">
+            <text class="d2-tag" x="{{ gg.x }}" y="{{ gg.y }}" font-size="{{ gg.size }}"
+                  text-anchor="{{ gg.anchor }}" fill="{{ gg.col }}" opacity="{{ gg.op }}"
+                  style="pointer-events:none">{{ gg.text }}</text>
+          </sc-for>
+          <sc-for list="{{ gateD2.temps }}" as="gm" hint-placeholder-count="6">
+            <text class="d2-tin" x="{{ gm.x }}" y="{{ gm.y }}" text-anchor="{{ gm.anchor }}"
+                  style="pointer-events:none">{{ gm.text }}</text>
           </sc-for>
           <sc-for list="{{ gateD2.out }}" as="go" hint-placeholder-count="6">
             <g class="d2-out" style="pointer-events:none">
@@ -4094,9 +4123,15 @@
                 <g opacity="{{ bl.op }}">
                   <rect class="{{ bl.cls }}" x="{{ bl.x }}" y="{{ bl.y }}" width="{{ bl.w }}" height="{{ bl.h }}"
                         rx="{{ bl.rx }}" data-k="{{ bl.pick }}" onClick="{{ rigPick2d }}"></rect>
-                  <text class="d2-lbl" x="{{ bl.lx }}" y="{{ bl.ly }}" text-anchor="middle">{{ bl.label }}</text>
-                  <text class="d2-sub" x="{{ bl.lx }}" y="{{ bl.sy }}" text-anchor="middle">{{ bl.sub }}</text>
+                  <text class="d2-lbl" x="{{ bl.lx }}" y="{{ bl.ly }}" text-anchor="{{ bl.anchor }}">{{ bl.label }}</text>
+                  <text class="d2-sub" x="{{ bl.lx }}" y="{{ bl.sy }}" text-anchor="{{ bl.anchor }}">{{ bl.sub }}</text>
                 </g>
+              </sc-for>
+
+              <!-- the internals that tell one grey box from another -->
+              <sc-for list="{{ rigD2.detail }}" as="dt" hint-placeholder-count="18">
+                <path class="d2-det" d="{{ dt.d }}" stroke="{{ dt.col }}"
+                      stroke-width="{{ dt.w }}" opacity="{{ dt.op }}"></path>
               </sc-for>
 
               <sc-for list="{{ rigD2.tags }}" as="tg" hint-placeholder-count="7">

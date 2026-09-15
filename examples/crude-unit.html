@@ -4157,7 +4157,7 @@ var RIG2D = (function () {
       return 1;
     }
 
-    var blocks = [], pipes = [], trays = [], bands = [], tags = [], temps = [];
+    var blocks = [], pipes = [], trays = [], bands = [], tags = [], temps = [], detail = [];
     var cx = G.towerX + G.towerW / 2;
     var feedY = G.towerY + G.towerH * (1 - 0.205);
     var sumpY = G.towerY + G.towerH;
@@ -4246,21 +4246,118 @@ var RIG2D = (function () {
 
     /* ── the rest of the equipment ───────────────────────────────────── */
     blocks.push(mkBlock('furnace', G.furX, G.furY, G.furW, G.furH, 'FIRED HEATER',
-                        r ? fmt(r.energy.furnace, 0) + ' MW' : '—'));
+                        r ? fmt(r.energy.furnace, 0) + ' MW' : '—', 6, 'below'));
     // keyed into the firebox rather than floating above it
     blocks.push(mkBlock('furnace', G.stackX, G.stackY, G.stackW, G.furY - G.stackY + 14, '', '', 3));
     blocks.push(mkBlock('condenser', G.condX, G.condY, G.condW, G.condH, 'CONDENSER',
-                        r ? fmt(r.energy.condenser, 0) + ' MW' : '—', 5));
+                        r ? fmt(r.energy.condenser, 0) + ' MW' : '—', 5, 'left'));
     blocks.push(mkBlock('drum', G.drumX, G.drumY, G.drumW, G.drumH, 'REFLUX DRUM',
-                        r ? fmt(r.energy.Ttop, 0) + ' °C' : '', 22));
+                        r ? fmt(r.energy.Ttop, 0) + ' °C' : '', 22, 'below'));
 
-    function mkBlock(pick, x, y, w, h, label, sub, rx) {
+    /** A line of equipment detail: the internals that tell one grey box from
+     *  another. A block with nothing in it is a block; a block with a tube
+     *  bundle in it is a condenser, and the difference is what makes a flow
+     *  sheet readable rather than decorative. */
+    function det(pick, d, c, w, opFactor) {
+      detail.push({ pick: pick, d: d, col: c, w: w || 1.3,
+                    op: dim(pick) * (opFactor == null ? 0.85 : opFactor) });
+    }
+
+    /** A block, and where its two lines of text go.
+     *
+     *  `place` matters once the equipment has internals in it: a name written
+     *  across a tube bundle is unreadable, and every piece here has a
+     *  different empty side to put it on. 'in' is only right for a box big
+     *  enough to be empty in the middle. */
+    function mkBlock(pick, x, y, w, h, label, sub, rx, place) {
+      var lx = x + w / 2, ly, sy, anchor = 'middle';
+      if (place === 'above')      { ly = y - 15;      sy = y - 4; }
+      else if (place === 'below') { ly = y + h + 14;  sy = y + h + 26; }
+      else if (place === 'left')  { lx = x - 8; anchor = 'end';
+                                    ly = y + h / 2 - 3; sy = y + h / 2 + 9; }
+      else                        { ly = y + h / 2 - (sub ? 3 : -3); sy = y + h / 2 + 11; }
       return { pick: pick, x: x, y: y, w: w, h: h, rx: rx == null ? 6 : rx,
                label: label, sub: sub || '', hollow: false,
-               lx: x + w / 2, ly: y + h / 2 - (sub ? 3 : -3),
-               sy: y + h / 2 + 11,
+               lx: lx, ly: ly, sy: sy, anchor: anchor,
                op: dim(pick), cls: 'd2-blk' + (pick === sel ? ' on' : '') };
     }
+
+    /* ── what makes each box the thing it is ─────────────────────────── */
+    // fired heater: a bridgewall, radiant tubes down the near wall, burners
+    // along the floor and a convection bank under the stack
+    var fbY = G.furY + G.furH, i2;
+    var burn = '';
+    for (i2 = 0; i2 < 4; i2++) {
+      var bx = G.furX + 22 + i2 * (G.furW - 44) / 3;
+      burn += 'M' + (bx - 7) + ' ' + (fbY - 9) + ' l7 -13 l7 13 ';
+    }
+    det('furnace', burn, C.hot, 1.7, 0.95);
+    var rt = '';
+    for (i2 = 0; i2 < 6; i2++) {
+      var rx2 = G.furX + 16 + i2 * (G.furW - 32) / 5;
+      rt += 'M' + rx2 + ' ' + (G.furY + 40) + ' V' + (fbY - 24) + ' ';
+    }
+    det('furnace', rt, C.crude, 1.5, 0.7);
+    det('furnace', 'M' + (G.furX + 8) + ' ' + (G.furY + 30) + ' H' + (G.furX + G.furW - 8),
+        SH.tray, 1.2, 0.6);
+    var cvx = G.stackX + G.stackW / 2, cvw = 34, cvt = '';
+    for (i2 = 0; i2 < 4; i2++)
+      cvt += 'M' + (cvx - cvw / 2) + ' ' + (G.furY + 4 + i2 * 6) + ' H' + (cvx + cvw / 2) + ' ';
+    det('furnace', cvt, SH.tray, 1.2, 0.7);
+    det('furnace', 'M' + (G.stackX - 5) + ' ' + G.stackY + ' H' + (G.stackX + G.stackW + 5),
+        SH.tray, 1.6, 0.7);
+
+    // condenser: a tube bundle between two tubesheets, and the cooling water
+    // that makes it a condenser rather than a drum
+    var ccy = G.condY + G.condH / 2, tb = '';
+    for (i2 = 0; i2 < 7; i2++) {
+      var tx = G.condX + 14 + i2 * (G.condW - 28) / 6;
+      tb += 'M' + tx + ' ' + (G.condY + 7) + ' V' + (G.condY + G.condH - 7) + ' ';
+    }
+    det('condenser', tb, SH.tray, 1.2, 0.75);
+    det('condenser', 'M' + (G.condX + 8) + ' ' + (G.condY + 4) + ' V' + (G.condY + G.condH - 4) +
+                     ' M' + (G.condX + G.condW - 8) + ' ' + (G.condY + 4) + ' V' + (G.condY + G.condH - 4),
+        SH.label, 1.5, 0.7);
+    det('condenser', 'M' + (G.condX + 26) + ' ' + (G.condY + G.condH + 14) + ' V' + (G.condY + G.condH) +
+                     ' M' + (G.condX + G.condW - 26) + ' ' + (G.condY + G.condH) + ' V' + (G.condY + G.condH + 14),
+        C.steam, 1.6, 0.8);
+    // clear of the condensate drop, which runs down the shell's centre line
+    tags.push({ x: G.condX + G.condW - 8, y: G.condY + G.condH + 25, size: 7.5,
+                anchor: 'start', op: dim('condenser') * 0.8, col: SH.quiet, text: 'COOLING WATER' });
+
+    // reflux drum: an operating level and the boot the water drops into
+    det('drum', 'M' + (G.drumX + 8) + ' ' + (G.drumY + G.drumH * 0.58) + ' H' + (G.drumX + G.drumW - 8),
+        C.reflux, 2.0, 0.85);
+    det('drum', 'M' + (G.drumX + G.drumW * 0.32) + ' ' + (G.drumY + G.drumH) + ' v10 h16 v-10',
+        SH.label, 1.4, 0.7);
+
+    // side strippers: four trays and the stripping steam under them
+    for (s = 0; s < 3; s++) {
+      var k2 = sideKeys[s];
+      var dY = G.towerY + G.towerH * (1 - DRAWF[k2]), stT = dY + 10;
+      var st = '';
+      for (i2 = 1; i2 <= 4; i2++)
+        st += 'M' + (G.stripX + 7) + ' ' + (stT + G.stripH * i2 / 5) + ' H' + (G.stripX + G.stripW - 7) + ' ';
+      det('sidedraw', st, SH.tray, 1.1, 0.7);
+      det('sidedraw', 'M' + (G.stripX - 16) + ' ' + (stT + G.stripH - 10) + ' H' + G.stripX,
+          C.steam, 1.5, 0.8);
+    }
+
+    // the tower's own nozzles, so every line lands on something
+    var noz = '';
+    function stub(x, y, dx2) { noz += 'M' + x + ' ' + y + ' h' + dx2 + ' '; }
+    stub(G.towerX, feedY, -12);
+    stub(G.towerX + G.towerW, G.towerY + G.towerH * (1 - DRAWF.kerosene), 12);
+    stub(G.towerX + G.towerW, G.towerY + G.towerH * (1 - DRAWF.diesel), 12);
+    stub(G.towerX + G.towerW, G.towerY + G.towerH * (1 - DRAWF.gasoil), 12);
+    stub(G.towerX, G.towerY + 24, -12);
+    stub(G.towerX, sumpY - 26, -12);
+    det('tower', noz, SH.label, 3.2, 0.55);
+    // the skirt the tower stands on
+    det('tower', 'M' + (G.towerX + 12) + ' ' + sumpY + ' V' + (sumpY + 26) +
+                 ' M' + (G.towerX + G.towerW - 12) + ' ' + sumpY + ' V' + (sumpY + 26) +
+                 ' M' + (G.towerX + 4) + ' ' + (sumpY + 26) + ' H' + (G.towerX + G.towerW - 4),
+        SH.label, 1.6, 0.55);
 
     /* ── static annotation ───────────────────────────────────────────── */
     tags.push({ x: G.towerX - 8, y: G.towerY - 14, size: 9, anchor: 'end',
@@ -4320,7 +4417,7 @@ var RIG2D = (function () {
     }
 
     return { w: W, h: H, blocks: blocks, tower: tower, bands: bands, trays: trays,
-             pipes: pipes, tags: tags, out: out, temps: temps, legend: legend,
+             pipes: pipes, tags: tags, out: out, temps: temps, detail: detail, legend: legend,
              thermal: thermal, flowMode: flowMode, hasLegend: !!legend,
              theme: THEME.mode(), sheet: SH };
   }
