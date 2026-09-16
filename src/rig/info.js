@@ -264,8 +264,8 @@ var RIGINFO = (function () {
       // back south: the five rundown tanks lie across the frame at the same
       // distance, with the unit that filled them standing behind. From any
       // other azimuth the tower is in front of the tanks and hides them.
-      { key:'farm',      label:'Tank farm', t:[-6, 13, -46],
-        yaw: Math.PI, pitch:0.20, dist: fit(66), w: 94,
+      { key:'farm',      label:'Tank farm', t:[-19, 13, -46],
+        yaw: Math.PI, pitch:0.20, dist: fit(66), w: 68,
         // Upright, the row cannot be shown broadside: a hundred and ninety
         // metres of tankage across a screen four hundred pixels wide is a
         // smudge. So a phone is stood at the end of the row instead and looks

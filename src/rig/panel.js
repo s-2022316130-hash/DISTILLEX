@@ -188,7 +188,8 @@ _rigAdapt(gl, fps) {
   const st = gl.state;
   let note = '';
   const want = this.state.rig.detail;
-  if (fps < 30 && st.detail > (want === 0 ? 0 : 0) && st.detail > 0) {
+  const floor = this._camFloor | 0;
+  if (fps < 30 && st.detail > floor) {
     st.detail -= 1;
   } else if (fps < 26 && st.tracers > 0.35 && this.state.rig.flow) {
     st.tracers = 0.3;
@@ -490,9 +491,17 @@ rigCamTo(key, snap) {
   // view raises the tier far enough to have something to look at; it is
   // never lowered, because the viewer's own choice of a richer scene stands.
   const need = c.key === 'farm' ? 1 : c.key === 'site' ? 2 : 0;
-  if (need && (this.state.rig.detail | 0) < need) {
-    gl.setDetail(need);
-    this.setRig({ detail: need });
+  // and the watchdog may not take it back below that while this shot is up:
+  // on a slow machine the tier went the moment it arrived, and pressing Tank
+  // farm gave an empty apron. Frames come off the resolution instead, which
+  // is the order the rest of the ladder already uses.
+  this._camFloor = need;
+  if (need) {
+    // Raise it now as well as hold it: the watchdog may already have taken the
+    // tier away, and on a machine that never reaches the climb-back threshold
+    // it would never come back on its own.
+    if (gl.state.detail < need) gl.setDetail(need);
+    if ((this.state.rig.detail | 0) < need) this.setRig({ detail: need });
   }
   const cvE = document.getElementById('rig-gl');
   const asp = cvE && cvE.clientHeight ? cvE.clientWidth / cvE.clientHeight : 1.6;
