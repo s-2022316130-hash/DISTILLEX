@@ -272,6 +272,22 @@ button { -webkit-tap-highlight-color: transparent }
 .tag .v { font-weight: 620 }
 .tag u { text-decoration: none; color: var(--ink3); font-size: var(--t-9) }
 
+/* nameplates: what every item is, and its equipment number */
+.lab { position: absolute; top: 0; left: 0; will-change: transform; pointer-events: none;
+       opacity: 0; transform: translate3d(-999px,-999px,0); transition: opacity 180ms linear;
+       padding: 4px 9px 5px; border-radius: var(--r-1); white-space: nowrap;
+       background: var(--glass); border: 1px solid var(--line2); box-shadow: var(--lift-1);
+       backdrop-filter: blur(10px) saturate(1.3); -webkit-backdrop-filter: blur(10px) saturate(1.3) }
+.lab b { display: block; font-size: var(--t-9); font-weight: 700; letter-spacing: .14em;
+         color: var(--accent) }
+.lab s { display: block; text-decoration: none; font-size: var(--t-11); font-weight: 600;
+         color: var(--ink); line-height: 1.25 }
+.lab i { display: block; font-style: normal; font-size: var(--t-9); color: var(--ink3);
+         line-height: 1.3 }
+.lab i:empty { display: none }
+.lab::after { content: ''; position: absolute; left: -5px; top: 50%; width: 5px; height: 5px;
+              margin-top: -2.5px; border-radius: 50%; background: var(--accent) }
+
 #hover { position: absolute; top: 0; left: 0; will-change: transform; pointer-events: none;
          padding: 5px 10px; font-size: var(--t-12); border-radius: var(--r-2); white-space: nowrap;
          background: var(--glass); border: 1px solid var(--line2); box-shadow: var(--lift-2);
@@ -682,6 +698,7 @@ button { -webkit-tap-highlight-color: transparent }
                 aria-label="Three-dimensional model of an atmospheric crude distillation unit. Drag to orbit, scroll to zoom, click a component to inspect it. The results panel lists every stage and product as text."></canvas>
         <div class="ov">
           <div id="tags"></div>
+          <div id="labs"></div>
           <div id="hover" hidden></div>
           <div id="info" hidden></div>
           <div id="tour" hidden></div>
@@ -731,6 +748,7 @@ button { -webkit-tap-highlight-color: transparent }
 // @include rig/theme.js
 // @include rig/glmath.js
 // @include rig/geometry.js
+// @include rig/kit.js
 // @include rig/plant.js
 // @include rig/renderer.js
 // @include rig/engine.js

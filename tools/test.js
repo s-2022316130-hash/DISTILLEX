@@ -734,6 +734,45 @@ function suiteStandalone() {
     ok(n === 1, 'the example declares ' + decl.slice(4, -2) + ' exactly once', 'found ' + n);
   });
 
+  // ── and the include list is closed under what those modules actually use.
+  //
+  //    The list above is hand-written, so it only ever catches the modules
+  //    somebody remembered to add to it. That is exactly how the page shipped
+  //    without rig/kit.js: plant.js started calling KIT, the standalone did
+  //    not include it, the mount threw, and the page reported the failure as
+  //    'WebGL is unavailable'. This check needs no maintenance — it reads the
+  //    includes, works out which module owns each global, and fails if a
+  //    module uses one whose owner is not in the list.
+  const rigDir = path.join(__dirname, '..', 'src', 'rig');
+  const strip = src => src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
+  const owner = {};                                  // exported global -> module path
+  const srcOf = {};
+  for (const f of fs.readdirSync(rigDir)) {
+    if (!f.endsWith('.js')) continue;
+    const body = fs.readFileSync(path.join(rigDir, f), 'utf8');
+    srcOf['rig/' + f] = strip(body);
+    const m = /^var ([A-Z][A-Z0-9_]*) =/m.exec(body);
+    if (m) owner[m[1]] = 'rig/' + f;
+  }
+  const pageSrc = fs.readFileSync(path.join(__dirname, '..', 'src', 'standalone', 'page.html'), 'utf8');
+  const included = (pageSrc.match(/^\/\/ @include (\S+)/gm) || [])
+    .map(l => l.replace('// @include ', '').trim());
+  const uiSrc = fs.readFileSync(path.join(__dirname, '..', 'src', 'standalone', 'ui.js'), 'utf8');
+  srcOf['standalone/ui.js'] = strip(uiSrc);
+  const missing = [];
+  for (const inc of included) {
+    const body = srcOf[inc];
+    if (!body) continue;
+    for (const name of Object.keys(owner)) {
+      if (owner[name] === inc) continue;
+      if (!new RegExp('\\b' + name + '\\s*\\.').test(body)) continue;
+      if (included.indexOf(owner[name]) < 0) missing.push(inc + ' uses ' + name + ' (' + owner[name] + ')');
+    }
+  }
+  ok(missing.length === 0,
+     'every module the standalone includes has the modules it uses included too',
+     missing.slice(0, 4).join('; '));
+
   // the honesty rules the page is built on must still be in it
   ok(html.indexOf('never claims convergence') >= 0 || html.indexOf('did not report') >= 0 ||
      html.indexOf('reports convergence') >= 0,

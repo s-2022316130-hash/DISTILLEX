@@ -42,12 +42,14 @@ var APP = (function () {
     tour: -1,
     hist: [],
     theme: 'dark',            // the resolved theme
-    themePref: 'auto'         // what the operator asked for: auto | light | dark
+    themePref: 'auto',        // what the operator asked for: auto | light | dark
+    detail: 2,                // how much of the site to draw: 0 unit, 1 +farm, 2 +site
+    labels: true              // nameplates on the equipment
   };
 
-  var gl = null, plant = null, cams = null, camPreset = 'plant';
+  var gl = null, plant = null, cams = null, camPreset = 'plant', camFloor = 0;
   var THEME_KEY = 'crude-unit.theme';
-  var raf = 0, tourTimer = null, tagEls = [], hoverRaf = 0, hoverAt = 0;
+  var raf = 0, tourTimer = null, tagEls = [], labEls = [], hoverRaf = 0, hoverAt = 0;
   var reduced = false;
   try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
 
@@ -354,13 +356,51 @@ var APP = (function () {
   function camTo(key, snap) {
     if (!gl || !cams) return;
     var c = cams.filter(function (q) { return q.key === key; })[0] || cams[0];
-    gl.cam.tYaw = c.yaw; gl.cam.tPitch = c.pitch; gl.cam.tDist = c.dist;
-    gl.cam.ttx = c.t[0]; gl.cam.tty = c.t[1]; gl.cam.ttz = c.t[2];
+    // A shot of something that is not being drawn is an empty shot: the tank
+    // farm and the off-plot furniture are detail tiers, so asking for either
+    // raises the tier far enough to have something to look at. It is never
+    // lowered — a richer scene the viewer chose stands.
+    var need = c.key === 'farm' ? 1 : c.key === 'site' ? 2 : 0;
+    // and the watchdog may not take it back below that while this shot is up:
+    // on a slow machine the tier went the moment it arrived, and pressing Tank
+    // farm gave an empty apron. Frames come off the resolution instead.
+    camFloor = need;
+    if (need) {
+      // Raise it now as well as hold it: the watchdog may already have taken
+      // the tier away, and on a machine that never reaches the climb-back
+      // threshold it would never come back on its own.
+      if (S.detail < need) S.detail = need;
+      if (gl.state.detail < need) gl.setDetail(need);
+    }
+    var cv = $('gl');
+    var asp = cv && cv.clientHeight ? cv.clientWidth / cv.clientHeight : 1.6;
+    // The field of view is vertical, so a canvas taller than it is wide holds
+    // the same plant top to bottom and much less side to side. A wide subject
+    // therefore needs a different composition upright, not merely more
+    // distance, and a preset may carry that second shot.
+    var q = (asp < 1 && c.port) ? merge(c, c.port) : c;
+    var dist = q.dist;
+    if (q.w) dist = Math.max(dist, q.w / (0.32 * Math.max(0.35, asp)));
+    gl.cam.tYaw = q.yaw; gl.cam.tPitch = q.pitch; gl.cam.tDist = dist;
+    gl.cam.ttx = q.t[0]; gl.cam.tty = q.t[1]; gl.cam.ttz = q.t[2];
     if (snap) {
-      gl.cam.yaw = c.yaw; gl.cam.pitch = c.pitch; gl.cam.dist = c.dist;
-      gl.cam.tx = c.t[0]; gl.cam.ty = c.t[1]; gl.cam.tz = c.t[2];
+      gl.cam.yaw = q.yaw; gl.cam.pitch = q.pitch; gl.cam.dist = dist;
+      gl.cam.tx = q.t[0]; gl.cam.ty = q.t[1]; gl.cam.tz = q.t[2];
     }
     camPreset = c.key;
+  }
+  function merge(a, b) {
+    var o = {}, k;
+    for (k in a) if (Object.prototype.hasOwnProperty.call(a, k)) o[k] = a[k];
+    for (k in b) if (Object.prototype.hasOwnProperty.call(b, k)) o[k] = b[k];
+    return o;
+  }
+
+  /** How much of the site to draw. It is an instance count per draw call, so
+   *  there is no rebuild behind this and nothing to lose. */
+  function setDetail(d) {
+    S.detail = Math.max(camFloor, Math.max(0, Math.min(2, d | 0)));
+    if (gl) gl.setDetail(S.detail);
   }
 
   /* ── guided tour ───────────────────────────────────────────────────── */
@@ -450,6 +490,9 @@ var APP = (function () {
     }
     fill($('tools'), [
       segs([['3d','3D'], ['2d','Process'], ['split','Both']], S.view, function (v) { set({ view:v }); }),
+      segs([['0','Unit'], ['1','+Farm'], ['2','+Site']], String(S.detail), function (d) {
+        setDetail(+d); render();
+      }),
       segs([['material','Material'], ['thermal','Thermal'], ['flow','Flow']], S.mode, function (m) {
         S.mode = m;
         if (gl) gl.state.mode = m;
@@ -459,6 +502,11 @@ var APP = (function () {
       h('button', { class:'ghost', onclick: function () {
         if (S.tour >= 0) { stopTour(); set({ tour:-1 }); } else tourGo(0);
       } }, S.tour >= 0 ? 'End tour' : 'Guided tour'),
+      h('button', { class:'ghost' + (S.labels ? ' on' : ''),
+                    title: S.labels ? 'Hide the equipment nameplates'
+                                    : 'Show what every item is and its equipment number',
+                    onclick: function () { S.labels = !S.labels; render(); } },
+        S.labels ? 'Names on' : 'Names'),
       h('button', { class:'ghost' + (S.expert ? ' on' : ''),
                     onclick: function () { set({ expert: !S.expert }); } },
         S.expert ? 'Expert view on' : 'Expert view'),
@@ -910,11 +958,23 @@ var APP = (function () {
     var cv = $('gl');
     try {
       plant = PLANT.build();
-      gl = RIGGL.create(cv, plant, { maxDpr: 2, theme: S.theme });
+      // A phone gets a smaller backing store and the unit on its own to start
+      // with; the watchdog and the detail control move it from there.
+      var wide = (window.innerWidth || 1200) >= 900;
+      gl = RIGGL.create(cv, plant, { maxDpr: wide ? 2 : 1.75, theme: S.theme });
+      S.detail = wide ? 2 : 1;
+      gl.setDetail(S.detail);
     } catch (err) {
+      // Say which of the two it was. 'WebGL is unavailable' over a scene that
+      // actually failed to build sends the reader to their graphics driver for
+      // a bug that is in this file.
+      var noGL = !cv || !cv.getContext || !(cv.getContext('webgl') || cv.getContext('experimental-webgl'));
       $('glfail').hidden = false;
-      $('glfail').textContent = 'WebGL is unavailable in this browser, so the 3D view cannot be drawn. '
-        + 'Everything else works: use the Process view, which needs no WebGL.';
+      $('glfail').textContent = noGL
+        ? 'WebGL is unavailable in this browser, so the 3D view cannot be drawn. '
+          + 'Everything else works: use the Process view, which needs no WebGL.'
+        : 'The 3D scene could not be built (' + ((err && err.message) || 'unknown error')
+          + '). Everything else works: use the Process view, which needs no WebGL.';
       S.view = '2d';
       render();
       return;
@@ -924,6 +984,7 @@ var APP = (function () {
     if (reduced) gl.state.flow = false;
     bindPointer(cv);
     buildTags();
+    buildLabels();
     loop();
   }
 
@@ -936,7 +997,7 @@ var APP = (function () {
       if (!gl) { raf = 0; return; }
       var dt = (now - last) / 1000; last = now;
       if (!(dt > 0) || dt > 0.25) dt = 1 / 60;
-      try { gl.render(dt); placeTags(); } catch (e) { raf = 0; return; }
+      try { gl.render(dt); placeTags(); placeLabels(); } catch (e) { raf = 0; return; }
       acc += dt; frames++;
       if (acc >= 0.5) {
         var fps = Math.round(frames / acc);
@@ -949,17 +1010,27 @@ var APP = (function () {
     raf = requestAnimationFrame(step);
   }
 
-  /** Hold the frame rate, and say so when holding it costs something. Two
-   *  levers in the order that costs the viewer least: the tracers, which are
-   *  decoration, then the backing-store resolution, which is what actually
-   *  changes shading cost. Both climb back when the machine can afford them. */
+  /** Hold the frame rate, cheapest thing first, and say so when holding it
+   *  costs something.
+   *
+   *  The order matters. Detail comes off before resolution: the site furniture
+   *  and the fine access steel are the most triangles and the least
+   *  information, and dropping them costs a viewer nothing, where blurring the
+   *  whole picture costs them everything. Tracers go next, resolution last.
+   *  Each lever climbs back on its own, with a gap between the thresholds so
+   *  nothing oscillates. */
   function adapt(fps) {
     var st = gl.state, note = '';
-    if (fps < 26 && st.tracers > 0.35 && S.flow) st.tracers = 0.3;
+    if (fps < 30 && st.detail > camFloor) st.detail -= 1;
+    else if (fps < 26 && st.tracers > 0.35 && S.flow) st.tracers = 0.3;
     else if (fps < 22 && st.scale > 0.62) st.scale = Math.max(0.6, st.scale - 0.2);
     else if (fps > 52 && st.scale < 1) st.scale = Math.min(1, st.scale + 0.2);
     else if (fps > 55 && st.tracers < 1) st.tracers = 1;
-    if (st.scale < 0.99 && st.tracers < 1) note = 'Tracers + resolution reduced';
+    else if (fps > 58 && st.detail < S.detail) st.detail += 1;
+    var dn = st.detail < 2;
+    if (dn && st.scale < 0.99) note = 'Detail + resolution reduced';
+    else if (dn) note = st.detail === 0 ? 'Site hidden' : 'Site detail reduced';
+    else if (st.scale < 0.99 && st.tracers < 1) note = 'Tracers + resolution reduced';
     else if (st.scale < 0.99) note = 'Resolution reduced';
     else if (st.tracers < 1) note = 'Tracers thinned';
     var w = $('degrade');
@@ -984,6 +1055,66 @@ var APP = (function () {
     });
     updateTagValues();
   }
+  /** The nameplates: every major item's equipment number and what it is. The
+   *  scene is readable without them, but only to someone who already knows a
+   *  crude unit; with them it teaches. */
+  function buildLabels() {
+    var host = $('labs');
+    fill(host, null);
+    labEls = (plant.labels || []).map(function (l) {
+      var el = h('div', { class:'lab' }, [
+        h('b', null, l.tag), h('s', null, l.name), h('i', null, l.note || '')
+      ]);
+      host.appendChild(el);
+      return { el:el, at:l.at, pick:l.pick, tier:l.tier || 0 };
+    });
+  }
+
+  /** Place them. The rules are the same as the tags' — nearest wins a clash,
+   *  there is a cap — with four differences a nameplate needs:
+   *
+   *  · a plate belongs to a detail tier, and goes when that tier does, or a
+   *    reduced scene floats names over empty paving;
+   *  · how far it can be read from follows the shot, because a plate on
+   *    tankage a hundred metres behind a close-up is clutter and the same
+   *    plate in the tank-farm shot is the subject;
+   *  · the clash test is the box the plate actually occupies, since they are
+   *    not all the same width and a narrow one hides inside a wide one;
+   *  · it is clamped into the canvas, because its leader dot still points at
+   *    the item and half a plate off the edge is litter.
+   */
+  function placeLabels() {
+    if (!gl || !labEls.length) return;
+    var cv = $('gl'), W = cv.clientWidth, H = cv.clientHeight;
+    var narrow = (window.innerWidth || 1200) < 1000;
+    var gapY = narrow ? 34 : 40, cap = narrow ? 5 : 11;
+    var reach = Math.max(70, gl.cam.dist * 1.7);
+    var tier = gl.state.detail, sel = gl.state.sel;
+    var shown = [], placed = [];
+    if (!S.labels) { labEls.forEach(function (t) { t.el.style.opacity = '0'; }); return; }
+    labEls.forEach(function (t) {
+      if (t.tier > tier) { t.el.style.opacity = '0'; return; }
+      var p = gl.toScreen(t.at);
+      if (!p) { t.el.style.opacity = '0'; return; }
+      shown.push({ t:t, p:p, on: !!sel && t.pick === sel });
+    });
+    shown.sort(function (a, b) { return (b.on ? 1 : 0) - (a.on ? 1 : 0) || a.p.d - b.p.d; });
+    shown.forEach(function (q) {
+      if (placed.length >= cap || q.p.d > reach) { q.t.el.style.opacity = '0'; return; }
+      var w = q.t.el.offsetWidth || 130, hh = q.t.el.offsetHeight || 40;
+      var x = Math.max(6, Math.min(W - w - 6, q.p.x + 9));
+      var y = Math.max(6, Math.min(H - hh - 6, q.p.y - 16));
+      var clash = placed.some(function (p) {
+        return Math.abs(p.y - y) < gapY && x < p.x + p.w + 8 && p.x < x + w + 8;
+      });
+      if (clash) { q.t.el.style.opacity = '0'; return; }
+      placed.push({ x:x, y:y, w:w });
+      q.t.el.style.opacity = q.on ? '1'
+        : String(Math.max(0.46, Math.min(0.95, 1.02 - 0.48 * (q.p.d / reach))));
+      q.t.el.style.transform = 'translate3d(' + Math.round(x) + 'px,' + Math.round(y) + 'px,0)';
+    });
+  }
+
   function updateTagValues() {
     tagEls.forEach(function (t) {
       var rd = reading(t.read);
